@@ -1,0 +1,88 @@
+# Unified optional sidecars for Chad (issue #363) — none of these are required for
+# first-run. Every one has a public/managed fallback (Brave for search, kroki.io for
+# diagrams); self-hosting here just removes rate limits and keeps data local.
+#
+#   Start:   docker compose -f docker/chad-services.yml up -d
+#   Stop:    docker compose -f docker/chad-services.yml down
+#   Verify:  .\scripts\setup\verify_chad_services.ps1
+#
+# After starting, point config/config.yaml at the local instances:
+#   tools.searxng_url:     http://127.0.0.1:8080
+#   visual.kroki_url:      http://127.0.0.1:8000
+#   visual.presenton_url:  http://127.0.0.1:5000   (optional --profile presenton)
+
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: chad-searxng
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    environment:
+      - SEARXNG_BASE_URL=http://127.0.0.1:8080/
+    depends_on:
+      - valkey
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: chad-searxng-valkey
+    restart: unless-stopped
+    command: valkey-server --save 30 1 --loglevel warning
+    volumes:
+      - valkey-data:/data
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+  # Optional — self-hosted diagram rendering. Public kroki.io works with zero setup;
+  # this is for privacy/rate-limit reasons only. Bound to 127.0.0.1, never exposed off-box.
+  kroki:
+    image: yuzutech/kroki:latest
+    container_name: chad-kroki
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # Optional — AI presentation generator (issue #350). Requires LLM env in
+  # docker/presenton/.env (copy from .env.example). Start with:
+  #   docker compose -f docker/chad-services.yml --profile presenton up -d
+  presenton:
+    image: ghcr.io/presenton/presenton:latest
+    container_name: chad-presenton
+    restart: unless-stopped
+    profiles:
+      - presenton
+    ports:
+      - "127.0.0.1:5000:80"
+    env_file:
+      - path: ./presenton/.env
+        required: false
+    volumes:
+      - presenton-data:/app/app_data
+
+  # Optional — live Excalidraw canvas for the excalidraw MCP add-on (issue #354).
+  # The MCP server itself is launched by the client (npx mcp-excalidraw-server, see
+  # config.yaml mcp_servers.excalidraw) and just needs this canvas to sync against.
+  excalidraw-canvas:
+    image: ghcr.io/yctimlin/mcp_excalidraw-canvas:latest
+    container_name: chad-excalidraw-canvas
+    restart: unless-stopped
+    profiles:
+      - excalidraw
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  valkey-data:
+  presenton-data:

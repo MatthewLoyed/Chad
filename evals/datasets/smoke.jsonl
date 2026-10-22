@@ -1,0 +1,2 @@
+// smoke.jsonl — one fast case to prove the live lane end-to-end (run with --live --judge).
+{"id": "live_time", "prompt": "what time is it right now?", "category": "agent", "expect": {"tools_any": ["get_datetime", "get_time", "get_current_time"], "response_excludes": ["i cannot", "i don't have access"], "max_duration_s": 60, "max_total_tokens": 4000}, "judge": ["tool_appropriateness", "response_grounded"]}

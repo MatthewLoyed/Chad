@@ -1,0 +1,20 @@
+{"id":"ir_chat_hi","query":"hi","expect_mode":"conversation"}
+{"id":"ir_chat_thanks","query":"thanks!","expect_mode":"conversation"}
+{"id":"ir_chat_how_are_you","query":"hey how are you doing today","expect_mode":"conversation"}
+{"id":"ir_command_volume","query":"set volume to 50","expect_mode":"agent"}
+{"id":"ir_command_open","query":"open discord","expect_mode":"agent"}
+{"id":"ir_agent_email","query":"search my email for invoices from last week","expect_mode":"agent"}
+{"id":"ir_agent_code","query":"refactor the auth module in src/remote/server.py","expect_mode":"agent"}
+{"id":"ir_planning_website","query":"build me a wedding website with RSVP and photo gallery","expect_mode":"plan"}
+{"id":"ir_chat_good_morning","query":"good morning chad","expect_mode":"conversation"}
+{"id":"ir_chat_no_worries","query":"yeah no worries, appreciate it","expect_mode":"conversation"}
+{"id":"ir_command_volume_down","query":"lower the tv volume to 20","expect_mode":"agent"}
+{"id":"ir_command_close_open","query":"close spotify and open chrome","expect_mode":"agent"}
+{"id":"ir_agent_drive_search","query":"search my drive for the tax documents from last year","expect_mode":"agent"}
+{"id":"ir_agent_canvas","query":"check my upcoming assignments in canvas","expect_mode":"agent"}
+{"id":"ir_agent_calendar","query":"what's on my calendar for tomorrow afternoon","expect_mode":"agent"}
+{"id":"ir_agent_reminder","query":"remind me to call the vet at 3pm","expect_mode":"agent"}
+{"id":"ir_planning_trip","query":"help me plan a weekend trip to chicago with flights and a hotel","expect_mode":"plan"}
+{"id":"ir_planning_migration","query":"put together a step by step plan to migrate this repo from pip to uv","expect_mode":"plan"}
+{"id":"ir_planning_declutter","query":"make a plan to organize and declutter my downloads folder by file type","expect_mode":"plan"}
+{"id":"ir_planning_tool_compare","query":"create a plan to research and compare three project management tools for our team","expect_mode":"plan"}

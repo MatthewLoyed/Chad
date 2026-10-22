@@ -1,0 +1,146 @@
+.tool-stack-wrapper {
+    margin: 8px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.tool-stack__header {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    user-select: none;
+    gap: 10px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.tool-stack__header:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Status specifics */
+.tool-stack--pending .tool-stack__header {
+    border-color: rgba(99, 102, 241, 0.2);
+    background: rgba(99, 102, 241, 0.03);
+}
+
+.tool-stack--error .tool-stack__header {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.03);
+}
+
+.tool-stack__header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.tool-stack__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+}
+
+/* Inline execution timeline */
+.tool-stack__timeline {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.tool-timeline-step {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+}
+
+.tool-timeline-step--success {
+    opacity: 0.75;
+}
+
+.tool-timeline-step--pending {
+    opacity: 1;
+    animation: timeline-pulse 1.4s infinite ease-in-out;
+}
+
+.tool-timeline-step--error {
+    opacity: 0.9;
+    filter: hue-rotate(180deg);
+}
+
+@keyframes timeline-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.tool-timeline-arrow {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    line-height: 1;
+}
+
+.tool-timeline-more {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 1px 5px;
+    margin-left: 2px;
+}
+
+.tool-stack__chevron {
+    color: rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    margin-left: 4px;
+}
+
+.tool-stack__status-indicator {
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.tool-stack__status-indicator .alert-icon {
+    color: #ef4444;
+}
+
+.tool-stack__status-indicator .check-icon {
+    color: #22c55e;
+}
+
+.tool-stack__expanded-content {
+    overflow: hidden;
+}
+
+.tool-stack__list {
+    padding: 4px 0 8px 0;
+    gap: 0;
+}
+
+.tool-stack__nested-item {
+    margin-top: -4px; /* Overlap slightly to connect the group better */
+}
+
+/* Remove individual margins for nested bubbles so they fit nicely */
+.tool-stack__nested-item .tool-bubble {
+    margin: 4px 0;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.015);
+}

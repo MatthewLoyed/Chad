@@ -1,0 +1,304 @@
+.tool-bubble {
+    margin: 8px 0;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    width: fit-content;
+    max-width: 100%;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-bubble--pending {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.05);
+}
+
+.tool-bubble--success {
+    background: rgba(34, 197, 94, 0.02);
+    border-color: rgba(34, 197, 94, 0.15);
+}
+
+.tool-bubble--error {
+    background: rgba(239, 68, 68, 0.02);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.tool-bubble--awaiting {
+    background: rgba(245, 158, 11, 0.05);
+    border-color: rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.08);
+}
+
+.tool-bubble__status--awaiting {
+    color: rgba(251, 191, 36, 0.9);
+}
+
+.indicator-awaiting {
+    color: rgba(251, 191, 36, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tool-bubble__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Icon Container & Spinner */
+.tool-bubble__icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.tool-bubble__icon {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.tool-bubble__spinner {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    color: rgba(99, 102, 241, 0.4);
+    pointer-events: none;
+}
+
+.spin-slow {
+    animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Text & Labels */
+.tool-bubble__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.tool-bubble__label {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tool-bubble__status {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+}
+
+/* Success/Error Indicators */
+.tool-bubble__indicator {
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.indicator-success {
+    color: #22c55e;
+    display: flex;
+    position: relative;
+}
+
+/* One-shot green bloom behind the checkmark when a tool completes */
+.indicator-success::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.5) 0%, transparent 70%);
+    animation: chad-glow-bloom 0.6s var(--ease-out-soft) both;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.indicator-success svg {
+    position: relative;
+    z-index: 1;
+}
+
+.indicator-error {
+    color: #ef4444;
+    display: flex;
+}
+
+/* Error Details */
+.tool-bubble__error-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(239, 68, 68, 0.1);
+    font-size: 12px;
+    color: rgba(239, 68, 68, 0.7);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+/* Category Specific Glows */
+.tool-bubble--cat-delegation {
+    background: rgba(168, 85, 247, 0.04);
+    border-color: rgba(168, 85, 247, 0.2);
+}
+
+.tool-bubble--cat-delegation.tool-bubble--pending {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.tool-bubble--cat-browser {
+    background: rgba(66, 133, 244, 0.04);
+    border-color: rgba(66, 133, 244, 0.25);
+}
+
+.tool-bubble--cat-email {
+    background: rgba(234, 67, 53, 0.04);
+    border-color: rgba(234, 67, 53, 0.25);
+}
+
+.tool-bubble--cat-todoist {
+    background: rgba(228, 67, 50, 0.04);
+    border-color: rgba(228, 67, 50, 0.25);
+}
+
+.tool-bubble--cat-canvas {
+    background: rgba(225, 57, 57, 0.04);
+    border-color: rgba(225, 57, 57, 0.25);
+}
+
+/* Nested Sub-Stream Styles */
+.tool-bubble--has-children {
+    width: 100%; /* Expand to fill when containing nested trees */
+    box-sizing: border-box;
+}
+
+.tool-bubble__header-clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    margin: -8px -12px; /* Invert bubble padding to fill hover */
+    padding: 8px 12px;
+}
+
+.tool-bubble__header-clickable:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tool-bubble__chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+    width: 16px;
+    margin-right: -4px; /* Pull icon closer to flow */
+}
+
+.tool-bubble__nested-children {
+    overflow: hidden;
+}
+
+.tool-bubble__nested-content-inner {
+    margin-top: 12px;
+    gap: 4px; /* Tighter flow for inner agents */
+}
+
+/* Distinctive style for nested tool bubbles */
+.tool-bubble__nested-content-inner .tool-bubble {
+    margin: 4px 0;
+    background: rgba(0, 0, 0, 0.1);
+    box-shadow: none;
+}
+
+.tool-bubble__nested-content-inner .tool-stack-wrapper {
+    margin: 4px 0;
+}
+
+.tool-bubble__details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.tool-bubble__details-section:last-child {
+    margin-bottom: 0;
+}
+
+.tool-bubble__details-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.tool-bubble__details-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.tool-bubble__details-code {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.tool-bubble__show-more {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(99, 102, 241, 0.9);
+    cursor: pointer;
+}
+
+.tool-bubble__show-more:hover {
+    color: rgba(129, 140, 248, 1);
+    text-decoration: underline;
+}
+
+.tool-bubble__details-code--error {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}

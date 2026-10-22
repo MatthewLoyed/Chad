@@ -1,0 +1,40 @@
+# Gitleaks configuration for Chad/AIAssistant
+# https://github.com/gitleaks/gitleaks
+
+title = "Chad AIAssistant Gitleaks Config"
+
+[extend]
+  useDefault = true
+
+[allowlist]
+  description = "Project-level allowlist"
+
+  # Placeholder / example values that are intentionally generic
+  regexes = [
+    # env-var style placeholders used throughout config
+    '''%[A-Z_]+%''',
+    # example / template email addresses
+    '''(the_user|partner|boss|professor|alex\.example|example)@(example\.com|university\.edu|company\.com)''',
+    # service account style addresses that are not personal credentials
+    '''gmail-api-push@system\.gserviceaccount\.com''',
+  ]
+
+  paths = [
+    # Example / template files — intentionally contain placeholder secrets
+    '''secrets\.yaml\.example''',
+    '''\.env\.example''',
+    # This file itself references pattern strings
+    '''\.gitleaks\.toml''',
+  ]
+
+[[rules]]
+  id = "notion-token"
+  description = "Notion API Token"
+  regex = '''ntn_[0-9A-Za-z]{43}'''
+  tags = ["notion", "api-key"]
+
+[[rules]]
+  id = "supabase-service-role"
+  description = "Supabase service role key"
+  regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJyb2xlIjoic2VydmljZV9yb2xlIi'''
+  tags = ["supabase", "api-key"]

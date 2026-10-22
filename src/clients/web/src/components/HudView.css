@@ -1,0 +1,175 @@
+/* Force body transparency for HUD window */
+:root.is-hud,
+html.is-hud,
+body.is-hud, 
+body.is-hud #root, 
+body.is-hud .hud-root {
+  background: transparent !important; /* Switch to true alpha */
+  background-image: none !important;
+  color-scheme: normal !important;
+}
+
+/* TRANSPARENCY ACTIVE */
+body.is-hud {
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hud-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+}
+
+.hud-container {
+  position: relative;
+  width: auto;
+  min-width: 500px;
+  max-width: 800px;
+  background: #0a0b10 !important; /* Opaque Chad Dark */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 100px;
+  padding: 12px 28px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  animation: hud-pill-pop 0.4s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+.hud-root.is-closing .hud-container {
+  animation: hud-pill-sink 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes hud-pill-pop {
+  from { transform: scale(0.95) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes hud-pill-sink {
+  from { transform: scale(1) translateY(0); opacity: 1; }
+  to { transform: scale(0.95) translateY(20px); opacity: 0; }
+}
+
+/* --- The Purple Glow --- */
+.hud-glow {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #8b5cf6, #6d28d9, #8b5cf6);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: -1;
+  filter: blur(12px);
+}
+
+.is-processing .hud-glow {
+  opacity: 0.6;
+  animation: hud-glow-pulse 2s linear infinite;
+}
+
+@keyframes hud-glow-pulse {
+  0% { background-position: 0% 50%; opacity: 0.4; }
+  50% { background-position: 100% 50%; opacity: 0.7; }
+  100% { background-position: 0% 50%; opacity: 0.4; }
+}
+
+/* --- Input Bar --- */
+.hud-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-prompt {
+  color: #a78bfa;
+  font-weight: 600;
+  font-size: 18px; /* Slightly smaller to match input better */
+  opacity: 1;
+  user-select: none;
+  padding-bottom: 1px; /* Optical alignment for slash */
+}
+
+.hud-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 4px 0;
+}
+
+.hud-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Status/Thinking View --- */
+.hud-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: hud-fade-in 0.3s ease;
+}
+
+.hud-status-text {
+  color: #c4b5fd;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
+.hud-spinner {
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+.spinner-inner {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(139, 92, 246, 0.1);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: hud-spin 0.8s linear infinite;
+}
+
+@keyframes hud-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Result View --- */
+.hud-result-view {
+  animation: hud-fade-in 0.4s ease;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.hud-result-text {
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 1.4;
+  display: block;
+}
+
+@keyframes hud-fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Scrollbar for long results --- */
+.hud-result-view::-webkit-scrollbar {
+  width: 3px;
+}
+
+.hud-result-view::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 10px;
+}

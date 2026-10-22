@@ -1,0 +1,32 @@
+name: Documentation integrity (offline)
+
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check paths, heading anchors and registry inventory
+        run: python scripts/dev/check_docs.py
+      - name: Exercise checker fixtures without application dependencies
+        run: python -m unittest discover -s tests/unit -p test_docs_integrity.py -v
+      - name: Check the five onboarding and resume routes
+        run: python -m evals.runner --project-context
+      - name: Exercise route and reference fixtures
+        run: python -m unittest discover -s tests/unit -p test_project_context_probe.py -v

@@ -1,0 +1,657 @@
+.nav-sidebar {
+    width: 260px;
+    height: 100vh;
+    background-color: #0f1115;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    color: #e5e7eb;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 100;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-sidebar.is-collapsed {
+    width: 68px;
+}
+
+.nav-sidebar.is-resizing {
+    transition: none;
+    user-select: none;
+}
+
+.nav-sidebar__resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 20;
+    touch-action: none;
+}
+
+.nav-sidebar__resize-handle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(99, 102, 241, 0.12) 20%,
+        rgba(99, 102, 241, 0.12) 80%,
+        transparent 100%
+    );
+    transition: background 0.2s ease, width 0.2s ease;
+}
+
+.nav-sidebar__resize-handle:hover::before,
+.nav-sidebar__resize-handle.is-resizing::before {
+    width: 2px;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(99, 102, 241, 0.45) 20%,
+        rgba(99, 102, 241, 0.45) 80%,
+        transparent 100%
+    );
+}
+
+.nav-sidebar__content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 20px;
+}
+
+.nav-sidebar__branding {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    margin-bottom: -4px;
+}
+
+.branding-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-sidebar.is-collapsed .nav-sidebar__branding {
+    padding: 4px 0;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.nav-sidebar.is-collapsed .branding-left {
+    justify-content: center;
+    padding: 0;
+}
+
+.nav-sidebar__toggle-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-sidebar__toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.nav-sidebar.is-collapsed .nav-sidebar__toggle-btn {
+    order: -1;
+    margin-bottom: 2px;
+}
+
+.nav-sidebar__title {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    margin: 0;
+    color: #fff;
+    opacity: 0.9;
+}
+
+.nav-sidebar__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-sidebar__btn-new {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.nav-sidebar__btn-new:hover {
+    background: var(--chad-accent-faint);
+    border-color: var(--chad-accent-border);
+    box-shadow: 0 2px 12px rgba(var(--chad-purple-rgb), 0.14);
+}
+
+.nav-sidebar__btn-new:active {
+    transform: scale(0.98);
+}
+
+.nav-sidebar__btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.nav-sidebar__btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.nav-sidebar__btn-secondary:active {
+    transform: scale(0.98);
+}
+
+.nav-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nav-section__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.nav-section__header:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+}
+
+.nav-section__chevron {
+    margin-left: auto;
+    opacity: 0.4;
+}
+
+.nav-sidebar.is-collapsed .nav-sidebar__btn-new,
+.nav-sidebar.is-collapsed .nav-sidebar__btn-secondary,
+.nav-sidebar.is-collapsed .nav-section__header {
+    justify-content: center;
+    padding: 10px 0;
+    width: 44px;
+    margin-inline: auto;
+}
+
+.nav-sidebar.is-collapsed .nav-sidebar__actions {
+    align-items: center;
+}
+
+.nav-sidebar__recents {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.recents-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.recents-label__text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recents-label__clear {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+.recents-label__clear:hover {
+    opacity: 1;
+}
+
+.recents-label__search {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.recents-label__search:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-section__add {
+    opacity: 0;
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.5);
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.nav-section__header:hover .nav-section__add {
+    opacity: 1;
+}
+
+.nav-section__add:hover {
+    color: #fff;
+}
+
+.nav-section__chevron {
+    transition: transform 0.15s ease;
+}
+
+.nav-section__chevron.is-expanded {
+    transform: rotate(180deg);
+}
+
+.projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px 4px 6px;
+}
+
+.recents-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.recents-pull-indicator {
+    height: 2px;
+    background: var(--accent, #7c6aff);
+    border-radius: 2px;
+    margin-bottom: 4px;
+    transform-origin: left;
+    transition: opacity 0.1s;
+}
+
+.recents-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.recents-list::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.recents-list:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.recent-item-wrapper {
+    position: relative;
+}
+
+.recent-item-wrapper.has-menu-open {
+    z-index: 20;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.recent-item--renaming {
+    padding: 6px 8px;
+}
+
+.recent-item__rename-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+}
+
+.recent-item__pin-icon {
+    flex-shrink: 0;
+    color: var(--chad-purple-light);
+    opacity: 0.85;
+}
+
+.recent-item__text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Category (domain agent) emoji badge — sized to line up with the lucide icons the
+   other nav rows use, which render at 13px. */
+.category-item__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    font-size: 12px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.recent-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.recent-item.is-active {
+    background: rgba(168, 85, 247, 0.1);
+    color: #fff;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.recent-item__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.recent-item:hover .recent-item__actions,
+.recent-item.is-active .recent-item__actions {
+    opacity: 1;
+}
+
+.recent-item__more {
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+}
+
+.recent-item__more:hover,
+.recent-item__more.is-open {
+    color: #fff;
+    opacity: 1;
+}
+
+.recent-item__menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 4px;
+    min-width: 168px;
+    background: #1a1d24;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    z-index: 30;
+}
+
+.recent-item__menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease;
+}
+
+.recent-item__menu-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.recent-item__menu-btn--danger {
+    color: #f87171;
+}
+
+.recent-item__menu-btn--danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.recents-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.recents-loading .animate-spin {
+    animation: spin 1s linear infinite;
+    color: var(--chad-purple-light);
+}
+
+/* Sidebar Skeleton Loading */
+.nav-sidebar-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 6px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.nav-sidebar-skeleton__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.nav-sidebar-skeleton__icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: chad-shimmer 2s infinite ease-in-out;
+}
+
+.nav-sidebar-skeleton__line {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: chad-shimmer 2s infinite ease-in-out;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.recents-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+}
+
+.recents-load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 8px 4px;
+    flex-shrink: 0;
+}
+
+.recents-load-more:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.recents-load-more:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recents-empty__offline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+}
+
+.recents-empty__reconnect-btn {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 6px;
+    color: #f59e0b;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.recents-empty__reconnect-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+}
+
+.recents-empty__reconnect-btn:active {
+    transform: translateY(0);
+}
+
+/* Off-canvas drawer on narrow viewports (#191) — sits beside the workspace
+   rail; toggled via .chad-mobile-nav-toggle / .chad-root.mobile-nav-is-open.
+   The drawer ignores the desktop collapsed state — it's all-or-nothing here.
+   The slide transform/position lives on the .app-shell__nav wrapper (see
+   AppShell.css), not on .nav-sidebar itself, because framer-motion keeps its
+   own inline `transform` style on .nav-sidebar (its mount-in animation)
+   which would otherwise win. */
+@media (max-width: 768px) {
+    .nav-sidebar,
+    .nav-sidebar.is-collapsed {
+        height: 100%;
+        width: 100%;
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Collapsing doesn't apply to an off-canvas drawer — hide the control. */
+    .nav-sidebar__toggle-btn {
+        display: none;
+    }
+
+    .nav-sidebar__resize-handle {
+        display: none;
+    }
+
+    .nav-sidebar__btn-new,
+    .nav-sidebar__btn-secondary,
+    .nav-section__header,
+    .recent-item {
+        min-height: 44px;
+    }
+}

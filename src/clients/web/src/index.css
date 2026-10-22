@@ -1,0 +1,218 @@
+/* Chad AI Assistant - Global Styles */
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #ffffff;
+  background-color: #0a0b10;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Chad Branding Colors */
+  --chad-purple-rgb: 139, 92, 246;
+  --chad-purple: rgb(var(--chad-purple-rgb));
+  --chad-purple-light: #c4b5fd;
+  --chad-purple-dark: #6d28d9;
+  
+  /* Accent Tokens (Purple based) */
+  --chad-accent-glow: rgba(var(--chad-purple-rgb), 0.4);
+  --chad-accent-faint: rgba(var(--chad-purple-rgb), 0.08);
+  --chad-accent-hover: rgba(var(--chad-purple-rgb), 0.14);
+  --chad-accent-active: rgba(var(--chad-purple-rgb), 0.18);
+  --chad-accent-badge: rgba(var(--chad-purple-rgb), 0.25);
+  --chad-accent-border: rgba(var(--chad-purple-rgb), 0.3);
+  --chad-accent-border-hover: rgba(var(--chad-purple-rgb), 0.5);
+
+  /* Status tokens — used by the shared async-state components (LoadingState /
+     ErrorState / EmptyState) so "couldn't load" reads the same everywhere. */
+  --chad-danger-rgb: 248, 113, 113;
+  --chad-danger: rgb(var(--chad-danger-rgb));
+  --chad-danger-faint: rgba(var(--chad-danger-rgb), 0.1);
+  --chad-danger-border: rgba(var(--chad-danger-rgb), 0.25);
+
+  /* Motion design tokens — shared easing + timing for consistent feel */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);   /* gentle deceleration */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* slight overshoot / pop */
+  --dur-fast: 0.15s;
+  --dur-base: 0.25s;
+  --dur-slow: 0.4s;
+}
+
+/* ── Reusable one-shot motion ────────────────────────────────────────────── */
+
+/* Soft radial glow that blooms outward then fades (success / confirm accents) */
+@keyframes chad-glow-bloom {
+  0%   { transform: scale(0.5); opacity: 0.55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Universal high-performance shimmer for UI skeletons */
+@keyframes chad-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.chad-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.035) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.035) 75%
+  );
+  background-size: 200% 100%;
+  animation: chad-shimmer 2s infinite ease-in-out;
+}
+
+
+/* Respect users who prefer reduced motion: collapse animation to its end
+   state instead of playing it. Keeps the UI usable without motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+:root {
+  background-color: #0a0b10;
+}
+
+/* Ensure total transparency when HUD mode is active */
+html.is-hud,
+body.is-hud,
+:root.is-hud,
+:root:has(.is-hud) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color-scheme: normal !important;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* --- Global Chad Scrollbar --- */
+/* Enforcing strict anti-web-standard scrollbars for a premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  /* Creates a padding effect */
+  background-clip: content-box;
+}
+
+/* 
+   Show thumb only when the scrollable container itself is hovered.
+   This avoids the scrollbar appearing when hovering unrelated parent areas.
+*/
+.sidebar__chat:hover::-webkit-scrollbar-thumb,
+.story-node__logs:hover::-webkit-scrollbar-thumb,
+.main-panel:hover::-webkit-scrollbar-thumb,
+.modal-body:hover::-webkit-scrollbar-thumb,
+.chad-dropdown__scroll:hover::-webkit-scrollbar-thumb,
+.settings-modal__content:hover::-webkit-scrollbar-thumb,
+[data-scrollable="true"]:hover::-webkit-scrollbar-thumb,
+[style*="overflow-y: auto"]:hover::-webkit-scrollbar-thumb,
+[style*="overflow-y: scroll"]:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Brighten on direct interaction with the scrollbar */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox Support - Targeted */
+.sidebar__chat,
+.story-node__logs,
+[style*="overflow-y: auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.sidebar__chat:hover,
+.story-node__logs:hover,
+[style*="overflow-y: auto"]:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* --- Global Tool Bubble --- */
+.tool-bubble {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    margin: 6px 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: fit-content;
+    max-width: 90%;
+}
+
+.tool-bubble--pending {
+    color: #818CF8; /* Chad Purple */
+    border-color: rgba(129, 140, 248, 0.2);
+}
+
+.tool-bubble--success {
+    color: #818CF8; /* Success stays Purple as per user request */
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.05);
+}
+
+.tool-bubble--error {
+    color: #F87171; /* Red */
+    border-color: rgba(248, 113, 113, 0.4);
+    background: rgba(248, 113, 113, 0.05);
+}
+
+.tool-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tool-icon-spin {
+    animation: tool-spin 2s linear infinite;
+}
+
+@keyframes tool-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

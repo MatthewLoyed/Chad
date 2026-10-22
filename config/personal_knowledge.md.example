@@ -1,0 +1,130 @@
+# Chad's Personal Knowledge Base
+
+This file is the single source of truth for what Chad knows about you.
+Edit it freely — plain English. Chad re-syncs it on every startup, so added,
+edited, and deleted lines all take effect on restart.
+
+Copy this file to `config/personal_knowledge.md` and fill it in.
+That file is gitignored — your data stays local.
+
+### How it works
+
+**Write one fact per line.** Each line under a `## section` becomes its own fact in
+the knowledge graph, retrieved and scored on its own. Don't write a paragraph — a
+whole section stored as one lump gets truncated when injected, and the truncator
+decides which of your facts survives.
+
+Three headings are reserved:
+
+| Heading | What it's for |
+|---|---|
+| `## _core_profile` | Who you are. Injected into every prompt verbatim, never retrieved. |
+| `## _behavior` | How Chad should act. Also always on, never retrieved. |
+| `## _graph` | Typed people/places/events Chad can walk at query time. |
+
+Everything else is a normal topic section of retrievable facts.
+
+---
+
+## _core_profile
+
+[The handful of facts that matter on almost any turn. This block is injected into
+every prompt verbatim — it is never retrieved, so it can never be ranked out or
+truncated away. Everything else in this file reaches Chad through similarity
+search, which is right for the long tail and wrong for "who do I live with".
+Keep it under ~800 characters and boring: name, where you live, who you live with,
+what you do, what's coming up. Not your height. If Chad ever asks you to
+re-explain something basic about your own life, that fact belongs here.]
+
+## _behavior
+
+[Standing directives about how Chad should ACT — not facts about you. Also always
+on, also never retrieved: as ordinary facts these matched weakly against almost
+any query and leaked into unrelated turns.
+e.g. "Ask clarifying questions with the ask_user_question tool, not in chat."
+e.g. "Prefer recent emails; don't resurface year-old todos as current."]
+
+## identity
+
+[Your full name.]
+[Your email address.]
+[Where you're based.]
+
+## family
+
+[One line per person — e.g. "Father is named Alex."]
+[Your partner or spouse, and any date that matters.]
+[Pets.]
+
+## health
+
+[Any health context that affects your routine, energy, or habits.]
+[Dietary preferences or restrictions.]
+
+## career
+
+[Current employer and role.]
+[Career stage and long-term direction.]
+[People you work with closely.]
+
+## goals
+
+[One line per goal, short-term and long-term.]
+
+## finances
+
+[Financial context, if you want Chad to help with budgeting or decisions.]
+
+## hardware
+
+[Your CPU and RAM.]
+[Your GPU, and which local models you run.]
+
+## interests
+
+[Hobbies and sports.]
+[Favorite foods.]
+[Media you like — shows, games, books.]
+
+## projects
+
+[One line per active side project or business.]
+
+## routine
+
+[Your typical weekday shape — when you wake, work, and wind down.]
+
+## _graph
+
+# Optional typed entities + relations (see docs/research/TYPED_GRAPH_MEMORY.md).
+# Relations are walked at query time, so naming a person in a question surfaces
+# how they connect to you.
+#
+# - Person:Alex
+# - Person:Sam
+# - Sam -partner_of-> Alex
+# - Project:ThisRepo -related_to_project-> Person:Alex
+# - Document:budget.xlsx -about-> Event:Wedding
+# - Document:budget.xlsx -in_service_of-> Goal:wedding_planning
+#
+# An entity can carry a short detail in parentheses. It is shown inline wherever
+# that entity appears, so Chad answers "what city was my university in" from the
+# relation itself instead of needing a separate fact:
+#
+# - Org:Northgate (in Corvallis, Oregon)
+# - Event:Wedding (April 11 2028, Cedar Hall)
+#
+# Keep these short — they share the same per-turn budget as your prose facts.
+# There is no point adding one to yourself: your own details are already in
+# _core_profile, which Chad sees on every single turn.
+#
+# An edge can carry an optional validity clause — (since X), (until Y), or both.
+# "until" means the relation ENDED: it is left out of normal retrieval and only
+# comes back for an explicitly past-tense question ("where did I used to work").
+#
+# - Alex -employed_by-> Org:CurrentCo
+# - Alex -employed_by-> Org:OldCo (since 2021-04, until 2024-09)
+#
+# Use employed_by (not member_of) for a job: it is single-valued, so telling Chad
+# "I now work at X" automatically ends the previous one. member_of stays
+# multi-valued for clubs, teams and groups, where several at once is normal.

@@ -1,0 +1,8 @@
+# Gitignored files that should still be copied into every new worktree Claude Code
+# creates (`.gitignore`-style patterns). Keeps maintainer-local files consistent
+# across worktrees without publishing them — see docs/guides/DEV_WORKSPACE.md.
+#
+# Only applies at worktree *creation* time. An existing worktree that predates this
+# file needs the copy done manually once (see DEV_WORKSPACE.md for the layout).
+
+CLAUDE.md

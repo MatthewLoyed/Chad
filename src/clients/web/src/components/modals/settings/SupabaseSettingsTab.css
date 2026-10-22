@@ -1,0 +1,79 @@
+.supabase-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.supabase-settings--loading {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted, #888);
+    padding: 0.5rem 0;
+}
+
+.supabase-settings__intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: var(--surface-elevated, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.supabase-settings__intro svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    opacity: 0.8;
+}
+
+.supabase-settings__headline {
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+}
+
+.supabase-settings__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--accent, #a78bfa);
+    white-space: nowrap;
+}
+
+.supabase-settings__input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+    background: var(--input-bg, rgba(0, 0, 0, 0.2));
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.supabase-settings__input:focus {
+    outline: none;
+    border-color: var(--accent, #a78bfa);
+}
+
+.supabase-settings__optional {
+    font-weight: normal;
+    opacity: 0.6;
+    font-size: 0.85em;
+}
+
+.supabase-settings__steps {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+}
+
+.supabase-settings__steps li {
+    margin-bottom: 0.15rem;
+}

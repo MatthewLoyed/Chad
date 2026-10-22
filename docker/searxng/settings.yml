@@ -1,0 +1,60 @@
+# SearXNG settings for Chad's self-hosted web search backend.
+# Localhost-only instance consumed by `web_search` via JSON.
+#
+# Engine curation (debug-local-search-accuracy): DuckDuckGo/Brave/Google/Bing/Mojeek
+# are disabled — SearXNG aggregation quality was poor for agent research. Startpage +
+# Wikipedia stay enabled; when Startpage JSON hits CAPTCHA, `web_search` falls through
+# to Playwright Startpage scrape, then Brave API.
+
+use_default_settings: true
+
+general:
+  instance_name: "chad-searxng"
+  debug: false
+
+server:
+  bind_address: "0.0.0.0"
+  port: 8080
+  secret_key: "chad-searxng-local-secret-change-me"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en-US"
+
+redis:
+  url: redis://valkey:6379/0
+
+# Engine selection: startpage CAPTCHA-blocks automated/datacenter queries and returns
+# empty for niche searches (it was the ONLY web engine enabled, which is why SearXNG
+# returned nothing for caterer queries and every search fell through to the slow Brave/
+# playwright chain — 318 dead searches in one 3-item run). Enable the automation-friendly
+# engines (duckduckgo/brave/mojeek + google/bing on a residential IP) and disable startpage.
+engines:
+  - name: duckduckgo
+    disabled: false
+    weight: 2
+  - name: brave
+    disabled: false
+    weight: 2
+  - name: startpage
+    disabled: true
+    weight: 1.5
+  - name: mojeek
+    disabled: false
+    weight: 1.5
+  - name: wikipedia
+    disabled: false
+    weight: 1
+  - name: google
+    disabled: false
+    weight: 1
+  - name: bing
+    disabled: false
+    weight: 1

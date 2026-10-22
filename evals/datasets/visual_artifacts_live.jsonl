@@ -1,0 +1,10 @@
+// visual_artifacts_live.jsonl — end-to-end LIVE lane: does the turn actually EXECUTE the
+// right visual tool and produce a real artifact (not just bind it)? Companion to the
+// tool_selection.jsonl dry-run cases added for the 2026-07-05 incident (compile_typst/
+// render_diagram/render_marp/render_animation/generate_presentation missing from the
+// Supabase RAG index entirely). Run against a throwaway dev Brain (PORT=8788), never prod.
+{"id": "pdf_report_live", "prompt": "create a short 1-page pdf explaining the basic rules of how to play spikeball, don't ask me anything just make it", "category": "agent", "expect": {"tools_any": ["compile_typst"], "tools_exclude": ["createTextFile", "uploadFile", "run_sandboxed_python", "run_sandboxed_bash"]}}
+{"id": "flowchart_diagram_live", "prompt": "draw me a flowchart of how a pull request gets reviewed and merged", "category": "agent", "expect": {"tools_any": ["render_diagram"]}}
+{"id": "illustrative_diagram_live", "prompt": "can you make me a diagram about how to play spikeball", "category": "agent", "expect": {"tools_any": ["render_diagram", "build_html_file"]}}
+{"id": "marp_slides_live", "prompt": "make me a quick 4-slide markdown deck with these exact slides: 1) Intro to our product 2) The problem we're solving 3) Our solution 4) Roadmap for next year. Just build it, don't ask me for anything else.", "category": "agent", "expect": {"tools_any": ["render_marp"]}}
+{"id": "animation_preview_live", "prompt": "write a simple CSS spinner animation and show me what it actually looks like", "category": "agent", "expect": {"tools_any": ["render_animation"]}}

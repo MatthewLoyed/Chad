@@ -1,0 +1,444 @@
+/* ActionApprovalCard / ApprovalCard.css - Claude-style unified action approval cards */
+
+.action-card {
+    margin: 12px 0;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 580px;
+    background: #15151c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card--email {
+    border-color: rgba(234, 67, 53, 0.3);
+}
+
+.action-card--command {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.action-card--file {
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.action-card--resolved {
+    opacity: 0.92;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Header */
+.action-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.action-card__header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-card__header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-card__icon--email {
+    color: #ea4335;
+}
+
+.action-card__icon--command {
+    color: #10b981;
+}
+
+.action-card__icon--file {
+    color: #818cf8;
+}
+
+.action-card__icon--calendar {
+    color: #38bdf8;
+}
+
+.action-card__icon--generic {
+    color: #f59e0b;
+}
+
+.action-card__header-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.01em;
+}
+
+/* Badges */
+.action-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.action-card__badge--pending {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+.action-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fbbf24;
+    animation: action-badge-pulse 2s infinite ease-in-out;
+}
+
+@keyframes action-badge-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.action-card__badge--approved {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.action-card__badge--declined {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+}
+
+/* Body */
+.action-card__body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-card__simple-prompt {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.45;
+}
+
+/* Meta rows (To, Subject, Directory, etc.) */
+.action-card__meta-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.action-card__meta-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.action-card__meta-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    min-width: 52px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.action-card__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.action-card__chip--email {
+    font-family: monospace;
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.action-card__subject {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.4;
+}
+
+.action-card__path {
+    font-family: monospace;
+    font-size: 11.5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #a5b4fc;
+    word-break: break-all;
+}
+
+/* Email Preview Pane */
+.action-card__email-preview {
+    margin-top: 4px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 10px 12px;
+}
+
+.action-card__preview-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 6px;
+}
+
+.action-card__preview-content {
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.88);
+    max-height: 220px;
+    overflow-y: auto;
+    word-break: break-word;
+}
+
+.action-card__preview-content p {
+    margin: 0 0 8px;
+}
+
+.action-card__preview-content p:last-child {
+    margin-bottom: 0;
+}
+
+.action-card__preview-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.action-card__preview-content ul,
+.action-card__preview-content ol {
+    margin: 4px 0 8px 18px;
+    padding: 0;
+}
+
+.action-card__preview-content li {
+    margin-bottom: 3px;
+}
+
+/* Code & Command Block */
+.action-card__code-container {
+    position: relative;
+    border-radius: 8px;
+    background: #0d0d12;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.action-card__code-block {
+    margin: 0;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #34d399;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.action-card__code-block--scroll {
+    max-height: 180px;
+    overflow-y: auto;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.action-card__code-copy {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.action-card__code-copy:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Generic Parameters */
+.action-card__generic-prompt {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 6px;
+}
+
+.action-card__param-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.action-card__param-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.action-card__param-key {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.action-card__param-val {
+    color: rgba(255, 255, 255, 0.85);
+    word-break: break-word;
+}
+
+/* Footer & Buttons */
+.action-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.action-card__footer--choices {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.action-btn--approve {
+    background: rgba(34, 197, 94, 0.16);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+}
+
+.action-btn--approve:hover {
+    background: rgba(34, 197, 94, 0.28);
+    border-color: rgba(34, 197, 94, 0.55);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+    transform: translateY(-0.5px);
+}
+
+.action-btn--decline {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.action-btn--decline:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    transform: translateY(-0.5px);
+}
+
+.action-option-btn {
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.action-option-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #fff;
+}
+
+/* Resolved State Bar */
+.action-card__resolved-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.action-card__resolved-bar--approved {
+    color: #4ade80;
+}
+
+.action-card__resolved-bar--declined {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Legacy compatibility classes so older tests/snapshots continue to match */
+.approval-card {
+    composes: action-card;
+}
+
+.approval-btn {
+    composes: action-btn;
+}
+
+.approval-btn--approve {
+    composes: action-btn--approve;
+}
+
+.approval-btn--decline {
+    composes: action-btn--decline;
+}

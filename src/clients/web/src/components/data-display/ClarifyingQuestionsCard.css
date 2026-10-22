@@ -1,0 +1,295 @@
+/* Clarifying questions — Claude-like compact card, Chad purple theme */
+
+.clarify-card {
+    --clarify-purple: rgb(var(--chad-purple-rgb, 139, 92, 246));
+    --clarify-purple-soft: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.14);
+    --clarify-purple-border: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.35);
+    --clarify-purple-glow: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.22);
+
+    margin: 8px 0;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    border: 1px solid var(--clarify-purple-border);
+    background: linear-gradient(
+        160deg,
+        rgba(var(--chad-purple-rgb, 139, 92, 246), 0.12) 0%,
+        rgba(20, 16, 32, 0.92) 42%,
+        rgba(12, 12, 18, 0.96) 100%
+    );
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(var(--chad-purple-rgb, 139, 92, 246), 0.08);
+}
+
+.clarify-card--resolved {
+    max-width: min(420px, 100%);
+    border-color: var(--clarify-purple-border);
+    background: linear-gradient(
+        145deg,
+        rgba(var(--chad-purple-rgb, 139, 92, 246), 0.16) 0%,
+        rgba(30, 24, 48, 0.9) 100%
+    );
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.clarify-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px 6px;
+}
+
+.clarify-card__question {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.94);
+    letter-spacing: -0.01em;
+}
+
+.clarify-card__pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.clarify-card__pager-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.clarify-card__pager-btn:hover:not(:disabled) {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.clarify-card__pager-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.clarify-card__pager-label {
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+.clarify-card__hint {
+    margin: 0;
+    padding: 0 16px 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.85);
+}
+
+.clarify-card__options {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0 4px;
+}
+
+.clarify-card__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.clarify-card__option:first-child {
+    border-top: none;
+}
+
+.clarify-card__option:hover {
+    background: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.08);
+}
+
+.clarify-card__option--selected {
+    background: var(--clarify-purple-soft);
+}
+
+.clarify-card__option-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.clarify-card__option-marker--num {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.clarify-card__option--selected .clarify-card__option-marker--num {
+    color: #fff;
+    background: var(--clarify-purple);
+    border-color: transparent;
+}
+
+.clarify-card__option-marker--check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    color: #fff;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+}
+
+.clarify-card__option--selected .clarify-card__option-marker--check {
+    background: var(--clarify-purple);
+    border-color: var(--clarify-purple);
+}
+
+.clarify-card__option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+    padding-top: 1px;
+}
+
+.clarify-card__option-label {
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.clarify-card__option-desc {
+    font-size: 12px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.clarify-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.clarify-card__other-row {
+    flex: 1;
+    min-width: 0;
+}
+
+.clarify-card__something-else {
+    padding: 6px 2px;
+    border: none;
+    background: none;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+}
+
+.clarify-card__something-else:hover {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.clarify-card__other-input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(var(--chad-purple-rgb, 139, 92, 246), 0.28);
+    outline: none;
+}
+
+.clarify-card__other-input:focus {
+    border-color: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.55);
+}
+
+.clarify-card__submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #f5f3ff;
+    background: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.55);
+    border: 1px solid rgba(var(--chad-purple-rgb, 139, 92, 246), 0.55);
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.clarify-card__submit:hover:not(:disabled) {
+    background: rgba(var(--chad-purple-rgb, 139, 92, 246), 0.72);
+}
+
+.clarify-card__submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Resolved Q&A — muted question, bold answer, purple shell */
+.clarify-card__qa {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.clarify-card__qa + .clarify-card__qa {
+    padding-top: 8px;
+    border-top: 1px solid rgba(var(--chad-purple-rgb, 139, 92, 246), 0.15);
+}
+
+.clarify-card__qa-question {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: rgba(196, 181, 253, 0.72);
+}
+
+.clarify-card__qa-answer {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.96);
+}

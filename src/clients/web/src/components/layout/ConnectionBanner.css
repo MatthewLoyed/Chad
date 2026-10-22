@@ -1,0 +1,102 @@
+.connection-banner {
+    /* Fixed overlay rather than in normal flow: `.chad-root` is `height: 100dvh`, so a
+       sibling banner above it would push the whole app down by its own height and create
+       a scrolling viewport on a phone. Overlaying briefly covers the mobile nav toggle,
+       which is an acceptable trade — whenever this banner is visible the app can't reach
+       the Brain anyway, so there's nothing behind it worth tapping. */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    /* Clear the notch on an installed iOS PWA, which runs full-screen with no browser
+       chrome to push content down. */
+    padding-top: calc(9px + env(safe-area-inset-top, 0px));
+    font-size: 13px;
+    line-height: 1.35;
+    border-bottom: 1px solid transparent;
+    backdrop-filter: blur(8px);
+}
+
+/* Opaque-ish rather than a light tint: this overlays real content, so it has to read as
+   a bar rather than a wash over the chat behind it. */
+.connection-banner--offline {
+    background: linear-gradient(rgba(69, 10, 10, 0.97), rgba(60, 12, 12, 0.97));
+    border-bottom-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+.connection-banner--pending {
+    background: linear-gradient(rgba(20, 23, 30, 0.95), rgba(24, 27, 34, 0.95));
+    border-bottom-color: rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.connection-banner__icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.connection-banner__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.connection-banner__hint {
+    opacity: 0.8;
+}
+
+.connection-banner__spin {
+    animation: connection-banner-spin 1s linear infinite;
+}
+
+@keyframes connection-banner-spin {
+    to { transform: rotate(360deg); }
+}
+
+.connection-banner__retry {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    /* 32px min target — thumb-sized, since this button only ever appears on a phone
+       that has lost its connection. */
+    min-height: 32px;
+    border: 1px solid rgba(252, 165, 165, 0.35);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.connection-banner__retry:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.connection-banner__retry:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45);
+}
+
+/* Phone: the hint is the least important part — drop it before the text wraps to
+   three lines and shoves the composer down. */
+@media (max-width: 480px) {
+    .connection-banner__hint {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .connection-banner__spin {
+        animation: none;
+    }
+}

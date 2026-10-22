@@ -1,0 +1,2 @@
+// telegram.jsonl — live-lane smoke for send_telegram_message (run with --live).
+{"id": "telegram_hi", "prompt": "Send me a message on Telegram that says exactly: hi from chad", "category": "agent", "expect": {"tools_include": ["send_telegram_message"]}, "judge": ["tool_appropriateness"]}

@@ -1,0 +1,80 @@
+name: Harness evals (free lanes)
+
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: '.'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+          # Nomic's custom embedding code uses the Transformers 4 attention API.
+          python -m pip install --no-cache-dir -r requirements.txt "transformers<5" reportlab
+          python -m playwright install chromium
+
+      # Full unit suite — pure-mocked, no LM Studio / no network / no live
+      # Supabase. Refs #216 (testing-expansion): this used to run only a
+      # hand-picked handful of files here; now every tests/unit/*.py runs on
+      # every PR so regressions get caught before merge, not discovered later.
+      # Includes test_server_boot_smoke.py (Starlette lifespan + /health) so
+      # "Brain won't start" bugs like missing lifespan imports fail CI, not prod.
+      - name: Unit tests
+        if: always()
+        run: python -m pytest tests/unit/ -v
+
+      # CI has no `config/persona/` (gitignored), so this audits the committed baseline —
+      # which is exactly the persona a fresh clone runs. Pinned explicitly so the lane can
+      # never silently change meaning based on what happens to exist in the checkout.
+      - name: Prompt audit
+        if: always()
+        env:
+          CHAD_PERSONA_LAYER: baseline
+        run: python -m evals.runner --prompt-audit
+
+      # Catches fragments that exist only in someone's overlay: their Chad works, every
+      # fresh clone silently boots without that prompt. Free and deterministic — it was
+      # built for #589 and then never wired up here.
+      - name: Persona parity
+        if: always()
+        run: python -m evals.runner --persona-parity
+
+      - name: Tool contract
+        if: always()
+        run: python -m evals.runner --tool-contract
+
+      # Tool selection and database-backed replay are opt-in local evaluations.
+      # This public CI never receives model or Supabase credentials.
+      - name: Upload eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: |
+            evals/runs/latest.md
+            evals/runs/triage.md
+            evals/runs/tool_contract_latest.md
+            evals/runs/replay_latest.md
+          if-no-files-found: warn

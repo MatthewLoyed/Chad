@@ -1,0 +1,293 @@
+.plan-card {
+    margin: 8px 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 260px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.plan-card--running {
+    border-color: rgba(99, 102, 241, 0.25);
+    background: rgba(99, 102, 241, 0.04);
+}
+
+.plan-card--failed {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.03);
+}
+
+.plan-card--completed {
+    border-color: rgba(34, 197, 94, 0.15);
+    background: rgba(34, 197, 94, 0.025);
+}
+
+.plan-card__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+}
+
+.plan-card__header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.plan-card.is-expanded .plan-card__header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.plan-card__header-icon {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.55);
+    flex-shrink: 0;
+}
+
+.plan-card__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Inline progress dots */
+.plan-card__progress {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.plan-pill {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.plan-pill--pending    { background: rgba(255, 255, 255, 0.2); }
+.plan-pill--running    { background: #6366f1; animation: pill-pulse 1.2s infinite ease-in-out; }
+.plan-pill--completed  { background: #22c55e; }
+.plan-pill--failed     { background: #ef4444; }
+
+@keyframes pill-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(0.85); }
+    50%       { opacity: 1;   transform: scale(1.15); }
+}
+
+.plan-card__overflow {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 1px 5px;
+}
+
+.plan-card__count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.plan-card__chevron {
+    color: rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Expanded body — no second border; parent .plan-card is the only box */
+.plan-card__body {
+    overflow: hidden;
+    border: none;
+    background: transparent;
+}
+
+.plan-card__body-inner {
+    padding: 0 0 4px;
+}
+
+.plan-card__goal {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 8px 12px 0;
+    margin: 0;
+    line-height: 1.4;
+    font-style: italic;
+}
+
+.plan-card__gather-brief {
+    margin: 8px 12px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.plan-card__gather-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(168, 85, 247, 0.9);
+    margin-bottom: 6px;
+}
+
+.plan-card__gather-text {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+
+.plan-card__steps {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0 8px;
+}
+
+/* Individual step */
+.plan-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 5px 12px;
+    transition: background 0.15s;
+}
+
+.plan-step:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.plan-step__number {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.25);
+    min-width: 14px;
+    text-align: right;
+    flex-shrink: 0;
+    line-height: 1.6;
+}
+
+.plan-step__icon {
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+
+.plan-step__icon--pending   { color: rgba(255, 255, 255, 0.25); }
+.plan-step__icon--running   { color: #6366f1; animation: spin 1s linear infinite; }
+.plan-step__icon--completed { color: #22c55e; }
+.plan-step__icon--failed    { color: #ef4444; }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.plan-step__description {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.45;
+    flex: 1;
+}
+
+.plan-step--completed .plan-step__description { color: rgba(255, 255, 255, 0.45); }
+.plan-step--failed    .plan-step__description { color: rgba(239, 68, 68, 0.75); }
+.plan-step--running   .plan-step__description { color: rgba(255, 255, 255, 0.9); }
+
+/* Approval footer */
+.plan-card__approval {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 2px;
+}
+
+.plan-approval-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.plan-approval-btn--approve {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+}
+
+.plan-approval-btn--approve:hover {
+    background: rgba(99, 102, 241, 0.28);
+}
+
+.plan-approval-btn--cancel {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.plan-approval-btn--cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.plan-card__approval-result {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px 10px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.plan-card__approval-result--approved { color: #a5b4fc; }
+.plan-card__approval-result--cancelled { color: rgba(255, 255, 255, 0.35); }
+
+.plan-step__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    align-items: flex-start;
+}
+
+.plan-step__tool-chip {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(139, 148, 255, 0.75);
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 5px;
+    padding: 1px 5px;
+    white-space: nowrap;
+}

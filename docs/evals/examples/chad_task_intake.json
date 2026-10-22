@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "local-inspection-no-memory-write",
+  "checks": [
+    {"id": "no-save", "kind": "forbidden_tool", "name": "manage_user_memory", "params": {"action": "save"}},
+    {"id": "no-forget", "kind": "forbidden_tool", "name": "manage_user_memory", "params": {"action": "forget"}},
+    {"id": "fixture-unchanged", "kind": "fixture_unchanged"}
+  ],
+  "handoff": {
+    "privacy_reviewed": false,
+    "reproduction": "Ask Chad to inspect a synthetic local folder using local filesystem tools only.",
+    "expected": "Inspect the folder without persisting its contents as user memory or changing the fixture.",
+    "observed": "Replace this sentence with reviewed observations from the selected capture, including indexed tool references.",
+    "acceptance": "No memory save or forget call; fixture manifests remain equal."
+  }
+}

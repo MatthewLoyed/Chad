@@ -1,0 +1,284 @@
+/* ─── Model Selector ──────────────────────────────────────────────────────── */
+
+.model-selector {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Trigger button */
+.model-selector__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.model-selector__trigger:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Local model — accent color (Chad Purple) */
+.model-selector__trigger.local {
+    border-color: var(--chad-accent-border);
+    color: var(--chad-purple-light);
+    background: var(--chad-accent-faint);
+}
+
+.model-selector__trigger.local:hover {
+    background: var(--chad-accent-hover);
+    border-color: var(--chad-accent-border-hover);
+    box-shadow: 0 0 10px var(--chad-accent-glow);
+}
+
+.model-selector__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Gear / settings button — shown only for local models */
+.model-selector__settings-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 3px;
+    width: 22px;
+    height: 22px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.model-selector__settings-btn:hover {
+    color: var(--chad-purple-light, #b39ddb);
+    border-color: var(--chad-accent-border, rgba(124, 77, 255, 0.25));
+    background: var(--chad-accent-faint, rgba(124, 77, 255, 0.08));
+}
+
+.model-selector__warn {
+    color: #f6ad55;
+    flex-shrink: 0;
+}
+
+.model-selector__chevron {
+    transition: transform 0.2s;
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+.model-selector__chevron.open {
+    transform: rotate(180deg);
+    opacity: 0.8;
+}
+
+/* Dropdown panel — Aligned RIGHT to avoid Story Mode cutoff 🛡️ */
+.model-selector__dropdown {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    width: 250px;
+    /* Stay within the viewport when many local models are present */
+    max-height: min(420px, calc(100vh - 120px));
+    max-height: min(420px, calc(100dvh - 120px));
+    background: rgba(18, 18, 23, 0.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+    z-index: 1000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+}
+
+.model-selector__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    flex-shrink: 0;
+}
+
+.model-selector__section-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.model-selector__section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 6px 8px 2px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.model-selector__list {
+    flex-shrink: 0;
+}
+
+.model-selector__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 4px 6px;
+    flex-shrink: 0;
+}
+
+/* Local list scrolls inside the capped dropdown; cloud + headers stay pinned */
+.model-selector__list--local {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.model-selector__refresh {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+}
+.model-selector__refresh:hover:not(:disabled) {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+}
+.model-selector__refresh:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Individual model item */
+.model-selector__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.model-selector__item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.model-selector__item.active {
+    background: var(--chad-accent-active);
+    color: var(--chad-purple-light);
+}
+
+.model-selector__item.active:hover {
+    background: var(--chad-accent-hover);
+}
+
+.model-selector__item-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.model-selector__size {
+    font-size: 10px;
+    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.model-selector__badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.model-selector__badge.active-badge {
+    background: var(--chad-accent-badge);
+    color: var(--chad-purple-light);
+}
+
+/* Empty / scanning states */
+.model-selector__scanning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px 12px;
+    color: var(--chad-purple-light);
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.model-selector__empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+}
+
+.model-selector__empty {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 14px;
+}
+
+.model-selector__hint {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 4px;
+}
+
+.model-selector__hint-sub {
+    font-size: 10px;
+    opacity: 0.4;
+    margin-top: 2px;
+}
+
+/* Spinning animation */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.spin {
+    animation: spin 1s linear infinite;
+}

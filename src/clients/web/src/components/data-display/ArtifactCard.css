@@ -1,0 +1,215 @@
+.artifact-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    max-width: 360px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.artifact-card:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.035) 100%);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+}
+
+.artifact-card__icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+/* File Type Specific Styles */
+.artifact-card--word .artifact-card__icon-wrapper { background: rgba(43, 87, 154, 0.14); border: 1px solid rgba(43, 87, 154, 0.25); }
+.artifact-icon--word { color: #3b82f6; }
+
+.artifact-card--html .artifact-card__icon-wrapper { background: rgba(227, 76, 38, 0.14); border: 1px solid rgba(227, 76, 38, 0.25); }
+.artifact-icon--html { color: #f97316; }
+
+.artifact-card--pdf .artifact-card__icon-wrapper { background: rgba(244, 15, 2, 0.14); border: 1px solid rgba(244, 15, 2, 0.25); }
+.artifact-icon--pdf { color: #ef4444; }
+
+.artifact-card--excel .artifact-card__icon-wrapper { background: rgba(33, 115, 70, 0.14); border: 1px solid rgba(33, 115, 70, 0.25); }
+.artifact-icon--excel { color: #10b981; }
+
+.artifact-card--markdown .artifact-card__icon-wrapper { background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.25); }
+.artifact-icon--markdown { color: #38bdf8; }
+
+.artifact-card--text .artifact-card__icon-wrapper { background: rgba(148, 163, 184, 0.14); border: 1px solid rgba(148, 163, 184, 0.25); }
+.artifact-icon--text { color: #94a3b8; }
+
+.artifact-card--image .artifact-card__icon-wrapper { background: rgba(167, 139, 250, 0.14); border: 1px solid rgba(167, 139, 250, 0.25); }
+.artifact-icon--image { color: #a78bfa; }
+
+.artifact-card--video .artifact-card__icon-wrapper { background: rgba(244, 63, 94, 0.14); border: 1px solid rgba(244, 63, 94, 0.25); }
+.artifact-icon--video { color: #f43f5e; }
+
+.artifact-card--code .artifact-card__icon-wrapper { background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.25); }
+.artifact-icon--code { color: #f59e0b; }
+
+.artifact-card--default .artifact-card__icon-wrapper { background: rgba(129, 140, 248, 0.14); border: 1px solid rgba(129, 140, 248, 0.25); }
+.artifact-icon--default { color: #818cf8; }
+
+.artifact-card__info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.artifact-card__filename {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.artifact-card__meta {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.artifact-card__btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    background: rgba(129, 140, 248, 0.1);
+    color: #a5b4fc;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.artifact-card__btn:hover {
+    background: #818cf8;
+    color: #0c0e14;
+    border-color: #818cf8;
+    transform: scale(1.02);
+}
+
+.artifact-card__btn:active {
+    transform: scale(0.98);
+}
+
+.artifact-card__btn span {
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .artifact-card__btn span {
+        display: none;
+    }
+    .artifact-card__btn {
+        padding: 8px;
+    }
+}
+
+.artifact-card__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.artifact-card__btn--preview {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.artifact-card__btn--preview:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.artifact-card[onClick] {
+    cursor: pointer;
+}
+
+/* Rich Inline Image Artifact Card */
+.artifact-card--image-rich {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    max-width: 520px;
+    width: 100%;
+    border-radius: 14px;
+    background: rgba(18, 20, 29, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.artifact-card__image-container {
+    width: 100%;
+    max-height: 420px;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.artifact-card__image-element {
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.2s ease;
+}
+
+.artifact-card__image-element:hover {
+    transform: scale(1.015);
+}
+
+.artifact-card__image-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.artifact-card__btn--copy {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.artifact-card__btn--copy:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+

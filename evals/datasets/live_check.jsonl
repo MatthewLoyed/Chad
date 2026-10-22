@@ -1,0 +1,5 @@
+// live_check.jsonl — live-lane validation (run with --live). Tests whether production-faithful
+// tool selection (Supabase RAG + MCP) binds the right tools, incl. the disputed web-search case.
+{"id": "web_search_live", "prompt": "search the web for the latest price of nvidia stock", "category": "agent", "judge": ["tool_appropriateness", "response_grounded"]}
+{"id": "email_live", "prompt": "check my email for anything important. Summarize only — do not draft, reply, or send.", "category": "agent", "expect": {"tools_exclude": ["send_email", "draft_gmail_reply", "create_gmail_draft"]}, "judge": ["tool_appropriateness", "response_grounded"]}
+{"id": "time_live", "prompt": "what time is it right now?", "category": "agent", "expect": {"tools_any": ["get_datetime", "get_time"]}, "judge": ["tool_appropriateness", "response_grounded"]}

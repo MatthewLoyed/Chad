@@ -1,0 +1,21 @@
+{"ch":"thinking","frame":{"type":"run_started","run_id":"turn_99","thread_id":"turn_99"}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"Con","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"sid","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"er","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"ing","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" the","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" req","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"uest","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" care","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"fully","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" bef","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"ore","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" ans","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"wer","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"ing","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" now.","append":true}}
+{"ch":"caption","text":"Done.","append":true}
+{"ch":"thinking","frame":{"type":"speech","text":"Done.","append":false}}
+{"ch":"token","frame":{"prompt_tokens":600,"completion_tokens":18,"total_tokens":618,"reasoning_tokens":12,"context_window":200000,"speed":60.0,"ttft":0.18,"stop_reason":"end_turn","estimated_prompt_tokens":null}}
+{"ch":"thinking","frame":{"type":"run_finished","run_id":"turn_99","response":"Done."}}
+{"ch":"state","state":"ready"}

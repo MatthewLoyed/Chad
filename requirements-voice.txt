@@ -1,0 +1,21 @@
+# Voice Interaction & Audio Processing (Optional)
+# Install via: pip install -r requirements-voice.txt
+
+sounddevice; sys_platform == 'win32'
+# Wake word ("Hey Chad") — free, local, ONNX-on-CPU, no account.
+openwakeword
+pycaw; sys_platform == 'win32'
+comtypes; sys_platform == 'win32'
+pydub>=0.25.1
+# numpy often used for audio buffer processing
+numpy
+scipy
+
+# Local TTS (Kokoro)
+kokoro
+onnxruntime
+
+# Local STT (faster-whisper) for the discrete "voice mode" pipeline.
+# CTranslate2 Whisper: free, offline, ~4x faster than openai-whisper.
+# CPU int8 works out-of-the-box on Windows; GPU needs CUDA + cuDNN.
+faster-whisper

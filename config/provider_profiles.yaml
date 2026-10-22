@@ -1,0 +1,149 @@
+# Provider Profiles Configuration (Multi-Provider Failover)
+#
+# Enables automatic failover between AI providers with credential rotation
+# and cooldown tracking.
+#
+# Features:
+#   - Multiple API keys per provider (automatic rotation)
+#   - Priority-based provider selection (lower = preferred)
+#   - Automatic cooldown on failures (rate limit, quota, auth)
+#   - Health tracking per provider
+#
+# Failover Flow:
+#   1. Primary provider fails (rate limit, quota, etc.)
+#   2. Detect error type (auth, rate_limit, quota, timeout)
+#   3. Apply cooldown (5min for rate limit, 1h for quota)
+#   4. Switch to next available provider by priority
+#   5. Retry with fallback provider
+#
+# Error-Specific Cooldowns:
+#   - rate_limit: 5 minutes (temporary burst limit)
+#   - quota: 1 hour (billing/daily quota exceeded)
+#   - auth: 15 minutes (or rotate API key if multiple available)
+#   - server_error: 2 minutes (5xx errors)
+#   - timeout: 1 minute (network timeout)
+#   - unknown: 1 minute (unclassified errors)
+
+# Enable/disable failover system
+enabled: true
+
+# Provider Profiles (sorted by priority)
+providers:
+  # GEMINI - Primary Provider (Priority 10)
+  gemini:
+    model: gemini-2.5-flash
+    priority: 10  # Primary (lowest = most preferred)
+    enabled: true
+    max_retries: 3
+    api_keys:
+      - ${GEMINI_API_KEY}
+      # Add more keys for rotation:
+      # - ${GEMINI_API_KEY_2}
+      # - ${GEMINI_API_KEY_3}
+
+  # OPENAI - Secondary Provider (Priority 20)
+  openai:
+    model: gpt-4o-mini
+    priority: 20  # Fallback from Gemini
+    enabled: false  # Disabled by default (enable when you have API key)
+    max_retries: 3
+    api_keys:
+      - ${OPENAI_API_KEY}
+      # Add more keys for rotation:
+      # - ${OPENAI_API_KEY_2}
+
+  # CLAUDE - Tertiary Provider (Priority 30)
+  claude:
+    model: claude-3-5-sonnet-20241022
+    priority: 30  # Fallback from OpenAI
+    enabled: false  # Disabled by default
+    max_retries: 3
+    api_keys:
+      - ${ANTHROPIC_API_KEY}
+
+  # GEMINI PRO - Quality Fallback (Priority 40)
+  gemini_pro:
+    model: gemini-2.5-pro
+    priority: 40  # Higher quality, slower, more expensive
+    enabled: false  # Use only when Flash unavailable
+    max_retries: 2
+    api_keys:
+      - ${GEMINI_API_KEY}
+
+# Usage Examples:
+#
+# 1. Single Provider (Gemini only):
+#    - Keep only gemini enabled
+#    - No failover (falls back to error)
+#
+# 2. Gemini → OpenAI Failover:
+#    - Enable both gemini and openai
+#    - Gemini fails → switches to OpenAI
+#    - After 5min cooldown, Gemini available again
+#
+# 3. Full Multi-Provider:
+#    - Enable gemini, openai, claude
+#    - Gemini fails → OpenAI → Claude
+#    - Provides maximum reliability
+#
+# 4. Credential Rotation:
+#    - Add multiple API keys per provider
+#    - Auth failures trigger key rotation
+#    - Prevents single key exhaustion
+
+# Configuration Notes:
+#
+# API Keys:
+#   - Use environment variables (${VAR_NAME})
+#   - Never commit actual API keys to version control
+#   - Set in .env file or system environment
+#
+# Priority:
+#   - Lower number = higher priority
+#   - 10 = primary, 20 = secondary, 30 = tertiary
+#   - Failover selects lowest available priority
+#
+# max_retries:
+#   - Number of retry attempts before cooldown
+#   - Higher = more persistent, but slower failure detection
+#   - Recommended: 2-3 retries
+#
+# Cooldown Behavior:
+#   - Automatic based on error type
+#   - Exponential backoff for repeated failures
+#   - Provider re-enabled after cooldown expires
+#
+# Best Practices:
+#   1. Enable at least 2 providers for reliability
+#   2. Use multiple API keys per provider for rotation
+#   3. Set appropriate priorities (cost vs quality)
+#   4. Monitor provider health via list_providers()
+#   5. Test failover in development before production
+
+# Environment Variables Setup:
+#
+# .env file:
+#   GEMINI_API_KEY=your_gemini_key_here
+#   OPENAI_API_KEY=your_openai_key_here
+#   ANTHROPIC_API_KEY=your_anthropic_key_here
+#
+# Or system environment:
+#   export GEMINI_API_KEY=your_gemini_key_here
+#   export OPENAI_API_KEY=your_openai_key_here
+
+# Monitoring:
+#
+# Check provider status:
+#   manager = get_failover_manager()
+#   providers = manager.list_providers()
+#
+# Output:
+#   [
+#     {
+#       'provider': 'gemini',
+#       'available': True,
+#       'failure_count': 0,
+#       'cooldown_until': None
+#     },
+#     ...
+#   ]

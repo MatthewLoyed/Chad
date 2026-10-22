@@ -1,0 +1,80 @@
+[
+  {
+    "id": "prompt_1",
+    "name": "Kroki Flowchart (Skill expected)",
+    "query": "Can you draw an architecture flowchart showing how the Limb connects to the Brain server over WebSocket?",
+    "expected_skill": "kroki",
+    "matched_skills": [
+      "kroki"
+    ],
+    "chars_a": 6065,
+    "tokens_a": 1405,
+    "chars_b": 296,
+    "tokens_b": 70,
+    "tokens_saved": 1335,
+    "pct_saved": 95.01779359430606,
+    "brief_sample": "### \ud83d\udca1 RECOMMENDED SKILLS (call `load_skill(skill_name)` to activate full SOP) - **kroki**: Render te"
+  },
+  {
+    "id": "prompt_2",
+    "name": "Marp/Presenton Slides (Skill expected)",
+    "query": "Create a 5-slide presentation on our Q3 release roadmap.",
+    "expected_skill": "presenton/marp",
+    "matched_skills": [
+      "marp",
+      "presenton"
+    ],
+    "chars_a": 6065,
+    "tokens_a": 1405,
+    "chars_b": 444,
+    "tokens_b": 107,
+    "tokens_saved": 1298,
+    "pct_saved": 92.38434163701068,
+    "brief_sample": "### \ud83d\udca1 RECOMMENDED SKILLS (call `load_skill(skill_name)` to activate full SOP) - **marp**: Create sli"
+  },
+  {
+    "id": "prompt_3",
+    "name": "Typst Invoice PDF (Skill expected)",
+    "query": "Generate a formatted project invoice and status report as a designed PDF.",
+    "expected_skill": "typst",
+    "matched_skills": [
+      "pdf",
+      "typst"
+    ],
+    "chars_a": 6065,
+    "tokens_a": 1405,
+    "chars_b": 434,
+    "tokens_b": 102,
+    "tokens_saved": 1303,
+    "pct_saved": 92.74021352313167,
+    "brief_sample": "### \ud83d\udca1 RECOMMENDED SKILLS (call `load_skill(skill_name)` to activate full SOP) - **pdf**: Use this sk"
+  },
+  {
+    "id": "prompt_4",
+    "name": "Drive + Memory + Summary Doc (No skill expected)",
+    "query": "Search my Google Drive for files mentioning wedding budget, look up in memory what we discussed about catering costs, and draft a summary in artifacts/wedding_budget_summary.md",
+    "expected_skill": "None",
+    "matched_skills": [],
+    "chars_a": 6065,
+    "tokens_a": 1405,
+    "chars_b": 0,
+    "tokens_b": 0,
+    "tokens_saved": 1405,
+    "pct_saved": 100.0,
+    "brief_sample": "None (0 chars)"
+  },
+  {
+    "id": "prompt_5",
+    "name": "Web Search + Local Code + Calendar (No skill expected)",
+    "query": "Search the web for Python 3.13 changelog features, search local files in src/core/orchestration for deprecated imports, and check my upcoming calendar for free slots this week.",
+    "expected_skill": "None",
+    "matched_skills": [],
+    "chars_a": 6065,
+    "tokens_a": 1405,
+    "chars_b": 0,
+    "tokens_b": 0,
+    "tokens_saved": 1405,
+    "pct_saved": 100.0,
+    "brief_sample": "None (0 chars)"
+  }
+]

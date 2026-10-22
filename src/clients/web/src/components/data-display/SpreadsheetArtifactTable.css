@@ -1,0 +1,91 @@
+.artifact-viewer--spreadsheet {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    background: #0c0e14;
+    overflow: hidden;
+}
+
+.spreadsheet-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 16px 0;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.spreadsheet-tabs__tab {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.spreadsheet-tabs__tab--active {
+    background: rgba(33, 115, 70, 0.2);
+    border-color: rgba(33, 115, 70, 0.4);
+    color: #86efac;
+}
+
+.spreadsheet-notice {
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(33, 115, 70, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.spreadsheet-table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.spreadsheet-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.spreadsheet-table th,
+.spreadsheet-table td {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spreadsheet-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(33, 115, 70, 0.35);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.spreadsheet-table tbody tr:hover {
+    background: rgba(129, 140, 248, 0.08);
+}
+
+.spreadsheet-table td {
+    color: rgba(255, 255, 255, 0.82);
+}

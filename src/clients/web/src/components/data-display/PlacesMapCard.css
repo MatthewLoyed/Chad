@@ -1,0 +1,118 @@
+.places-map-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 640px;
+    margin: 12px 0;
+    border-radius: 12px;
+    background: rgba(22, 22, 26, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow: hidden;
+}
+
+.places-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 12px;
+    background: rgba(10, 10, 12, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    gap: 8px;
+}
+
+.places-map-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+}
+
+.places-map-brand-icon {
+    color: #34d399;
+    flex-shrink: 0;
+}
+
+.places-map-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.places-map-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+}
+
+.places-map-body {
+    height: 280px;
+    width: 100%;
+    position: relative;
+}
+
+.places-map-leaflet {
+    height: 100%;
+    width: 100%;
+    z-index: 0;
+}
+
+.places-map-leaflet .leaflet-container {
+    height: 100%;
+    width: 100%;
+    font: inherit;
+    background: #1a1a1e;
+}
+
+.places-map-popup-meta {
+    font-size: 12px;
+    color: #444;
+    margin-top: 2px;
+}
+
+.places-map-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 12px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.places-map-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.places-map-list-name {
+    font-weight: 500;
+}
+
+.places-map-list-cat {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+}
+
+.places-map-pending {
+    margin: 12px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(22, 22, 26, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+}

@@ -1,0 +1,253 @@
+# Tool Policy Configuration (OpenClaw Pattern)
+#
+# Fine-grained tool access control with profile-based restrictions.
+#
+# Features:
+#   - Profile-based policies for different contexts (work, personal, restricted)
+#   - Wildcard pattern matching: "gmail_*" matches all Gmail tools
+#   - Tool groups: "@office" expands to all office-related tools
+#   - Allow/deny lists with cascading evaluation
+#
+# Policy Evaluation:
+#   1. If tool matches deny pattern -> DENY (highest priority)
+#   2. If tool matches allow pattern -> ALLOW
+#   3. Default -> DENY (whitelist approach)
+#
+# Usage:
+#   Change active_profile to switch between policies
+#   Use wildcards for flexible matching
+#   Define tool groups for common categories
+
+# Active policy profile (change to switch contexts)
+active_profile: base
+
+# ---------------------------------------------------------------------------
+# Risk-based human-in-the-loop approval gate
+# ---------------------------------------------------------------------------
+# Tool calls whose name matches any pattern below are paused before execution
+# and surfaced to the user as an Approve/Decline card (ApprovalCard.tsx),
+# regardless of allow/deny. This is the "pause only for destructive tools"
+# standard (LangGraph/Claude HITL). It works for native, MCP, and skill tools
+# because enforcement lives in the executor-agnostic approval gate
+# (src/core/orchestration/approval_gate.py), not in any one tool class.
+#
+# Supports the same wildcard (*, ?) and @group syntax as allow/deny.
+# Set approval_enabled: false to disable the gate globally (e.g. for unattended
+# autonomous runs / eval harness).
+approval_enabled: true
+approval:
+  # Destructive / irreversible
+  - "*_delete"
+  - "*_remove"
+  - delete_branch
+  - reset_branch
+  - rebase_branch
+  - execute_sql
+  - apply_migration
+  - deploy_edge_function
+  - pause_project
+  - restore_project
+  # Outbound communication (sends on the user's behalf)
+  - "*_send"
+  - send_email
+  - send_telegram_message
+  - send_gmail_message
+  # Money / billing
+  - confirm_cost
+
+# Tool Groups - Named collections of tool patterns
+tool_groups:
+  # Office productivity tools
+  office:
+    - gmail_*
+    - google_calendar_*
+    - "*_calendar_*"
+    - get_calendar_events
+    - google_drive_*
+    - outlook_*
+
+  # Communication tools
+  communication:
+    - gmail_send
+    - outlook_send
+    - slack_*
+    - discord_*
+    - telegram_*
+
+  # System management tools
+  system:
+    - system_control_*
+    - process_*
+    - service_*
+    - registry_*
+
+  # Web and search tools
+  web:
+    - brave_search
+    - google_search
+    - web_scrape
+    - url_fetch
+
+  # File operations
+  files:
+    - file_read
+    - file_write
+    - file_delete
+    - directory_*
+
+  # Memory and knowledge tools
+  memory:
+    - memory_*
+    - knowledge_*
+    - embedding_*
+
+# Policy Profiles
+profiles:
+  # BASE PROFILE - Default permissive policy for general use
+  base:
+    description: "Default profile with most tools enabled, blocks only dangerous system operations"
+    allow:
+      - "*"  # Allow all tools by default
+    deny:
+      - system_control_shutdown
+      - system_control_reboot
+      - registry_delete
+      - process_kill_all
+
+  # RESTRICTED PROFILE - Limited tool access for untrusted or experimental use
+  restricted:
+    description: "Limited access profile - read-only operations and basic search"
+    allow:
+      - brave_search
+      - google_search
+      - memory_search
+      - memory_recall
+      - file_read
+      - "@web"  # Web tools group
+    deny:
+      - "*_send"  # No sending emails/messages
+      - "*_delete"  # No deletion operations
+      - "*_write"  # No write operations
+      - "@system"  # No system tools
+
+  # ADMIN PROFILE - Full access including dangerous operations
+  admin:
+    description: "Full access profile for administrative tasks"
+    allow:
+      - "*"  # Allow everything
+    deny: []  # No restrictions
+
+  # WORK PROFILE - Office tools + communication, no personal/social
+  work:
+    description: "Work context - office productivity and professional communication"
+    allow:
+      - "@office"  # Gmail, Calendar, Drive
+      - "@communication"  # Email, Slack
+      - brave_search
+      - google_search
+      - "@memory"
+      - "@files"
+    deny:
+      - spotify_*
+      - reddit_*
+      - twitter_*
+      - instagram_*
+      - tiktok_*
+      - "@system"
+
+  # PERSONAL PROFILE - Social, entertainment, no work tools
+  personal:
+    description: "Personal context - social media, entertainment, personal productivity"
+    allow:
+      - brave_search
+      - google_search
+      - spotify_*
+      - reddit_*
+      - twitter_*
+      - "@memory"
+      - file_read
+      - file_write
+    deny:
+      - gmail_*  # No work email
+      - outlook_*
+      - slack_*
+      - google_calendar_*
+      - "@system"
+
+  # READ_ONLY PROFILE - Search and read operations only
+  read_only:
+    description: "Read-only profile - no side effects, perfect for exploration"
+    allow:
+      - "*_search"
+      - "*_read"
+      - "*_get"
+      - "*_list"
+      - "*_query"
+      - brave_search
+      - google_search
+      - memory_recall
+      - memory_search
+    deny:
+      - "*_send"
+      - "*_write"
+      - "*_delete"
+      - "*_create"
+      - "*_update"
+      - "*_execute"
+
+  # MINIMAL PROFILE - Absolute minimum (search + memory only)
+  minimal:
+    description: "Minimal profile - search and memory only, maximum safety"
+    allow:
+      - brave_search
+      - google_search
+      - memory_recall
+      - memory_search
+    deny:
+      - "*"  # Deny everything else
+
+  # TELEGRAM PROFILE - Pocket remote (mirrors telegram_agent fixed menu)
+  telegram:
+    description: "Telegram pocket remote — quick asks, no desktop specialists"
+    allow:
+      - web_search
+      - search_gmail
+      - read_gmail
+      - send_email
+      - draft_gmail_reply
+      - create_gmail_draft
+      - search_contacts
+      - google_calendar_check
+      - get_calendar_events
+      - add_calendar_event
+      - manage_user_memory
+      - geocode
+      - search_places
+      - get_route
+      - compile_typst
+      - render_diagram
+      - render_marp
+      - generate_presentation
+      - generate_image
+      - escalate_to_agent
+    deny:
+      - delegate_to_*
+      - "*_delete"
+      - system_control_*
+      - show_map
+      - build_html_file
+      - write_file
+      - run_sandboxed_*
+      - open_app
+      - hubspace_*
+
+# Examples of policy usage:
+#
+# 1. Work hours (9am-5pm): active_profile = work
+# 2. Personal time: active_profile = personal
+# 3. Experimenting with new features: active_profile = restricted
+# 4. Administrative tasks: active_profile = admin
+# 5. Demo/presentation mode: active_profile = read_only
+#
+# Policies can be switched dynamically via API or time-based rules (future feature)
+# Telegram pocket remote uses profiles.telegram via fixed tool menu (not active_profile).

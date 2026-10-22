@@ -1,0 +1,65 @@
+# Builds Chad-Setup-<version>.exe and attaches it to the GitHub Release when
+# a version tag is pushed (docs/RELEASING.md's dev -> master -> tag flow).
+# Signing is a no-op until a code-signing cert is configured (issue #430) -
+# see scripts/prod/sign_installer.ps1. Set these repo secrets to enable it:
+#   CHAD_SIGN_PFX_BASE64, CHAD_SIGN_PFX_PASSWORD
+name: Release installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/clients/web/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m venv .venv
+          .venv\Scripts\pip install --upgrade pip
+          .venv\Scripts\pip install -r requirements.txt
+          .venv\Scripts\pip install pyinstaller
+
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
+      - name: Derive version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build installer
+        shell: pwsh
+        env:
+          CHAD_SIGN_PFX_BASE64: ${{ secrets.CHAD_SIGN_PFX_BASE64 }}
+          CHAD_SIGN_PFX_PASSWORD: ${{ secrets.CHAD_SIGN_PFX_PASSWORD }}
+        run: |
+          powershell -ExecutionPolicy Bypass -File scripts\prod\build_installer.ps1 `
+            -Version "${{ steps.version.outputs.version }}" `
+            -Python "$pwd\.venv\Scripts\python.exe"
+
+      - name: Create/update GitHub Release with the installer attached
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: dist/Chad-Setup-${{ steps.version.outputs.version }}.exe

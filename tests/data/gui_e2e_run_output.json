@@ -1,0 +1,14 @@
+{
+  "status": "failure",
+  "model_id": "qwen2.5-coder-1.5b-instruct:2",
+  "turns": [
+    {
+      "turn": 1,
+      "query": "Turn on the lamp.",
+      "error": "Timeout",
+      "metrics": {
+        "latency_seconds": 60.02
+      }
+    }
+  ]
+}

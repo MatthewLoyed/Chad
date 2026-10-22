@@ -1,0 +1,14 @@
+// planner.jsonl — LIVE lane only (needs a running server): run with --live --judge.
+// category "planning" routes to the planner node; we capture the real plan and judge its logic.
+// `expect` runs against the live plan/response (min_steps/max_steps, response_includes, executed tools_*).
+// Sizing (refs #315): grown from 3 to 6, not to 15-20 — every case here is a real LLM call
+// against the live planner (no free/dry-run coverage exists for planner_quality), so case count
+// trades directly against run cost/time. 6 cases now span narrow/wide step-count expectations
+// plus two grounded single-tool checks, which is enough variety for pass^k to mean something
+// without making --live --judge runs prohibitively slow.
+{"id": "plan_backup", "prompt": "make a plan to back up my documents folder to an external drive", "category": "planning", "expect": {"min_steps": 2, "max_steps": 10}, "judge": ["planner_quality"]}
+{"id": "plan_research_writeup", "prompt": "research the top 3 python web frameworks and write a short comparison to a markdown file", "category": "planning", "expect": {"min_steps": 2, "max_steps": 12}, "judge": ["planner_quality"]}
+{"id": "live_time_grounded", "prompt": "what time is it right now?", "category": "agent", "expect": {"tools_any": ["get_datetime"]}, "judge": ["tool_appropriateness", "response_grounded"]}
+{"id": "plan_narrow_single_step", "prompt": "make a plan to check what time it is and tell me", "category": "planning", "expect": {"min_steps": 1, "max_steps": 3}, "judge": ["planner_quality"], "note": "narrow low-step plan — guards against over-decomposing a trivial ask"}
+{"id": "plan_migration_multistep", "prompt": "make a plan to migrate my project from pip to uv, updating dependencies and testing that everything still works after", "category": "planning", "expect": {"min_steps": 3, "max_steps": 12}, "judge": ["planner_quality"], "note": "wider multi-step plan with a verification step, distinct domain from backup/research cases"}
+{"id": "live_calendar_grounded", "prompt": "what's on my calendar today?", "category": "agent", "expect": {"tools_any": ["google_calendar_check"]}, "judge": ["tool_appropriateness", "response_grounded"], "note": "second grounded single-tool case, different tool than get_datetime"}

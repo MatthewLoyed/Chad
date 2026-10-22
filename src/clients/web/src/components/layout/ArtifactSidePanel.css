@@ -1,0 +1,123 @@
+.artifact-side-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: min(42vw, 720px);
+    min-width: 320px;
+    max-width: 720px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, rgba(18, 20, 28, 0.98) 0%, rgba(12, 14, 20, 0.99) 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+    z-index: 12;
+}
+
+.artifact-side-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.artifact-side-panel__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.artifact-side-panel__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.artifact-side-panel__btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    background: rgba(129, 140, 248, 0.1);
+    color: #a5b4fc;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.artifact-side-panel__btn:hover {
+    background: #818cf8;
+    color: #0c0e14;
+    border-color: #818cf8;
+}
+
+.artifact-side-panel__btn--close {
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.artifact-side-panel__btn--close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.artifact-side-panel__body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.artifact-side-panel__body .artifact-viewer {
+    min-height: 0;
+    flex: 1;
+    max-height: none;
+}
+
+.artifact-side-panel__body .artifact-viewer--iframe,
+.artifact-side-panel__body .artifact-viewer__iframe {
+    min-height: 0;
+    height: 100%;
+}
+
+.artifact-side-panel__body .artifact-viewer--markdown,
+.artifact-side-panel__body .artifact-viewer--text,
+.artifact-side-panel__body .artifact-viewer--word,
+.artifact-side-panel__body .artifact-viewer--spreadsheet {
+    max-height: none;
+}
+
+/* Stack as a full-screen overlay instead of a side-by-side panel (#191) —
+   narrow viewports don't have room for chat + artifact side by side. */
+@media (max-width: 768px) {
+    .artifact-side-panel {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        z-index: 240;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .artifact-side-panel__btn--close {
+        width: 44px;
+        height: 44px;
+    }
+}

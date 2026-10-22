@@ -1,0 +1,240 @@
+/* InlineLinkPill.css - Compact inline link/citation pills with floating hover cards */
+
+.inline-pill-container {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    vertical-align: middle;
+    margin: 0 3px;
+    white-space: nowrap;
+}
+
+.inline-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    text-decoration: none;
+}
+
+.inline-pill:hover {
+    background: rgba(129, 140, 248, 0.15);
+    border-color: rgba(129, 140, 248, 0.4);
+    color: #e0e7ff;
+    transform: translateY(-0.5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.inline-pill:active {
+    transform: translateY(0);
+}
+
+.inline-pill__index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 13px;
+    height: 13px;
+    padding: 0 2px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #a5b4fc;
+    background: rgba(129, 140, 248, 0.2);
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.inline-pill__favicon {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.inline-pill__icon {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.inline-pill:hover .inline-pill__icon {
+    color: #a5b4fc;
+}
+
+.inline-pill__label {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inline-pill__arrow {
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.inline-pill:hover .inline-pill__arrow {
+    opacity: 0.9;
+    transform: translate(1px, -1px);
+}
+
+/* Floating Hover Preview Card */
+.inline-pill__popover {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%) translateY(4px);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 260px;
+    padding: 10px 12px;
+    background: #171720;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    font-size: 12px;
+    line-height: 1.35;
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 100;
+}
+
+/* Keep open while hovering either the pill or the popover */
+.inline-pill-container:hover .inline-pill__popover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.inline-pill__popover-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.inline-pill__popover-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    object-fit: contain;
+}
+
+.inline-pill__popover-icon {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.inline-pill__popover-domain {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inline-pill__popover-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10.5px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.inline-pill__popover-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.inline-pill__copy-success {
+    color: #34d399;
+}
+
+.inline-pill__popover-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f1f5f9;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.35;
+}
+
+.inline-pill__popover-url {
+    font-size: 10.5px;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.38);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.inline-pill__popover-open-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    margin-top: 2px;
+    padding: 5px 0;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 6px;
+    color: #c7d2fe;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.inline-pill__popover-open-action:hover {
+    background: rgba(99, 102, 241, 0.22);
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #ffffff;
+}
+
+/* Horizontal Inline Sources Strip (right below/alongside content) */
+.inline-sources-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.inline-sources-strip__label {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    margin-right: 2px;
+}

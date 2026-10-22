@@ -1,0 +1,397 @@
+.subagents-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.subagents-tab__stats {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.subagents-tab__intro {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Warnings */
+.subagents-warning {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.subagents-warning__icon {
+    color: #f87171;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.subagents-warning__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.subagents-warning__text strong {
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+/* Grid layout — roomy cards, no artificial height cap */
+.subagents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+}
+
+.subagent-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    transition: border-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.subagent-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.subagent-card.is-disabled {
+    opacity: 0.55;
+}
+
+.subagent-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.subagent-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.subagent-card__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--agent-accent, #818cf8) 18%, transparent);
+    color: var(--agent-accent, #818cf8);
+    flex-shrink: 0;
+}
+
+.subagent-card__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.subagent-card__name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 650;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.2;
+}
+
+.subagent-card__id {
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.subagent-card__desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+/* Modern toggle switch */
+.subagent-switch {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.subagent-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.subagent-switch__track {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.subagent-switch__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
+}
+
+.subagent-switch input:checked + .subagent-switch__track {
+    background: color-mix(in srgb, var(--agent-accent, #34d399) 75%, #1a1a1f);
+    border-color: color-mix(in srgb, var(--agent-accent, #34d399) 50%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--agent-accent, #34d399) 35%, transparent);
+}
+
+.subagent-switch input:checked + .subagent-switch__track .subagent-switch__thumb {
+    transform: translateX(20px);
+    background: #fff;
+}
+
+.subagent-switch input:focus-visible + .subagent-switch__track {
+    outline: 2px solid var(--chad-purple-light, #a78bfa);
+    outline-offset: 2px;
+}
+
+.subagent-switch__label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.subagent-switch input:checked ~ .subagent-switch__label {
+    color: color-mix(in srgb, var(--agent-accent, #34d399) 80%, white);
+}
+
+/* Model section */
+.subagent-card__model {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.subagent-card__model-current {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.subagent-card__model-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+}
+
+.subagent-card__model-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.subagent-card__model-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.subagent-card__model-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+    word-break: break-word;
+}
+
+.subagent-card__model-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.38);
+    text-transform: capitalize;
+}
+
+.subagent-card__model-badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.subagent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.subagent-badge--pinned {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fcd34d;
+}
+
+.subagent-badge--builtin {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+}
+
+.subagent-badge--inherit {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.subagent-card__model-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.subagent-card__model-picker .chad-dropdown {
+    flex: 1;
+    min-width: 0;
+}
+
+.subagent-card__saving {
+    flex-shrink: 0;
+    color: var(--chad-purple-light, #a78bfa);
+}
+
+/* Utilities */
+.subagents-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    padding: 40px 0;
+}
+
+.subagents-spin {
+    animation: subagent-spin 0.8s linear infinite;
+}
+
+@keyframes subagent-spin {
+    to { transform: rotate(360deg); }
+}
+
+.subagents-empty {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.35);
+    text-align: center;
+    padding: 40px 0;
+}
+
+.subagents-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #f87171;
+    font-size: 14px;
+    padding: 24px 16px;
+    text-align: center;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 768px) {
+    .subagents-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Vision assist fallback styling inside browser_agent card */
+.subagent-card__vision-assist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.subagent-vision-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.subagent-vision-toggle__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.subagent-vision-toggle__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.subagent-vision-toggle__desc {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.38);
+    line-height: 1.35;
+}
+
+.subagent-vision-model-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}

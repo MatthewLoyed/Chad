@@ -1,0 +1,8 @@
+// prompt_contracts.jsonl — is the assembled system prompt lean and self-consistent?
+// Catches context bloat and contradictory instructions. `max_system_tokens` runs FREE;
+// `prompt_contract` judge (with --judge) reads the full system prompt for conflicting directives.
+// Note: the dry-run intercepts the supervisor/agent turn, so this audits the AGENT scope.
+// Planner/validator-scope auditing is the Phase 3 prompt_audit.py extension.
+{"id": "contract_simple", "prompt": "what time is it?", "category": "agent", "expect": {"max_system_tokens": 8000}, "judge": ["prompt_contract"]}
+{"id": "contract_tool_heavy", "prompt": "open chrome, check my email, and turn on my desk lamp", "category": "agent", "expect": {"max_system_tokens": 8000, "max_total_tokens": 14000}, "note": "tool-heavy prompt — watch for system+tool context bloat", "judge": ["prompt_contract"]}
+{"id": "contract_coding", "prompt": "refactor my python project and run the tests", "category": "agent", "expect": {"max_system_tokens": 8000}, "judge": ["prompt_contract"]}

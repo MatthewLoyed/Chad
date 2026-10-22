@@ -1,0 +1,5 @@
+{"id":"vfd_open_youtube","query":"open youtube","expect_escalate":false,"expect_stop_reasons":["fast_lane"],"expect_response_substr":"Opening youtube"}
+{"id":"vfd_open_polite","query":"can you open youtube","expect_escalate":false,"expect_stop_reasons":["fast_lane","quick_tool_lane"],"expect_response_substr":"Opening youtube"}
+{"id":"vfd_open_please","query":"open youtube please","expect_escalate":false,"expect_stop_reasons":["fast_lane","quick_tool_lane"],"expect_response_substr":"Opening youtube"}
+{"id":"vfd_search_weather","query":"search for the weather tomorrow","expect_escalate":false,"expect_stop_reasons":["quick_tool_lane","task_completed"]}
+{"id":"vfd_escalate_email","query":"check my email for the lease","expect_escalate":true,"expect_stop_reasons":null}

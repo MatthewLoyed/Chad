@@ -1,0 +1,171 @@
+/* New Category (domain agent) form. Rides the shared Modal shell, so only the body
+   contents are styled here — overlay/header/close come from Modal.css. */
+
+.new-category-modal {
+    width: min(520px, 94vw);
+}
+
+.new-category-hint {
+    margin: 0 0 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.new-category-label {
+    display: block;
+    margin: 14px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.new-category-templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.new-category-template {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 11px;
+    font-size: 13px;
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.new-category-template:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.new-category-template.is-selected {
+    border-color: rgba(96, 165, 250, 0.7);
+    background: rgba(96, 165, 250, 0.12);
+}
+
+.new-category-template__icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.new-category-name-row {
+    display: flex;
+    gap: 8px;
+}
+
+.new-category-input,
+.new-category-icon-input,
+.new-category-textarea {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #e5e7eb;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.new-category-input:focus,
+.new-category-icon-input:focus,
+.new-category-textarea:focus {
+    border-color: rgba(96, 165, 250, 0.7);
+}
+
+.new-category-input {
+    flex: 1;
+}
+
+.new-category-icon-input {
+    width: 46px;
+    text-align: center;
+}
+
+.new-category-textarea {
+    width: 100%;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.new-category-colors {
+    display: flex;
+    gap: 8px;
+}
+
+.new-category-color {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.new-category-color:hover {
+    transform: scale(1.12);
+}
+
+.new-category-color.is-selected {
+    border-color: #fff;
+}
+
+.new-category-error {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #f87171;
+}
+
+.new-category-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.new-category-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.new-category-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.new-category-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.new-category-btn--primary {
+    background: rgba(96, 165, 250, 0.9);
+    border-color: transparent;
+    color: #0b1220;
+}
+
+.new-category-btn--primary:hover:not(:disabled) {
+    background: rgba(96, 165, 250, 1);
+}
+
+.new-category-btn .animate-spin {
+    animation: spin 1s linear infinite;
+}

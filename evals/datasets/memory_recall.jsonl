@@ -1,0 +1,37 @@
+{"id": "partner-date-by-name", "query": "plan me a date with Sam, include places, prices, dessert, outfits", "expect_any": ["partner_of", "fiancé is sam", "engaged to sam"], "category": "partner", "note": "The original failure: naming the partner instead of the role lost the relationship edge to an alphabetical tiebreak."}
+{"id": "partner-date-by-role", "query": "plan a date night with my fiance", "expect_any": ["partner_of", "engaged to sam"], "category": "partner"}
+{"id": "partner-gift", "query": "what should I get Sam for their birthday", "expect_any": ["partner_of", "fiancé is sam", "engaged to sam"], "category": "partner"}
+{"id": "partner-note", "query": "write a sweet note for Sam", "expect_any": ["partner_of", "fiancé is sam", "engaged to sam"], "category": "partner"}
+{"id": "wedding-date", "query": "how long until my wedding", "expect_any": ["april 11, 2028"], "category": "wedding"}
+{"id": "wedding-venue", "query": "where is my wedding venue", "expect_any": ["cedar hall", "bend"], "category": "wedding"}
+{"id": "wedding-party", "query": "who is in my wedding party", "expect_any": ["priya", "owen", "marisol"], "category": "wedding"}
+{"id": "wedding-open-items", "query": "what still needs booking for the wedding", "expect_any": ["photographer"], "category": "wedding", "note": "Was truncated away when a whole section was one node."}
+{"id": "family-father", "query": "what is my dad's name", "expect_any": ["marcus"], "category": "family"}
+{"id": "family-brother", "query": "what is my brother's name", "expect_any": ["theo"], "category": "family"}
+{"id": "family-in-laws", "query": "what are Sam's parents names", "expect_any": ["ruth", "daniel"], "category": "family"}
+{"id": "family-pet", "query": "what is the dog's name", "expect_any": ["biscuit"], "category": "family", "note": "Also truncation — the pet was the last line of the family blob."}
+{"id": "family-multihop", "query": "what should I get Sam's mom for christmas", "expect_any": ["ruth"], "category": "family-multihop"}
+{"id": "work-employer", "query": "where do I work", "expect_any": ["harbor dynamics"], "category": "work"}
+{"id": "work-colleague", "query": "who do I work with", "expect_any": ["nadia", "priya"], "category": "work"}
+{"id": "work-task-context", "query": "draft a status email to my team at work", "expect_any": ["harbor dynamics"], "category": "work"}
+{"id": "work-former-employer", "query": "where did I used to work before this job", "expect_any": ["tidewater"], "category": "history", "note": "#656: an expired employed_by edge (valid_to set) is excluded from every normal walk, and reachable ONLY via an explicit past-tense marker. If this starts passing for 'where do I work', the history gate has broken open."}
+{"id": "neg-history-not-leaked-into-present", "query": "where do I work", "expect_none_substring": "tidewater", "category": "history", "note": "#656 regression guard, the direction that actually matters: the superseded employer must never surface on a present-tense query."}
+{"id": "neg-previous-is-code-not-history", "query": "rewrite my previous implementation of the tool selector", "expect_none_substring": "->", "category": "negative", "note": "#656: a past-tense cue with no personal-life subject is a CODING question. Detecting history on the bare cue made 'my previous implementation' / 'my former approach' / 'my regex-based parser' all seed the ego node, walking the user's job and family into unrelated turns. Asserts no WALK LINE ('->') specifically: this query does also pull two project facts by plain embedding similarity, which is the pre-existing fact-retrieval path and not what this case guards."}
+{"id": "school-degree", "query": "what degree do I have", "expect_any": ["mechanical engineering"], "category": "school"}
+{"id": "school-funding", "query": "who paid for my school", "expect_any": ["grieve"], "category": "school"}
+{"id": "school-university-location-from-walk", "query": "what city was my university in", "expect_any": ["corvallis"], "category": "school", "note": "#659: 'Corvallis' appears ONLY as an attribute on the Org:Northgate entity — no prose fact contains it — so this case can only pass if entity attributes reach the prompt via the walk line. Before #659 the walk said 'Alex -attended-> Northgate' and the model had nothing to answer with."}
+{"id": "projects-side", "query": "what side projects am I working on", "expect_any": ["tidepool"], "category": "projects"}
+{"id": "projects-by-category-not-by-name", "query": "remind me what my projects are", "expect_any": ["kelpline"], "category": "projects", "note": "#661: names no entity, and 'Kelpline' is in no prose fact — only reachable if the generic word 'projects' seeds Project-TYPE entities. The branch this replaced hardcoded one specific user's project node id, so it did nothing on any other graph."}
+{"id": "documents-by-category-not-by-name", "query": "what documents do I have for the wedding", "expect_any": ["venuecontract", "venue contract"], "category": "documents", "note": "#661: same generalization for Document entities. Replaces a branch that listed five hardcoded Document:/Event: node ids belonging to one person."}
+{"id": "location-home", "query": "where do I live", "expect_any": ["portland"], "category": "location"}
+{"id": "location-implicit", "query": "find me a good restaurant near me", "expect_any": ["portland"], "category": "location"}
+{"id": "interests-food", "query": "what are my favorite foods", "expect_any": ["green curry", "sourdough"], "category": "interests"}
+{"id": "interests-sport", "query": "what sports do I do", "expect_any": ["bouldering", "kayaking"], "category": "interests"}
+{"id": "hardware-specs", "query": "what are my pc specs", "expect_any": ["4070", "i7-13700k"], "category": "hardware"}
+{"id": "routine-week", "query": "help me plan my week", "expect_any": ["weekday", "7am", "4pm"], "category": "routine"}
+{"id": "neg-traceback", "query": "fix this python traceback in my websocket handler", "expect_none": true, "category": "negative"}
+{"id": "neg-refactor", "query": "refactor the tool selector to use a registry", "expect_none": true, "category": "negative", "allow_bullets": 1, "note": "Known limit: 'tool selector' vs the fixture's 'internal tooling' is a genuine embedding near-collision (0.257 vs a 0.247 true positive). No scalar or relative-margin threshold separates them; one weak bullet is tolerated rather than overfitting the ranker to this fixture."}
+{"id": "neg-tcp", "query": "explain how tcp handshakes work", "expect_none": true, "category": "negative", "note": "'handshakes work' hit the career topic hint, which floored every career fact to a flat 0.70."}
+{"id": "neg-geography", "query": "what is the capital of France", "expect_none": true, "category": "negative"}
+{"id": "neg-css", "query": "how do I center a div", "expect_none": true, "category": "negative"}
+{"id": "neg-bash", "query": "write a bash script to tail logs", "expect_none": true, "category": "negative", "allow_bullets": 1, "note": "Known limit: 'write a bash script' vs 'sole developer of an app' scores 0.252, inside the true-positive band. See neg-refactor."}

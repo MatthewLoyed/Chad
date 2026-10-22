@@ -1,0 +1,4 @@
+{"id": "mem_family_partner", "prompt": "Who is Sam to me?", "must_include": ["Sam", "partner_of", "Alex"], "must_not": [], "note": "typed partner_of edge, not a lucky prose match (#610)"}
+{"id": "mem_event_doc", "prompt": "What documents relate to the wedding?", "must_include": ["WeddingBudget", "about", "Wedding2026"], "must_not": [], "note": "Document -about-> Event path surfaces (#610)"}
+{"id": "mem_why_doc", "prompt": "Why do I have a wedding budget document?", "must_include": ["in_service_of", "wedding_planning"], "must_not": [], "note": "in_service_of / goal edge answers 'why' (#610)"}
+{"id": "mem_regression_identity", "prompt": "What is my location?", "must_include": ["Portland"], "must_not": [], "note": "identity still answers via fact/embed path, no regression from graph walk (#610)"}

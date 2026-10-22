@@ -1,0 +1,205 @@
+.memory-catalog {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.memory-catalog__toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.memory-catalog__toolbar .settings-hint {
+    margin: 0;
+    flex: 1;
+}
+
+.memory-catalog__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.memory-catalog__retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.memory-catalog__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.memory-section {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+.memory-section__head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.memory-section__head:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.memory-section__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.memory-section__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.memory-section__desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.42);
+    line-height: 1.35;
+}
+
+.memory-section__count {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(var(--chad-purple-rgb), 0.9);
+    background: rgba(var(--chad-purple-rgb), 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.memory-section__chevron {
+    color: rgba(255, 255, 255, 0.45);
+    transition: transform 0.18s ease;
+}
+
+.memory-section__head.is-open .memory-section__chevron {
+    transform: rotate(180deg);
+}
+
+.memory-section__body {
+    overflow: hidden;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 12px 12px;
+}
+
+.memory-list--section {
+    max-height: 320px;
+}
+
+.memory-empty--compact {
+    padding: 18px 12px;
+}
+
+.memory-section__more {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.memory-section__more:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.memory-section__more:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.memory-item__time {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.memory-catalog__search-results {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 10px 12px 12px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Memory Skeleton */
+.memory-catalog-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.memory-skeleton-section {
+    opacity: 0.9;
+}
+
+.memory-skeleton-line {
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.035) 25%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.035) 75%
+    );
+    background-size: 200% 100%;
+    animation: chad-shimmer 2s infinite ease-in-out;
+}
+
+.memory-skeleton-line--title {
+    height: 14px;
+    margin-bottom: 6px;
+}
+
+.memory-skeleton-line--desc {
+    height: 11px;
+}
+
+.memory-skeleton-badge {
+    width: 28px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        rgba(139, 92, 246, 0.12) 25%,
+        rgba(139, 92, 246, 0.25) 50%,
+        rgba(139, 92, 246, 0.12) 75%
+    );
+    background-size: 200% 100%;
+    animation: chad-shimmer 2s infinite ease-in-out;
+}
+

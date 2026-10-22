@@ -1,0 +1,66 @@
+[
+  {"id": "mcordovamedia", "category": "wedding_js_shell", "url": "https://mcordovamedia.com/", "snippet": "North Alabama Wedding and Production Videographer traveling to capture your special moments.", "expect_playwright": true},
+  {"id": "chelseyk_investment", "category": "wedding_vendor", "url": "https://www.chelseykfilms.com/investment", "snippet": "Wedding videography packages starting around $3,600 with eight hours of coverage and two videographers."},
+  {"id": "newheights", "category": "wedding_vendor", "url": "https://newheightsfilm.com/", "snippet": "Husband-wife wedding videography team based in Birmingham, Alabama."},
+  {"id": "hmbycait", "category": "wedding_vendor", "url": "https://hmbycait.com/", "snippet": "Huntsville wedding hair and makeup artist offering bridal day-of packages and trials."},
+  {"id": "zola_vendor", "category": "wedding_js_shell", "url": "https://www.zola.com/wedding-vendors/search/huntsville-al-videographers", "snippet": "Browse wedding videographers in Huntsville, Alabama on Zola.", "expect_playwright": true},
+
+  {"id": "weddingwire", "category": "bot_wall", "url": "https://www.weddingwire.com/biz/creating-moments-events/", "snippet": "Contact Creating Moments in Cleveland on WeddingWire with five out of five reviews."},
+  {"id": "theknot", "category": "bot_wall", "url": "https://www.theknot.com/marketplace/wedding-videographers-huntsville-al", "snippet": "Find wedding videographers in Huntsville, Alabama on The Knot marketplace."},
+  {"id": "facebook_page", "category": "bot_wall", "url": "https://www.facebook.com/chelseykfilms/", "snippet": "Chelsey K. Films is an Alabama wedding videographer with highlight and full film packages."},
+  {"id": "amazon_product", "category": "bot_wall", "url": "https://www.amazon.com/dp/B0BDHWDR12", "snippet": "Amazon Echo Dot smart speaker product listing with price and customer reviews."},
+  {"id": "bestbuy_product", "category": "bot_wall", "url": "https://www.bestbuy.com/site/searchpage.jsp?st=cordless+drill", "snippet": "Best Buy search results for cordless drills with prices and ratings."},
+  {"id": "homedepot_category", "category": "bot_wall", "url": "https://www.homedepot.com/b/Tools-Power-Tools-Drills/N-5yc1vZc2bg", "snippet": "Home Depot power drills category with product listings and specifications."},
+  {"id": "instagram_profile", "category": "bot_wall", "url": "https://www.instagram.com/nasa/", "snippet": "NASA official Instagram profile with space photography and mission updates.", "expect_playwright": true},
+  {"id": "linkedin_company", "category": "bot_wall", "url": "https://www.linkedin.com/company/microsoft", "snippet": "Microsoft company profile on LinkedIn with industry and employee information."},
+
+  {"id": "wikipedia_wedding", "category": "encyclopedia", "url": "https://en.wikipedia.org/wiki/Wedding", "snippet": "A wedding is a ceremony where two people are united in marriage.", "expect_og_image": true},
+  {"id": "wikipedia_python", "category": "encyclopedia", "url": "https://en.wikipedia.org/wiki/Python_(programming_language)", "snippet": "Python is a high-level, general-purpose programming language emphasizing code readability.", "expect_og_image": true},
+  {"id": "wikipedia_web_scraping", "category": "encyclopedia", "url": "https://en.wikipedia.org/wiki/Web_scraping", "snippet": "Web scraping is the process of extracting data from websites."},
+  {"id": "britannica_ai", "category": "encyclopedia", "url": "https://www.britannica.com/technology/artificial-intelligence", "snippet": "Artificial intelligence is the ability of a computer to perform tasks associated with intelligent beings."},
+
+  {"id": "bbc_news", "category": "news", "url": "https://www.bbc.com/news", "snippet": "BBC News provides breaking news, features, and analysis from around the world."},
+  {"id": "reuters_business", "category": "news", "url": "https://www.reuters.com/business/", "snippet": "Reuters Business news covering markets, companies, and the global economy."},
+  {"id": "ap_news", "category": "news", "url": "https://apnews.com/hub/technology", "snippet": "Associated Press technology news and coverage of the tech industry."},
+  {"id": "ars_technica", "category": "news", "url": "https://arstechnica.com/gadgets/", "snippet": "Ars Technica gadgets section with reviews and analysis of consumer technology."},
+  {"id": "wirecutter_drill", "category": "news_review", "url": "https://www.nytimes.com/wirecutter/reviews/best-drill/", "snippet": "Wirecutter review comparing the best cordless drills for home projects."},
+
+  {"id": "reddit_wedding", "category": "forum_js", "url": "https://www.reddit.com/r/weddingplanning/", "snippet": "Community for wedding planning tips, vendor recommendations, and advice.", "expect_playwright": true},
+  {"id": "reddit_python", "category": "forum_js", "url": "https://www.reddit.com/r/Python/", "snippet": "Reddit community discussing the Python programming language and ecosystem.", "expect_playwright": true},
+  {"id": "stackoverflow_question", "category": "forum_js", "url": "https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do", "snippet": "Stack Overflow explanation of the Python yield keyword and generator functions."},
+  {"id": "hackernews", "category": "forum_js", "url": "https://news.ycombinator.com/", "snippet": "Hacker News technology news aggregator curated by the Y Combinator community."},
+
+  {"id": "squarespace", "category": "js_builder", "url": "https://www.squarespace.com/", "snippet": "Squarespace website builder for creators, businesses, and online stores.", "expect_playwright": true},
+  {"id": "webflow", "category": "js_builder", "url": "https://webflow.com/", "snippet": "Webflow visual web design platform for building responsive websites without code.", "expect_playwright": true},
+  {"id": "wix", "category": "js_builder", "url": "https://www.wix.com/", "snippet": "Wix website builder with templates for businesses, portfolios, and online stores.", "expect_playwright": true},
+
+  {"id": "mdn_array_map", "category": "documentation", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map", "snippet": "MDN documentation for JavaScript Array.prototype.map method."},
+  {"id": "python_tutorial", "category": "documentation", "url": "https://docs.python.org/3/tutorial/index.html", "snippet": "Official Python tutorial covering basic syntax, data structures, and modules."},
+  {"id": "react_quickstart", "category": "documentation", "url": "https://react.dev/learn", "snippet": "React official documentation quick start guide for building user interfaces."},
+  {"id": "github_trafilatura", "category": "documentation", "url": "https://github.com/adbar/trafilatura", "snippet": "Trafilatura open-source Python library for web text extraction and crawling.", "expect_og_image": true},
+  {"id": "stripe_api_docs", "category": "documentation", "url": "https://docs.stripe.com/api", "snippet": "Stripe API reference documentation for payment processing integration."},
+
+  {"id": "dewalt_drill", "category": "manufacturer", "url": "https://www.dewalt.com/product/dcd771c2/20v-max-cordless-drill-driver-kit", "snippet": "DeWalt 20V MAX cordless drill driver kit specifications and features."},
+  {"id": "apple_iphone", "category": "manufacturer", "url": "https://www.apple.com/iphone/", "snippet": "Apple iPhone product page with features, cameras, and pricing options."},
+  {"id": "microsoft_surface", "category": "manufacturer", "url": "https://www.microsoft.com/en-us/surface", "snippet": "Microsoft Surface laptops and tablets product lineup and specifications."},
+
+  {"id": "nih_health", "category": "government", "url": "https://www.nih.gov/health-information", "snippet": "National Institutes of Health health information resources for patients and families."},
+  {"id": "cdc_flu", "category": "government", "url": "https://www.cdc.gov/flu/about/index.html", "snippet": "CDC information about influenza symptoms, prevention, and vaccination guidance."},
+  {"id": "nasa_missions", "category": "government", "url": "https://www.nasa.gov/missions/", "snippet": "NASA missions overview including Artemis, Mars exploration, and Earth science."},
+  {"id": "stanford_cs", "category": "education", "url": "https://cs.stanford.edu/", "snippet": "Stanford University Computer Science department research and academic programs."},
+
+  {"id": "yelp_restaurant", "category": "local_directory", "url": "https://www.yelp.com/search?find_desc=Pizza&find_loc=Huntsville%2C+AL", "snippet": "Yelp search results for pizza restaurants in Huntsville, Alabama with ratings."},
+  {"id": "imdb_film", "category": "reference", "url": "https://www.imdb.com/title/tt0111161/", "snippet": "IMDb page for The Shawshank Redemption with cast, plot summary, and ratings."},
+  {"id": "merriam_apple", "category": "reference", "url": "https://www.merriam-webster.com/dictionary/apple", "snippet": "Merriam-Webster dictionary definition of the word apple with etymology."},
+
+  {"id": "devto_article", "category": "blog", "url": "https://dev.to/t/python", "snippet": "DEV Community articles tagged Python covering tutorials and developer stories."},
+  {"id": "cloudflare_blog", "category": "blog", "url": "https://blog.cloudflare.com/", "snippet": "Cloudflare blog posts on internet infrastructure, security, and performance."},
+  {"id": "mozilla_blog", "category": "blog", "url": "https://blog.mozilla.org/en/", "snippet": "Mozilla blog covering Firefox, privacy, and open web initiatives."},
+
+  {"id": "pypi_trafilatura", "category": "package_registry", "url": "https://pypi.org/project/trafilatura/", "snippet": "PyPI package page for trafilatura web scraping and text extraction library."},
+  {"id": "npm_express", "category": "package_registry", "url": "https://www.npmjs.com/package/express", "snippet": "npm registry page for Express.js fast, unopinionated web framework for Node."},
+  {"id": "arxiv_paper", "category": "academic", "url": "https://arxiv.org/abs/1706.03762", "snippet": "Attention Is All You Need — foundational transformer architecture research paper."},
+
+  {"id": "etsy_search", "category": "marketplace", "url": "https://www.etsy.com/search?q=handmade+wedding+gift", "snippet": "Etsy marketplace search for handmade wedding gifts from independent sellers."},
+  {"id": "youtube_watch", "category": "video_platform", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "snippet": "YouTube video page with title, channel, and view count.", "expect_playwright": true}
+]
