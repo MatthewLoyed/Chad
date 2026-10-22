@@ -28,8 +28,8 @@ per-request instead of dumping the whole registry into context every turn.
 
 ## Download (Windows)
 
-The Windows installer is prepared but has not been published yet. Once approved,
-it will be available on [GitHub Releases](https://github.com/MatthewLoyed/Chad/releases)
+Windows installers are distributed through
+[GitHub Releases](https://github.com/MatthewLoyed/Chad/releases)
 — no Python or `npm` required for the installer.
 
 You also need a separately installed local model server, such as LM Studio or
