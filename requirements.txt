@@ -34,6 +34,7 @@ google-auth-oauthlib>=1.0.0
 google-auth>=2.22.0
 google-api-python-client>=2.100.0
 PyPDF2>=3.0.0
+pypdf>=5.0.0  # Existing PDF reader imports pypdf; PyPDF2 is a separate package.
 python-docx>=1.0.0
 mammoth>=1.8.0
 todoist-api-python>=2.1.0
