@@ -1,0 +1,116 @@
+.context-meter-container {
+    background-color: rgba(30, 30, 35, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+    backdrop-filter: blur(5px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.context-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.context-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ctx-title {
+    font-size: 0.85rem;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.ctx-profile-badge {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.ctx-stats {
+    font-size: 0.8rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.ctx-value {
+    font-weight: bold;
+    color: #eee;
+}
+
+.ctx-limit {
+    color: #666;
+    margin-left: 4px;
+}
+
+.ctx-value.ctx-safe {
+    color: #4ade80;
+}
+
+.ctx-value.ctx-warning {
+    color: #facc15;
+}
+
+.ctx-value.ctx-critical {
+    color: #f87171;
+}
+
+.ctx-progress-track {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.ctx-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease, background-color 0.3s ease;
+}
+
+.ctx-progress-bar.ctx-safe {
+    background-color: #4ade80;
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+}
+
+.ctx-progress-bar.ctx-warning {
+    background-color: #facc15;
+    box-shadow: 0 0 5px rgba(250, 204, 21, 0.3);
+}
+
+.ctx-progress-bar.ctx-critical {
+    background-color: #f87171;
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+}
+
+.ctx-controls {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ctx-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ctx-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}

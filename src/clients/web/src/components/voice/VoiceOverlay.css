@@ -1,0 +1,226 @@
+/* Voice turn overlay (issue #654) — ambient glow + top pill + unavailable chip. */
+
+/* --- Ambient glow -------------------------------------------------------- */
+/* An inset ring rather than a scrim: the chat stays fully readable and usable
+   for the whole voice turn, which is the point of a quick command. */
+.voice-glow {
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    pointer-events: none;
+    border-radius: 12px;
+}
+
+.voice-glow--listening {
+    box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.55),
+                inset 0 0 42px rgba(99, 102, 241, 0.28);
+    animation: voice-glow-pulse 1.6s ease-in-out infinite;
+}
+
+.voice-glow--transcribing,
+.voice-glow--heard {
+    box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.4),
+                inset 0 0 30px rgba(99, 102, 241, 0.18);
+}
+
+.voice-glow--thinking {
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.42),
+                inset 0 0 34px rgba(139, 92, 246, 0.2);
+    animation: voice-glow-breathe 2.6s ease-in-out infinite;
+}
+
+.voice-glow--speaking {
+    box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.5),
+                inset 0 0 38px rgba(45, 212, 191, 0.22);
+    animation: voice-glow-pulse 1.9s ease-in-out infinite;
+}
+
+.voice-glow--error {
+    box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.5),
+                inset 0 0 32px rgba(248, 113, 113, 0.2);
+}
+
+@keyframes voice-glow-pulse {
+    0%, 100% { opacity: 0.65; }
+    50%      { opacity: 1; }
+}
+
+@keyframes voice-glow-breathe {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 0.85; }
+}
+
+/* --- Voice pill ---------------------------------------------------------- */
+.voice-pill {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9995;
+    max-width: min(560px, 72vw);
+    padding: 9px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 999px;
+    background: rgba(15, 17, 21, 0.88);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.8125rem;
+    user-select: none;
+}
+
+.voice-pill--expanded {
+    border-radius: 16px;
+    max-width: min(620px, 80vw);
+    cursor: default;
+}
+
+.voice-pill--error {
+    border-color: rgba(248, 113, 113, 0.35);
+}
+
+.voice-pill__row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.voice-pill__icon {
+    display: flex;
+    flex-shrink: 0;
+    color: #818cf8;
+}
+
+.voice-pill--speaking .voice-pill__icon { color: #2dd4bf; }
+.voice-pill--error    .voice-pill__icon { color: #f87171; }
+
+.voice-pill__spin {
+    animation: voice-spin 1s linear infinite;
+}
+
+@keyframes voice-spin {
+    to { transform: rotate(360deg); }
+}
+
+.voice-pill__label {
+    flex-shrink: 0;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+/* The transcript is the payload — it gets the room and the emphasis. */
+.voice-pill__transcript {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.62);
+    font-style: italic;
+}
+
+.voice-pill__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 2px 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.voice-pill__detail-line {
+    margin: 0;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.voice-pill__who {
+    display: inline-block;
+    min-width: 42px;
+    margin-right: 8px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Unavailable chip ---------------------------------------------------- */
+/* Only rendered when voice mode failed to arm. Nothing is shown on the happy
+   path or when voice mode is intentionally disabled. Positioned at left: 76px
+   to stay well clear of the 60px workspace rail and Settings gear. */
+.voice-unavailable {
+    position: fixed;
+    bottom: 18px;
+    left: 76px;
+    z-index: 9994;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(15, 17, 21, 0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(248, 113, 113, 0.28);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    color: #fca5a5;
+    font-size: 0.75rem;
+}
+
+.voice-unavailable__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.voice-unavailable__head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.voice-unavailable__close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.voice-unavailable__close:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.voice-unavailable__message {
+    font-weight: 600;
+}
+
+.voice-unavailable__remedy {
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.voice-unavailable__remedy.is-clickable {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.25);
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+}
+
+.voice-unavailable__remedy.is-clickable:hover {
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration-color: rgba(255, 255, 255, 0.6);
+}

@@ -1,0 +1,54 @@
+# User preferences — copy to config/preferences.yaml (gitignored).
+#
+#   copy config\preferences.yaml.example config\preferences.yaml
+#
+# The GUI model picker and settings write this file at runtime. Fresh clones /
+# worktrees work without it when config/config.yaml defaults match your stack.
+#
+# Personal machine profile overrides (apps, routines, monitors) go under
+# `profile:` — deep-merged over config/profiles.yaml for the active profile.
+
+local_models:
+  use_local: true
+  active_model:
+    name: google/gemma-4-26b-a4b-qat
+    provider: lmstudio
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    supports_tools: true
+
+ui:
+  # Chat input mode dropdown: auto | agent | chat | plan
+  default_turn_mode: auto
+
+# Optional profile overlay (machine-specific apps, routines, monitors).
+# profile:
+#   monitors:
+#     layout: [ "primary", "left", "right" ]
+#   apps:
+#     cursor:
+#       path: "%USERPROFILE%\\AppData\\Local\\Programs\\cursor\\Cursor.exe"
+#       process: "Cursor.exe"
+#       titles: [ "Cursor" ]
+#   routines:
+#     coding:
+#       - action: launch_app
+#         app: cursor
+#         monitor: 1
+
+# Optional overrides (uncomment as needed):
+# disabled_subagents:
+#   - browser_agent
+# tools:
+#   fast_track_commands:
+#     - alias: lamp_on
+#       label: "Lamp On"
+#       tool: hubspace_control
+#       params: { action: turn_on, device_name: lamp }
+# voice_mode:
+#   enabled: true
+# local_models:
+#   lifecycle:
+#     vram_budget_gb: 16
+# updates:
+#   auto_update: true

@@ -1,0 +1,91 @@
+.tool-limit-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 16px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.tool-limit-modal__icon-wrapper {
+    position: relative;
+    margin-bottom: 28px;
+    color: #f59e0b;
+    /* Amber 500 */
+    filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
+}
+
+.tool-limit-modal__icon-bg {
+    position: absolute;
+    inset: -15px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+    z-index: -1;
+}
+
+.tool-limit-modal__message {
+    font-size: 17px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.tool-limit-modal__sub-message {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 32px;
+}
+
+.tool-limit-modal__highlight {
+    color: #fbbf24;
+    /* Amber 400 */
+    font-weight: 600;
+}
+
+.tool-limit-modal__actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.tool-limit-modal__btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.tool-limit-modal__btn--cancel {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tool-limit-modal__btn--cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.tool-limit-modal__btn--primary {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+}
+
+.tool-limit-modal__btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    filter: brightness(1.1);
+}
+
+.tool-limit-modal__btn--primary:active {
+    transform: translateY(0);
+}

@@ -1,0 +1,13 @@
+{"ch":"thinking","frame":{"type":"run_started","run_id":"turn_91","thread_id":"turn_91"}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"Let me","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" answer in two parts.","append":true}}
+{"ch":"caption","text":"First, I'll explain. ","append":true}
+{"ch":"caption","text":"It works like this. ","append":true}
+{"ch":"thinking","frame":{"type":"speech","text":"First, I'll explain. It works like this. ","append":false}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"Now","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" reconsider the second half.","append":true}}
+{"ch":"caption","text":"Final answer here.","append":true}
+{"ch":"thinking","frame":{"type":"speech","text":"Final answer here.","append":false}}
+{"ch":"token","frame":{"prompt_tokens":900,"completion_tokens":55,"total_tokens":955,"reasoning_tokens":30,"context_window":200000,"speed":48.0,"ttft":0.25,"stop_reason":"end_turn","estimated_prompt_tokens":null}}
+{"ch":"thinking","frame":{"type":"run_finished","run_id":"turn_91","response":"First, I'll explain. It works like this. Final answer here."}}
+{"ch":"state","state":"ready"}

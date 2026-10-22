@@ -1,0 +1,167 @@
+.pair-phone {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.pair-phone__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #e5e7eb;
+}
+
+.pair-phone__title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pair-phone__sub {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pair-phone__refresh {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+}
+
+.pair-phone__refresh:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.12);
+    color: #fff;
+}
+
+.pair-phone__spin {
+    animation: pair-phone-spin 1s linear infinite;
+}
+
+@keyframes pair-phone-spin {
+    to { transform: rotate(360deg); }
+}
+
+.pair-phone__options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pair-phone__option {
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.pair-phone__option.is-active {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.1);
+    color: #fff;
+}
+
+.pair-phone__error,
+.pair-phone__warn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.pair-phone__error {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+}
+
+.pair-phone__warn {
+    background: rgba(234, 179, 8, 0.1);
+    color: #fde68a;
+}
+
+.pair-phone__warn code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.pair-phone__qr-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+/* White plate behind the QR: scanners need light modules on a light field, and the
+   app's dark surface alone tanks contrast enough that phone cameras miss it. */
+.pair-phone__qr {
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff;
+    line-height: 0;
+}
+
+.pair-phone__reveal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 22px 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pair-phone__reveal:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #fff;
+}
+
+.pair-phone__reveal-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.pair-phone__hide {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.pair-phone__addr {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    text-align: center;
+    word-break: break-all;
+}

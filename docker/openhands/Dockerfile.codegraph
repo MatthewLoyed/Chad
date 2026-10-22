@@ -1,0 +1,38 @@
+# Chad Code — codegraph-enabled OpenHands image (issue #582, epic #569).
+#
+# WHY THIS IMAGE EXISTS: the base OpenHands image has no node/npx, so the `codegraph` MCP
+# server (an npm CLI, `@colbymchenry/codegraph`) can't run inside a plain container the way
+# the *hosted-HTTP* Context7/GitHub MCPs do (those need no runtime at all — just an outbound
+# HTTPS call). `codegraph` is a **stdio** MCP server (`codegraph serve --mcp --path <dir>
+# --no-watch`) that has to run *in* the same container as the coding agent, against the
+# read-only `/repo` reference mount, so it can index the codebase and hand back `/repo`-
+# relative paths the agent already understands. That means baking Node + the CLI into a
+# small layer on top of the base image, rather than trying to reach it from the host.
+#
+# This image is ONLY used for jobs that mount a `reference` repo at `/repo` (explore-and-
+# report style tasks) — see `tools.openhands_codegraph_image` / `_build_mcp_config()` in
+# `src/tools/dev/openhands_dispatch.py`. Ordinary build/fix jobs with no reference keep using
+# the lighter base image, so they don't pay for Node + the graph tool they'd never use.
+#
+# Build:
+#   docker build -f docker/openhands/Dockerfile.codegraph -t chad-code/openhands-codegraph:latest docker/openhands
+#
+# Verify:
+#   docker run --rm --entrypoint bash chad-code/openhands-codegraph:latest -c "codegraph --version"
+#   # -> 0.9.9
+
+FROM docker.openhands.dev/openhands/openhands:latest
+
+# Base image is Debian (trixie) with curl/apt-get but no Node — install Node 20 LTS via the
+# NodeSource setup script (the distro's own `nodejs` package in trixie can lag npm compat).
+RUN apt-get update \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pin the exact version the harness was built/tested against (#582 research spike).
+RUN npm install -g @colbymchenry/codegraph@0.9.9
+
+# Sanity check baked in at build time — fail the build loudly instead of shipping a broken
+# image if the install silently didn't put `codegraph` on PATH.
+RUN codegraph --version

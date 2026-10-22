@@ -1,0 +1,273 @@
+"""
+Command Pattern - GUI actions as objects
+
+Commands encapsulate GUI actions for better:
+- Testability (commands are objects)
+- Logging (can track command execution)
+- Validation (commands can validate parameters)
+- Future extensibility (undo, queuing, replay)
+"""
+
+from .base_command import Command, CommandHandler
+from .chat_history_commands import (
+    GetConversationsCommand,
+    GetMessagesCommand,
+    CreateConversationCommand,
+    UpdateConversationTitleCommand,
+    DeleteConversationCommand,
+    SearchChatsCommand,
+    PinConversationCommand,
+    SetConversationProjectCommand,
+    ListWorkspaceProjectsCommand,
+    CreateWorkspaceProjectCommand,
+    RenameWorkspaceProjectCommand,
+)
+from .audio_commands import (
+    SetAudioDeviceCommand,
+    SwitchOutputDeviceCommand,
+    SetVolumeCommand,
+    GetAudioDevicesCommand,
+    GetVolumeCommand,
+    GetAudioLevelCommand
+)
+from .memory_commands import (
+    GetMemoriesCommand,
+    SearchMemoriesCommand,
+    DeleteMemoryCommand,
+    ClearMemoriesCommand,
+    SaveMemoryCommand,
+    UpdateMemoryCommand,
+    SemanticSearchMemoriesCommand,
+    GetStorageStatsCommand,
+    GetMemoryCatalogCommand,
+    GetMemorySectionCommand,
+)
+from .session_commands import (
+    GetSessionStateCommand,
+    GetVoiceNameCommand
+)
+from .message_commands import (
+    SendMessageCommand,
+    ClassifyIntentCommand,
+    StopActiveTaskCommand
+)
+from .config_commands import (
+    SetVoiceCommand,
+    SetModelCommand,
+    GetContextStatusCommand,
+    SetContextProfileCommand,
+    ForceConsolidationCommand,
+    DiscoverLocalModelsCommand,
+    SetActiveModelCommand,
+    GetSubagentsCommand,
+    ToggleSubagentCommand,
+    SetSubagentModelCommand,
+    GetMCPServersCommand,
+    AddMCPServerCommand,
+    DeleteMCPServerCommand,
+    ToggleMCPServerCommand,
+    TestMCPConnectionCommand,
+    GetNativeConnectorsCommand,
+    SaveTelegramConnectorCommand,
+    SaveCanvasConnectorCommand,
+    SaveStockImagesConnectorCommand,
+    SaveFinanceConnectorCommand,
+    CreateFinanceLinkTokenCommand,
+    ExchangeFinanceTokenCommand,
+    ListFinanceInstitutionsCommand,
+    DisconnectFinanceInstitutionCommand,
+    EnableNativeConnectorCommand,
+    DeleteNativeConnectorCommand,
+    GetBrowserSafetyCommand,
+    SetBrowserSafetyCommand,
+    GetPresentonSettingsCommand,
+    SetPresentonSettingsCommand,
+    GetChadCodeSettingsCommand,
+    SetChadCodeSettingsCommand,
+    ChadCodePreflightCommand,
+    ChadCodeJobStatusCommand,
+    GetSearxngSettingsCommand,
+    SetSearxngSettingsCommand,
+    GetSearchQuotaCommand,
+    StartSearxngSidecarCommand,
+    GetSupabaseSettingsCommand,
+    BootstrapSupabaseCommand,
+    GetSetupStatusCommand,
+    StartLMStudioSetupCommand,
+    GetLMStudioSetupProgressCommand,
+    ProbeLocalBackendCommand,
+    SaveProviderChoiceCommand,
+)
+from .dashboard_commands import (
+    GetDashboardFeedCommand,
+    RunDashboardActionCommand,
+    DismissDashboardEntryCommand
+)
+from .workspace_commands import (
+    ListDriveFilesCommand,
+    GetDriveFileContentCommand,
+    CheckGoogleAuthCommand,
+    StartGoogleAuthCommand
+)
+from .kanban_commands import (
+    ListKanbanCardsCommand,
+    CreateKanbanCardCommand,
+    UpdateKanbanCardCommand,
+    MoveKanbanCardCommand,
+    DeleteKanbanCardCommand
+)
+from .workflow_commands import (
+    ListWorkflowsCommand,
+    CreateWorkflowCommand,
+    UpdateWorkflowCommand,
+    DeleteWorkflowCommand
+)
+from .routine_commands import (
+    ListToolCatalogCommand,
+    DraftRoutineCommand,
+    ListSkillsCatalogCommand,
+    GetSkillContentCommand,
+)
+from .routine_builder_commands import (
+    GetRoutineBuilderModelCommand,
+    SetRoutineBuilderModelCommand,
+)
+from .capability_commands import (
+    GetCapabilitySuggestionsCommand,
+    SetCapabilitySuggestionStatusCommand,
+    ProposeCapabilitySkillBuildCommand,
+    CommitCapabilitySkillBuildCommand
+)
+from .reflection_commands import (
+    GetReflectionLessonsCommand,
+    SetReflectionLessonStatusCommand,
+    AnswerReflectionQuestionCommand,
+)
+from .automation_commands import (
+    GetAutomationsSummaryCommand,
+    ListAutonomousRunsCommand,
+    UpdateDaemonSettingsCommand,
+    ListCronJobsCommand,
+    CreateCronJobCommand,
+    SetCronJobStatusCommand,
+    DeleteCronJobCommand,
+    UpdateHeartbeatChecklistCommand,
+    GetWebhookStatusCommand,
+    TriggerIngestionSyncCommand
+)
+
+__all__ = [
+    'Command',
+    'CommandHandler',
+    'SetAudioDeviceCommand',
+    'SwitchOutputDeviceCommand',
+    'SetVolumeCommand',
+    'GetAudioDevicesCommand',
+    'GetVolumeCommand',
+    'GetAudioLevelCommand',
+    'GetMemoriesCommand',
+    'SearchMemoriesCommand',
+    'DeleteMemoryCommand',
+    'ClearMemoriesCommand',
+    'SaveMemoryCommand',
+    'UpdateMemoryCommand',
+    'SemanticSearchMemoriesCommand',
+    'GetStorageStatsCommand',
+    'GetMemoryCatalogCommand',
+    'GetMemorySectionCommand',
+    'GetSessionStateCommand',
+    'GetVoiceNameCommand',
+    'SendMessageCommand',
+    'ClassifyIntentCommand',
+    'StopActiveTaskCommand',
+    'SetVoiceCommand',
+    'SetModelCommand',
+    'GetContextStatusCommand',
+    'SetContextProfileCommand',
+    'ForceConsolidationCommand',
+    'DiscoverLocalModelsCommand',
+    'SetActiveModelCommand',
+    'GetSubagentsCommand',
+    'ToggleSubagentCommand',
+    'SetSubagentModelCommand',
+    'GetMCPServersCommand',
+    'AddMCPServerCommand',
+    'DeleteMCPServerCommand',
+    'ToggleMCPServerCommand',
+    'TestMCPConnectionCommand',
+    'GetNativeConnectorsCommand',
+    'SaveTelegramConnectorCommand',
+    'SaveCanvasConnectorCommand',
+    'SaveStockImagesConnectorCommand',
+    'SaveFinanceConnectorCommand',
+    'CreateFinanceLinkTokenCommand',
+    'ExchangeFinanceTokenCommand',
+    'ListFinanceInstitutionsCommand',
+    'DisconnectFinanceInstitutionCommand',
+    'EnableNativeConnectorCommand',
+    'DeleteNativeConnectorCommand',
+    'GetBrowserSafetyCommand',
+    'SetBrowserSafetyCommand',
+    'GetPresentonSettingsCommand',
+    'SetPresentonSettingsCommand',
+    'GetChadCodeSettingsCommand',
+    'SetChadCodeSettingsCommand',
+    'ChadCodePreflightCommand',
+    'ChadCodeJobStatusCommand',
+    'GetSearxngSettingsCommand',
+    'SetSearxngSettingsCommand',
+    'GetSearchQuotaCommand',
+    'StartSearxngSidecarCommand',
+    'GetSupabaseSettingsCommand',
+    'BootstrapSupabaseCommand',
+    'GetSetupStatusCommand',
+    'StartLMStudioSetupCommand',
+    'GetLMStudioSetupProgressCommand',
+    'ProbeLocalBackendCommand',
+    'SaveProviderChoiceCommand',
+    'SearchChatsCommand',
+    'PinConversationCommand',
+    'SetConversationProjectCommand',
+    'ListWorkspaceProjectsCommand',
+    'CreateWorkspaceProjectCommand',
+    'RenameWorkspaceProjectCommand',
+    'GetDashboardFeedCommand',
+    'RunDashboardActionCommand',
+    'DismissDashboardEntryCommand',
+    'ListDriveFilesCommand',
+    'GetDriveFileContentCommand',
+    'CheckGoogleAuthCommand',
+    'StartGoogleAuthCommand',
+    'ListKanbanCardsCommand',
+    'CreateKanbanCardCommand',
+    'UpdateKanbanCardCommand',
+    'MoveKanbanCardCommand',
+    'DeleteKanbanCardCommand',
+    'ListWorkflowsCommand',
+    'CreateWorkflowCommand',
+    'UpdateWorkflowCommand',
+    'DeleteWorkflowCommand',
+    'ListToolCatalogCommand',
+    'DraftRoutineCommand',
+    'ListSkillsCatalogCommand',
+    'GetSkillContentCommand',
+    'GetRoutineBuilderModelCommand',
+    'SetRoutineBuilderModelCommand',
+    'GetCapabilitySuggestionsCommand',
+    'SetCapabilitySuggestionStatusCommand',
+    'ProposeCapabilitySkillBuildCommand',
+    'CommitCapabilitySkillBuildCommand',
+    'GetReflectionLessonsCommand',
+    'SetReflectionLessonStatusCommand',
+    'AnswerReflectionQuestionCommand',
+    'GetAutomationsSummaryCommand',
+    'ListAutonomousRunsCommand',
+    'UpdateDaemonSettingsCommand',
+    'ListCronJobsCommand',
+    'CreateCronJobCommand',
+    'SetCronJobStatusCommand',
+    'DeleteCronJobCommand',
+    'UpdateHeartbeatChecklistCommand',
+    'GetWebhookStatusCommand',
+    'TriggerIngestionSyncCommand',
+]

@@ -1,0 +1,119 @@
+.move-project-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+}
+
+.move-project-content {
+    width: min(420px, 92vw);
+    max-height: 70vh;
+    background: #16181d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: #e5e7eb;
+}
+
+.move-project-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.move-project-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.move-project-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 8px 0;
+}
+
+.move-project-loading .animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+.move-project-error,
+.move-project-empty {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+}
+
+.move-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 40vh;
+    padding-right: 4px;
+}
+
+.move-project-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.move-project-option:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.move-project-option.is-selected {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.25);
+}
+
+.move-project-option__name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.move-project-option__path {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    word-break: break-all;
+}
+
+.move-project-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.move-project-btn {
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.move-project-btn--cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+}

@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "input": "Send an email to John about the meeting.",
+    "expected_agent": "communication_agent"
+  },
+  {
+    "id": 2,
+    "input": "Schedule a meeting for tomorrow at 2 PM.",
+    "expected_agent": null
+  },
+  {
+    "id": 3,
+    "input": "Open Notepad and type 'Hello World'.",
+    "expected_agent": "ui_automation_agent"
+  },
+  {
+    "id": 4,
+    "input": "Search the web for the latest AI news.",
+    "expected_agent": "browser_agent"
+  },
+  {
+    "id": 5,
+    "input": "Run a python script to calculate fibonacci.",
+    "expected_agent": "code_agent"
+  },
+  {
+    "id": 6,
+    "input": "List files in my current directory.",
+    "expected_agent": "system_agent"
+  },
+  {
+    "id": 7,
+    "input": "What's my favorite color?",
+    "expected_agent": null
+  },
+  {
+    "id": 8,
+    "input": "Send a Slack message to the dev team and then create a Jira ticket.",
+    "expected_agent": "communication_agent"
+  },
+  {
+    "id": 9,
+    "input": "Check my calendar and email me the summary.",
+    "expected_agent": null
+  },
+  {
+    "id": 10,
+    "input": "Find the latest stock prices and save them to a file.",
+    "expected_agent": "browser_agent"
+  },
+  {
+    "id": 11,
+    "input": "Write a script to automate my browser.",
+    "expected_agent": "code_agent"
+  },
+  {
+    "id": 12,
+    "input": "What's the weather today?",
+    "expected_agent": "browser_agent"
+  },
+  {
+    "id": 13,
+    "input": "Create a reminder to buy milk.",
+    "expected_agent": null
+  },
+  {
+    "id": 14,
+    "input": "Who did I talk to yesterday?",
+    "expected_agent": null
+  },
+  {
+    "id": 15,
+    "input": "Open my browser and go to google.com",
+    "expected_agent": "browser_agent"
+  }
+]

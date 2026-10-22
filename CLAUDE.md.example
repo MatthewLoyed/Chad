@@ -1,0 +1,13 @@
+# Claude Code local setup
+
+Copy this file to the gitignored `CLAUDE.md`, or run
+`scripts/setup/bootstrap_dev_workspace.ps1`. The bootstrap preserves existing
+local files unless you explicitly use `-Force`.
+
+Read [AGENTS.md](AGENTS.md) for shared project guidance, then follow the task
+route in [END_TO_END.md](docs/architecture/END_TO_END.md#find-the-existing-implementation).
+Keep personal workflow notes below locally; do not copy the shared playbook.
+See [developer workspace setup](docs/guides/DEV_WORKSPACE.md).
+
+Tracked Claude skills in `.claude/skills/` include `verification-before-completion`,
+`code-reviewer`, and `systematic-debugging`. Apply them when relevant.

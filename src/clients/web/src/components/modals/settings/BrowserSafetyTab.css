@@ -1,0 +1,204 @@
+.browser-safety-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.browser-safety-tab__intro {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.browser-safety-tab__intro code {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.browser-safety-loading,
+.browser-safety-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.browser-safety-error {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.browser-safety-spin {
+    animation: browser-safety-spin 0.9s linear infinite;
+}
+
+@keyframes browser-safety-spin {
+    to { transform: rotate(360deg); }
+}
+
+.browser-safety-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.browser-safety-section__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.browser-safety-section__head h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.browser-safety-section__hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.browser-safety-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.browser-safety-mode {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 2px 12px;
+    align-items: start;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.browser-safety-mode:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.browser-safety-mode.is-active {
+    border-color: rgba(52, 211, 153, 0.45);
+    background: rgba(52, 211, 153, 0.08);
+}
+
+.browser-safety-mode input {
+    margin-top: 3px;
+    accent-color: #34d399;
+}
+
+.browser-safety-mode__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.browser-safety-mode__desc {
+    grid-column: 2;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+.browser-safety-allowlist__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.browser-safety-allowlist__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.browser-safety-allowlist__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+}
+
+.browser-safety-allowlist__remove:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.browser-safety-empty {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.38);
+    font-style: italic;
+}
+
+.browser-safety-add {
+    display: flex;
+    gap: 8px;
+}
+
+.browser-safety-add__input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+}
+
+.browser-safety-add__input:focus {
+    outline: none;
+    border-color: rgba(52, 211, 153, 0.5);
+}
+
+.browser-safety-add__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    background: rgba(52, 211, 153, 0.12);
+    color: #6ee7b7;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.browser-safety-add__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

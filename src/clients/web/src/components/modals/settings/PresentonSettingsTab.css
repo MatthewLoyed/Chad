@@ -1,0 +1,109 @@
+.presenton-settings__intro {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.presenton-settings__loading,
+.presenton-settings__error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 12px;
+}
+
+.presenton-settings__error {
+    color: #fca5a5;
+}
+
+.presenton-settings__spin {
+    animation: presenton-spin 0.9s linear infinite;
+}
+
+@keyframes presenton-spin {
+    to { transform: rotate(360deg); }
+}
+
+.presenton-settings__toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #f3f4f6;
+    margin-bottom: 16px;
+    cursor: pointer;
+}
+
+.presenton-settings__toggle--sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.presenton-settings__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    margin-bottom: 12px;
+}
+
+.presenton-settings__field .form-label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.presenton-settings__field-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.presenton-settings__field-head .form-label {
+    margin-bottom: 0;
+}
+
+.presenton-settings__input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #f3f4f6;
+    font-size: 13px;
+}
+
+.presenton-settings__input:focus {
+    outline: none;
+    border-color: rgba(var(--chad-purple-rgb), 0.6);
+}
+
+.presenton-settings__refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+}
+
+.presenton-settings__refresh:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.presenton-settings__status {
+    margin-top: 8px;
+}

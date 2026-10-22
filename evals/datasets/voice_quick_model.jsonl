@@ -1,0 +1,19 @@
+{"id":"qm_open_youtube","query":"open youtube","expect_tool":"open_browser","expect_arg_contains":"youtube"}
+{"id":"qm_open_youtube_polite","query":"can you open youtube","expect_tool":"open_browser","expect_arg_contains":"youtube"}
+{"id":"qm_open_youtube_trailing","query":"open youtube for me","expect_tool":"open_browser","expect_arg_contains":"youtube"}
+{"id":"qm_open_youtube_stacked","query":"hey can you please open youtube","expect_tool":"open_browser","expect_arg_contains":"youtube"}
+{"id":"qm_open_claude","query":"open claude","expect_tool":"open_browser","expect_arg_contains":"claude"}
+{"id":"qm_open_gmail_polite","query":"could you go to gmail for me","expect_tool":"open_browser","expect_arg_contains":"gmail"}
+{"id":"qm_open_app_discord","query":"launch discord","expect_tool":"open_app","expect_arg_contains":"discord"}
+{"id":"qm_open_app_notepad","query":"can you open notepad","expect_tool":"open_app","expect_arg_contains":"notepad"}
+{"id":"qm_open_app_calculator","query":"open up the calculator app","expect_tool":"open_app","expect_arg_contains":"calculator"}
+{"id":"qm_search_pizza","query":"search for pizza places near me","expect_tool":"web_search","expect_arg_contains":"pizza"}
+{"id":"qm_search_weather_polite","query":"can you look up the weather for tomorrow","expect_tool":"web_search","expect_arg_contains":"weather"}
+{"id":"qm_search_paraphrase","query":"can you find out what time the game starts tonight","expect_tool":"web_search","expect_arg_contains":"game"}
+{"id":"qm_time","query":"what time is it","expect_tool":"get_datetime","expect_arg_contains":"time"}
+{"id":"qm_lights","query":"turn on the living room lights","expect_tool":"hubspace_control","expect_arg_contains":"turn_on"}
+{"id":"qm_email","query":"check my email for the lease","expect_tool":"search_gmail","expect_arg_contains":"lease"}
+{"id":"qm_escalate_calendar","query":"what's on my calendar for tomorrow afternoon","expect_tool":null}
+{"id":"qm_escalate_multi_step","query":"close spotify, open chrome, and pull up my calendar","expect_tool":null}
+{"id":"qm_escalate_conversation","query":"hey how are you doing today","expect_tool":null}
+{"id":"qm_escalate_ambiguous","query":"do the thing we talked about earlier","expect_tool":null}

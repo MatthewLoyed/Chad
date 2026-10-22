@@ -1,0 +1,335 @@
+.dash-content {
+    width: 100%;
+    max-width: 1400px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.dash-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-right: 4px;
+}
+
+.dash-content h1,
+.dash-content h2,
+.dash-content h3 {
+    color: #f3f4f6;
+    margin: 1.2em 0 0.5em;
+}
+
+.dash-content code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: rgba(var(--chad-purple-rgb), 0.12);
+    color: var(--chad-purple-light);
+    padding: 1px 5px;
+    border-radius: 5px;
+}
+
+/* Pinned life-widget strip */
+
+.dash-pinned-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.dash-pinned-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(236, 72, 153, 0.08);
+    border: 1px solid rgba(236, 72, 153, 0.25);
+    border-radius: 14px;
+    min-width: 180px;
+    max-width: 420px;
+}
+
+.dash-pinned-card__icon {
+    color: rgba(244, 114, 182, 1);
+    flex-shrink: 0;
+}
+
+.dash-pinned-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.dash-pinned-card__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.dash-pinned-card__metric {
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.92);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.dash-pinned-card__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.dash-pinned-card__dismiss:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Empty state */
+
+.dash-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 48px 20px;
+    color: rgba(255, 255, 255, 0.4);
+    gap: 8px;
+}
+
+.dash-empty__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 8px 0 0;
+}
+
+.dash-empty__sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    max-width: 360px;
+    margin: 0;
+}
+
+/* Feed */
+
+.dash-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 1100px;
+}
+
+.dash-card {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+}
+
+.dash-card__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.dash-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.dash-card__badge--thought {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: rgba(129, 140, 248, 1);
+}
+
+.dash-card__badge--life {
+    background: rgba(236, 72, 153, 0.15);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+    color: rgba(244, 114, 182, 1);
+}
+
+.dash-card__badge--status {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: rgba(96, 165, 250, 1);
+}
+
+.dash-card__badge--discovery {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: rgba(52, 211, 153, 1);
+}
+
+.dash-card__badge--action {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: rgba(251, 191, 36, 1);
+}
+
+.dash-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    flex: 1;
+}
+
+.dash-card__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.dash-card__dismiss:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dash-card__body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.dash-card__action {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dash-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.15);
+    color: rgba(251, 191, 36, 1);
+    transition: background 0.15s ease;
+}
+
+.dash-card__cta:hover {
+    background: rgba(245, 158, 11, 0.25);
+}
+
+.dash-card__cta:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.dash-card__spinner {
+    animation: dash-card-spin 0.8s linear infinite;
+}
+
+@keyframes dash-card-spin {
+    to { transform: rotate(360deg); }
+}
+
+.dash-card__done {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(52, 211, 153, 1);
+}
+
+/* Auto tag — small "bot · auto" label on autonomous feed entries */
+.dash-card__auto-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 2px 6px;
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+/* Filter bar */
+.dash-filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.dash-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.dash-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.dash-filter-btn--active {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.dash-filter-btn__count {
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 5px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.5);
+}

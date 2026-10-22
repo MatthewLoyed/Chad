@@ -1,0 +1,9 @@
+// memory_layer.jsonl — no-LLM retrieval probes for Drive catalog,
+// filesystem catalog (personal_index), and ActivityRAG. Used by
+// `python -m evals.runner --memory-layer` (issue #618). Not a dry-run
+// suite — lives outside evals/datasets/ so `--all` ignores it.
+{"id": "wedding_budget_drive", "prompt": "where's the wedding budget?", "layer": "drive_catalog", "must_include": ["Wedding Budget", "Wedding"], "must_not": ["tax_return_2019", "grocery"], "note": "Drive catalog should surface the wedding budget spreadsheet by name/path"}
+{"id": "wedding_budget_filesystem", "prompt": "where's the wedding budget spreadsheet on disk?", "layer": "filesystem", "must_include": ["wedding_budget", "Wedding"], "must_not": ["tax_return_2019", "Visited Web Page"], "note": "Filesystem catalog rows live in personal_index; ActivityRAG path must find them"}
+{"id": "youtube_activity", "prompt": "did I watch anything about wedding budgets?", "layer": "activity", "must_include": ["YouTube", "wedding budget"], "must_not": ["tax_return_2019", "Drive File:"], "note": "Chrome/YouTube activity should recall the watched video title"}
+{"id": "gmail_venue_activity", "prompt": "that email about the wedding venue deposit", "layer": "activity", "must_include": ["venue deposit", "alice@example.com"], "must_not": ["tax_return_2019", "grocery list"], "note": "Gmail personal_index snippet recall"}
+{"id": "negative_tax_not_wedding", "prompt": "where's the wedding budget?", "layer": "drive_catalog", "must_include": ["Wedding Budget"], "must_not": ["tax_return_2019"], "note": "Unrelated tax doc fixture must not dominate wedding budget retrieval"}

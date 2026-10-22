@@ -1,0 +1,174 @@
+.app-shell {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f1115 0%, #1a1d24 100%);
+}
+
+.app-shell__nav {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-shrink: 0;
+    z-index: 15;
+}
+
+/* Off-canvas NavSidebar drawer on narrow viewports (#191). See the comment
+   in NavSidebar.css for why the transform lives here, not on .nav-sidebar. */
+@media (max-width: 768px) {
+    .app-shell__nav {
+        position: fixed;
+        top: 0;
+        left: 60px;
+        height: 100vh;
+        height: 100dvh;
+        width: min(78vw, 300px);
+        transform: translateX(-120%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 210;
+    }
+
+    .chad-root.mobile-nav-is-open .app-shell__nav {
+        transform: translateX(0);
+    }
+}
+
+.app-shell__sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: transparent;
+    border-right: none;
+    overflow: hidden;
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+    z-index: 10;
+    /* transition: none; handled by framer motion */
+}
+
+.app-shell.has-artifact-panel .app-shell__sidebar {
+    flex: 1 1 auto;
+}
+
+.app-shell__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 20px;
+    min-width: 0;
+    /* Ensure content doesn't force width */
+}
+
+/* Divider Logic */
+.app-shell__divider {
+    position: relative;
+    width: 6px;
+    /* Wider hit area for resizing */
+    margin: 0 -2px;
+    height: 100%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    flex-shrink: 0;
+    transition: background 0.3s ease;
+    cursor: col-resize;
+}
+
+.app-shell__divider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(99, 102, 241, 0.1) 20%,
+            rgba(99, 102, 241, 0.1) 80%,
+            transparent 100%);
+    transition: background 0.3s ease;
+}
+
+.app-shell__divider:hover::before,
+.app-shell__divider.is-resizing::before {
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(99, 102, 241, 0.4) 20%,
+            rgba(99, 102, 241, 0.4) 80%,
+            transparent 100%);
+    width: 2px;
+}
+
+.app-shell.is-resizing {
+    cursor: col-resize;
+}
+
+.app-shell.is-resizing * {
+    pointer-events: none;
+    /* Prevent text selection during resize */
+    user-select: none;
+}
+
+.app-shell.is-resizing .app-shell__divider {
+    pointer-events: auto;
+}
+
+.app-shell__toggle-handle {
+    position: absolute;
+    width: 24px;
+    height: 48px;
+    background: rgba(30, 35, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    z-index: 21;
+    padding: 0;
+}
+
+.app-shell__toggle-handle:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.handle-glow {
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    opacity: 0;
+    filter: blur(8px);
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.app-shell__toggle-handle:hover .handle-glow {
+    opacity: 0.3;
+}
+
+.app-shell__controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.app-shell__controls>* {
+    pointer-events: auto;
+}

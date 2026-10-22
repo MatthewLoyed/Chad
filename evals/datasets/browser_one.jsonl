@@ -1,0 +1,2 @@
+// Single browser canary for a one-shot judged live run.
+{"id": "hn_top_story", "prompt": "Go to Hacker News (news.ycombinator.com) and tell me the title of the #1 story on the front page and how many points it has.", "category": "agent", "expect": {"tools_any": ["delegate_to_browser_agent", "browser_navigate", "browser_snapshot"]}, "judge": ["tool_appropriateness", "response_grounded"], "note": "Cheapest browser golden canary: delegate + DOM read of HN #1."}

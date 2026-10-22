@@ -1,0 +1,68 @@
+/* Shared purple collapse rail — used by thinking, tools, subagents, stacks. */
+
+.collapse-rail {
+    position: relative;
+    /* Horizontal pad so the purple glow isn't clipped by parents */
+    padding-left: 10px;
+    margin-left: -2px;
+}
+
+.collapse-rail__body {
+    padding-left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* Wide hitbox; visible line via ::before */
+.collapse-rail__hit {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    z-index: 1;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.collapse-rail__hit::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        width 0.2s ease,
+        left 0.2s ease;
+}
+
+.collapse-rail__hit:hover::before,
+.collapse-rail__hit:focus-visible::before {
+    left: 8px;
+    width: 3px;
+    background: #A855F7;
+    box-shadow:
+        0 0 8px rgba(168, 85, 247, 0.85),
+        0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+.collapse-rail__hit:focus-visible {
+    outline: none;
+}
+
+.collapse-rail--inactive .collapse-rail__hit {
+    visibility: hidden;
+    pointer-events: none;
+}

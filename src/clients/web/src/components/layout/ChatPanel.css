@@ -1,0 +1,431 @@
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px 16px;
+    gap: 8px;
+}
+
+.chat-panel__top {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-panel__top-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    height: 56px;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.chat-panel__status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--chad-purple-light);
+    background: rgba(168, 85, 247, 0.1);
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chat-panel__top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.chat-panel__actions-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-panel__controls-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+}
+
+.chat-panel__action-toggle {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.4);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chat-panel__action-toggle:hover {
+    background: var(--chad-accent-faint);
+    color: var(--chad-purple-light);
+    border-color: rgba(168, 85, 247, 0.3);
+}
+
+.chat-panel__action-toggle.is-active {
+    background: var(--chad-accent-active);
+    color: var(--chad-purple-light);
+    border-color: var(--chad-accent-border);
+}
+
+.chat-panel__pipeline-toggle {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.3);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.chat-panel__pipeline-toggle:hover {
+    background: var(--chad-accent-faint);
+    color: var(--chad-purple-light);
+    border-color: var(--chad-accent-border);
+    transform: translateY(-1px);
+}
+
+.chat-panel__pipeline-toggle.is-active {
+    background: var(--chad-accent-active);
+    color: var(--chad-purple-light);
+    border-color: var(--chad-accent-border-hover);
+    box-shadow: 0 0 15px var(--chad-accent-glow);
+}
+
+.chat-panel__orb-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 8px;
+}
+
+.chat-panel__orb-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    margin-bottom: 4px;
+}
+
+.chat-panel__status {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Order Management */
+.chat-panel__top-tools { order: -1; }
+.chat-panel__top { order: 0; }
+.chat-panel__chat { order: 2; }
+.chat-panel__input { order: 3; }
+.control-dock { order: 4; }
+
+/* Splash Mode Overrides */
+.chat-panel--splash {
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding-bottom: 8vh; /* Lift it slightly above pure center */
+    overflow: hidden;
+}
+
+.chat-panel__content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Key fix: Fill available space to push input down */
+    min-height: 0; /* Important for scrollable children */
+}
+
+.chat-panel--splash .chat-panel__content {
+    width: 100%;
+    max-width: 800px;
+    margin: 0;
+    flex: 0 1 auto; /* Reset flex to allow centering */
+    min-height: auto;
+}
+
+.chat-panel__greeting {
+    font-size: 36px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 1);
+    margin: 40px 0 24px 0; /* 24px gap between greeting and skills */
+    font-family: 'Times New Roman', Times, serif;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+.chat-panel--splash .chat-panel__orb-section {
+    transform: scale(1.0);
+    margin: 0;
+    gap: 0;
+}
+
+.chat-panel__input {
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+}
+
+.chat-panel__input--splash {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 0;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    gap: 16px; /* Gap between ChatInput and SuggestedActions */
+}
+
+.chat-panel__input--splash .input-wrapper {
+    max-width: 800px;
+}
+
+.chat-panel--splash .suggested-actions {
+    justify-content: center;
+    order: 2; /* Ensure it stays below ChatInput if needed */
+}
+
+.chat-panel__chat {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   Offline / Standby Connection UI Components
+   ────────────────────────────────────────────────────────────────────────────── */
+
+.chat-panel__chat-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
+/* Subtle indeterminate progress bar for warm background SWR syncs */
+.chat-panel__sync-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 25;
+    overflow: hidden;
+    background: transparent;
+    pointer-events: none;
+}
+
+.chat-panel__sync-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 35%;
+    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.85), transparent);
+    animation: chat-panel-sync-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes chat-panel-sync-slide {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(350%);
+    }
+}
+
+
+/* Subtle connection status banner in Splash mode */
+.chat-panel__status-subtle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 20px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.status-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-pulse-dot.connecting {
+    background-color: var(--chad-purple-light);
+    box-shadow: 0 0 8px var(--chad-purple);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-pulse-dot.offline {
+    background-color: #fbbf24;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+.chat-panel__status-reconnect-btn {
+    background: transparent;
+    border: none;
+    color: var(--chad-purple-light);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    margin-left: 4px;
+}
+
+.chat-panel__status-reconnect-btn:hover {
+    opacity: 1;
+}
+
+.chat-panel__code-pill {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--chad-purple-light);
+    background: rgba(168, 85, 247, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(168, 85, 247, 0.15);
+}
+
+/* Sliding reconnection banner in active chat mode */
+.chat-panel__reconnect-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(255, 255, 255, 0.7);
+    z-index: 5;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.chat-panel__reconnect-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Reserved for the "error" state only — repeated failed reconnect attempts,
+   not the first one or two (those stay neutral, see ChatPanel.tsx isAlarmed). */
+.chat-panel__reconnect-content--alarmed .chat-panel__reconnect-icon,
+.chat-panel__reconnect-content--alarmed .chat-panel__reconnect-text {
+    color: rgba(251, 191, 36, 0.9);
+}
+
+.chat-panel__reconnect-icon {
+    flex-shrink: 0;
+}
+
+.chat-panel__reconnect-icon--spin {
+    animation: spin 2s linear infinite;
+}
+
+.chat-panel__reconnect-text {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.chat-panel__reconnect-subtext {
+    font-size: 11px;
+    font-family: monospace;
+    opacity: 0.8;
+}
+
+.chat-panel__banner-reconnect-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 12px;
+}
+
+.chat-panel__banner-reconnect-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.chat-panel__banner-reconnect-btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile (#191): full-width column (nav/rail go off-canvas), clear the
+   fixed hamburger toggle, and respect the iOS home-indicator safe area. */
+@media (max-width: 768px) {
+    .chat-panel {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: calc(56px + env(safe-area-inset-top, 0px));
+    }
+
+    .chat-panel__input {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .chat-panel__action-toggle,
+    .chat-panel__pipeline-toggle {
+        width: 40px;
+        height: 40px;
+    }
+}

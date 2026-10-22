@@ -1,0 +1,64 @@
+# OpenHands — Chad Code's coding harness sidecar (epic #569, foundational issue #447).
+#
+# Runs the OpenHands app (web UI + v1 REST API on :3001) pointed at your local
+# LM Studio. Chad dispatches coding tasks here via POST /api/v1/app-conversations,
+# hands off the UI, and polls results back. See README.md for the full story.
+#
+#   Setup:  copy .env.example -> .env and fill in the two machine-specific paths
+#   Start:  docker compose -f docker/openhands/docker-compose.yml up -d
+#   Check:  curl http://127.0.0.1:3001/       (200 = healthy)
+#   Stop:   docker compose -f docker/openhands/docker-compose.yml down
+#
+# NOTE ON PORT BINDING: unlike SearXNG (bound to 127.0.0.1), the OpenHands app must be
+# reachable from the *sibling* agent-server sandbox containers it spawns, via
+# `host.docker.internal:${OH_PORT}`. A 127.0.0.1-only bind is NOT reachable from those
+# containers, so the port is published on 0.0.0.0. It's a local dev coding tool — firewall
+# the port off your LAN if that matters to you.
+#
+# THE OH_WEB_URL FIX (root-caused 2026-07-20, see README + #447): OpenHands' legacy
+# `get_default_web_url()` assumes HTTPS whenever WEB_HOST is set, so the agent-server's
+# injected MCP client dials `https://host.docker.internal:3001/mcp/mcp` while the app
+# serves plain HTTP -> `[SSL] record layer failure` -> 500 -> start-task ERROR.
+# Setting OH_WEB_URL (parsed via `from_env(AppServerConfig, 'OH')`) forces the http
+# scheme + correct port for both the MCP endpoint and the event webhooks.
+
+services:
+  openhands:
+    image: docker.openhands.dev/openhands/openhands:${OH_IMAGE_TAG:-latest}
+    container_name: chad-openhands
+    restart: unless-stopped
+    ports:
+      # host 0.0.0.0:${OH_PORT} -> container 3000 (see PORT BINDING note above)
+      - "${OH_PORT:-3001}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # --- LLM backend (local, via LM Studio by default) ---
+      - LLM_API_KEY=${OH_LLM_API_KEY:-lmstudio}
+      - LLM_MODEL=${OH_LLM_MODEL:-openai/qwen/qwen3.6-35b-a3b}
+      - LLM_BASE_URL=${OH_LLM_BASE_URL:-http://host.docker.internal:1234/v1}
+      # --- THE FIX: force http scheme + correct port for MCP + webhooks ---
+      - OH_WEB_URL=http://host.docker.internal:${OH_PORT:-3001}
+      - WEB_HOST=host.docker.internal:${OH_PORT:-3001}
+      # --- sandbox / workspace behavior ---
+      - SANDBOX_VOLUMES=${OH_SANDBOX_VOLUMES}
+      - INIT_GIT_IN_EMPTY_WORKSPACE=1
+      - SANDBOX_LOCAL_RUNTIME_URL=http://host.docker.internal
+      - USE_HOST_NETWORK=false
+      - RUN_AS_OPENHANDS=true
+      - OPENHANDS_USER_ID=42420
+      - SANDBOX_USER_ID=0
+      - WORKSPACE_BASE=/opt/workspace_base
+      # Grace period before the app reads sandbox state — works around a startup race
+      # where exposed_urls is read before the agent-server reaches RUNNING (empty-detail
+      # start-task ERROR / "AssertionError: exposed_urls is not None"). See README.
+      - SANDBOX_STARTUP_GRACE_SECONDS=${OH_SANDBOX_GRACE:-30}
+      # --- persistence ---
+      - FILE_STORE=local
+      - FILE_STORE_PATH=/.openhands
+      - LOG_ALL_EVENTS=true
+    volumes:
+      # Lets OpenHands spawn sibling agent-server sandbox containers.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persisted settings + conversation DB (machine-specific host path from .env).
+      - ${OH_CONFIG_DIR}:/.openhands

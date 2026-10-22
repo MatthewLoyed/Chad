@@ -1,0 +1,153 @@
+.token-usage-ticker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    pointer-events: auto;
+    margin-bottom: 8px;
+    margin-left: 10px; /* Subtle indent */
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.token-usage-ticker:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+.ticker-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-icon {
+    opacity: 0.6;
+    color: #a78bfa; /* Light purple hue */
+}
+
+.stat-label {
+    opacity: 0.5;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    font-variant-numeric: tabular-nums;
+}
+
+.ticker-divider {
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ticker-stat--reasoning .stat-icon {
+    color: #fca5a5; /* Soft red/rose hue */
+}
+
+.ticker-stat--total {
+    background: rgba(167, 139, 250, 0.1);
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 4px;
+}
+
+.stat-value-total {
+    font-weight: 700;
+    color: #c084fc; /* Brighter purple */
+    font-variant-numeric: tabular-nums;
+}
+
+/* Limit Visualizer styling */
+.limit-visual {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.limit-track {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.limit-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #a855f7);
+    border-radius: 2px;
+}
+
+.fill-warning {
+    background: linear-gradient(90deg, #eab308, #f97316);
+}
+
+.fill-danger {
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+.limit-text {
+    font-weight: 600;
+    opacity: 0.8;
+    min-width: 28px;
+}
+
+/* Handle theme light variations if applicable (though primarily dark mode app) */
+body.light-mode .token-usage-ticker {
+    background: rgba(0, 0, 0, 0.03);
+    color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+body.light-mode .ticker-stat--total {
+    background: rgba(167, 139, 250, 0.15);
+}
+body.light-mode .stat-value-total {
+    color: #7c3aed;
+}
+
+/* Standby / Null state styling */
+.token-usage-ticker--standby {
+    opacity: 0.45;
+    background: rgba(255, 255, 255, 0.01);
+    border-color: rgba(255, 255, 255, 0.03);
+    box-shadow: none;
+}
+.token-usage-ticker--standby .stat-icon {
+    color: rgba(255, 255, 255, 0.3);
+}
+.token-usage-ticker--standby .ticker-stat--total {
+    background: rgba(255, 255, 255, 0.02);
+}
+.token-usage-ticker--standby .stat-value-total {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.stat-value-est {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.45);
+    margin-left: 2px;
+}
+
+/* Mobile (#193): the token telemetry ticker is desktop diagnostics clutter
+   that wastes vertical space on a phone. Hide it on small screens. */
+@media (max-width: 768px) {
+    .token-usage-ticker {
+        display: none;
+    }
+}

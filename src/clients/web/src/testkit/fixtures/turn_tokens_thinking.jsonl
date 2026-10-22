@@ -1,0 +1,16 @@
+{"ch":"thinking","frame":{"type":"run_started","run_id":"turn_42","thread_id":"turn_42"}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"Let","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" me","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" check","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" your","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" inbox","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" and","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" turn","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" on","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" the","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" lamp.","append":true,"agent_name":null,"parent_id":null}}
+{"ch":"thinking","frame":{"type":"activity_snapshot","message_id":"turn_42_plan","activity_type":"PLAN","content":{"steps":[{"id":"s1","description":"List unread emails","tools":["list_emails"],"status":"pending"},{"id":"s2","description":"Turn on the lamp","tools":["control_device"],"status":"pending"}],"goal":"Check inbox and turn on the lamp"},"replace":true}}
+{"ch":"thinking","frame":{"type":"activity_snapshot","message_id":"turn_42_1718300001000","activity_type":"PLAN","content":{"steps":[{"id":"s1","description":"List unread emails","tools":["list_emails"],"status":"completed"},{"id":"s2","description":"Turn on the lamp","tools":["control_device"],"status":"pending"}],"goal":"Check inbox and turn on the lamp"},"replace":true}}
+{"ch":"token","frame":{"prompt_tokens":1840,"completion_tokens":96,"total_tokens":1936,"reasoning_tokens":64,"context_window":200000,"speed":42.5,"ttft":0.31,"stop_reason":"end_turn","estimated_prompt_tokens":null}}
+{"ch":"thinking","frame":{"type":"run_finished","run_id":"turn_42","response":"Your inbox has 3 unread emails and the lamp is on."}}
+{"ch":"state","state":"ready"}

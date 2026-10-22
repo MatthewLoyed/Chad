@@ -1,0 +1,108 @@
+.skills-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    gap: 20px;
+    min-height: 360px;
+}
+
+.skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 280px);
+}
+
+.skills-card {
+    text-align: left;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.skills-card:hover,
+.skills-card.is-active {
+    border-color: rgba(var(--chad-purple-rgb), 0.45);
+    background: rgba(var(--chad-purple-rgb), 0.06);
+}
+
+.skills-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.skills-card__name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #f3f4f6;
+}
+
+.skills-card__desc {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.skills-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.skills-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.skills-preview {
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 16px;
+    overflow: auto;
+    max-height: calc(100vh - 280px);
+}
+
+.skills-preview__placeholder {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.skills-preview__body {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.78);
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.skills-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 48px 20px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .skills-layout {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,146 @@
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lesson-card {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+}
+
+.lesson-card__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.lesson-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lesson-card__badge--user {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: rgba(129, 140, 248, 1);
+}
+
+.lesson-card__badge--tools {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: rgba(52, 211, 153, 1);
+}
+
+.lesson-card__badge--question {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: rgba(251, 191, 36, 1);
+}
+
+.lesson-card__text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 10px;
+}
+
+.lesson-card__why {
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 12px;
+}
+
+.lesson-card__why-label {
+    display: inline-block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-right: 6px;
+}
+
+.lesson-card__meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.lesson-card__metric {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.lesson-card__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.lesson-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lesson-btn--accept {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: rgba(52, 211, 153, 1);
+}
+
+.lesson-btn--accept:hover {
+    background: rgba(16, 185, 129, 0.25);
+}
+
+.lesson-btn--dismiss {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.lesson-btn--dismiss:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.lesson-card__answer {
+    display: flex;
+    gap: 8px;
+}
+
+.lesson-card__answer-input {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+}
+
+.lesson-card__answer-input:focus {
+    outline: none;
+    border-color: rgba(99, 102, 241, 0.5);
+}

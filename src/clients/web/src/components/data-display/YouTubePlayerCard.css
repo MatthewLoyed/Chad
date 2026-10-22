@@ -1,0 +1,164 @@
+.youtube-player-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 640px;
+    margin: 12px 0;
+    border-radius: 12px;
+    background: rgba(22, 22, 26, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.youtube-player-card.preview:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.1), 0 0 12px rgba(239, 68, 68, 0.05);
+    transform: translateY(-2px);
+}
+
+/* Minimal/Muted Header Bar */
+.youtube-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 12px;
+    background: rgba(10, 10, 12, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.youtube-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.youtube-brand-icon {
+    color: #ef4444;
+    filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+    flex-shrink: 0;
+}
+
+.youtube-video-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(243, 244, 246, 0.90);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Premium Close Button */
+.youtube-close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(243, 244, 246, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.youtube-close-button:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+/* Widescreen Body Area (16:9 Aspect Ratio) */
+.youtube-card-body {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    overflow: hidden;
+}
+
+.youtube-thumbnail-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.youtube-video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.youtube-thumbnail-wrapper:hover .youtube-video-thumbnail {
+    transform: scale(1.03);
+}
+
+/* Glassmorphism Hover Overlay */
+.youtube-hover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 12, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.youtube-thumbnail-wrapper:hover .youtube-hover-overlay {
+    background: rgba(10, 10, 12, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Glowing Play Button */
+.youtube-play-btn-glow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    transform: scale(0.9);
+    opacity: 0.85;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.youtube-play-icon {
+    margin-left: 3px; /* Offset to visually center-align play arrow */
+}
+
+.youtube-thumbnail-wrapper:hover .youtube-play-btn-glow {
+    transform: scale(1.1);
+    opacity: 1;
+    background: #ef4444;
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.9), 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+/* Active Iframe Container */
+.youtube-iframe-wrapper {
+    width: 100%;
+    height: 100%;
+}
+
+.youtube-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

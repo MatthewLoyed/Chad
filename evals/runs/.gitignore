@@ -1,0 +1,24 @@
+# Transient eval run artifacts — not source
+*.json
+*.md
+*.log
+*.out
+*.err
+*.png
+*.py
+*.localbak
+
+!.gitignore
+
+# Curated proof-of-concept trajectories (keep in git)
+!proof/
+!proof/**
+
+# Scratch dumps under proof/ (persona extractions, etc.) — not curated
+proof/*.txt
+proof/persona_*
+
+# Longitudinal eval history — the ONE durable artifact here. Append-only, one compact
+# record per run. Tracked in git on purpose: "are we getting better?" is unanswerable if
+# the baseline is wiped every time the transient run_*.json files are cleaned up.
+!history.jsonl

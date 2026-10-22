@@ -1,0 +1,289 @@
+/* MarkdownMessage.css */
+.markdown-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: inherit;
+    overflow-wrap: break-word;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.markdown-content>*:first-child {
+    margin-top: 0;
+}
+
+.markdown-content>*:last-child {
+    margin-bottom: 0;
+}
+
+/* Headers */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.markdown-content h1 {
+    font-size: 1.5em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+    font-size: 1.3em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.3em;
+}
+
+.markdown-content h3 {
+    font-size: 1.1em;
+}
+
+.markdown-content h4 {
+    font-size: 1em;
+}
+
+/* Lists */
+.markdown-content ul,
+.markdown-content ol {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-left: 1.5em;
+}
+
+.markdown-content li {
+    margin-top: 0.25em;
+}
+
+/* Links */
+.markdown-link {
+    color: #60a5fa;
+    /* blue-400 */
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.markdown-link:hover {
+    border-bottom-color: #60a5fa;
+}
+
+/* Inline citation markers ([1]-style, linked to the Sources footer entries) */
+.citation-marker {
+    position: relative;
+    display: inline-block;
+    margin: 0 1px;
+}
+
+.citation-marker__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    background: rgba(129, 140, 248, 0.15);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    border-radius: 999px;
+    color: #a5b4fc;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: super;
+    transition: all 0.15s ease;
+}
+
+.citation-marker__btn:hover {
+    background: rgba(129, 140, 248, 0.3);
+    border-color: rgba(129, 140, 248, 0.5);
+    color: #fff;
+}
+
+.citation-marker__tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%) translateY(4px);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 240px;
+    padding: 6px 10px;
+    background: #1e1e2a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 20;
+}
+
+.citation-marker__btn:hover+.citation-marker__tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.citation-marker__tooltip-title {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.citation-marker__tooltip-domain {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 11px;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+    border-left: 4px solid rgba(255, 255, 255, 0.2);
+    padding-left: 1em;
+    margin: 1em 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+/* Code Blocks */
+.code-block-wrapper {
+    margin: 1em 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1e1e1e;
+    /* Match vscDarkPlus background */
+}
+
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px 4px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    font-family: monospace;
+}
+
+.code-block-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.code-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9em;
+    font-family: monospace;
+    text-transform: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.code-action-btn:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.code-copy-btn.copied,
+.code-action-btn:has(svg[data-check]) {
+    color: #22c55e;
+}
+
+.code-block-collapsed {
+    padding: 10px 16px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: monospace;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.15s;
+}
+
+.code-block-collapsed:hover {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Inline Code */
+.inline-code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Tables */
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+/* Artifact Download Button */
+.download-button-artifact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #a855f7, #7c3aed); /* Chad Purple Gradient */
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 8px 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.download-button-artifact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
+    filter: brightness(1.1);
+}
+
+.download-button-artifact:active {
+    transform: translateY(0);
+}

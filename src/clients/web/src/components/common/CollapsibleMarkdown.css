@@ -1,0 +1,21 @@
+.collapsible-markdown {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.collapsible-markdown__toggle {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(99, 102, 241, 0.9);
+    cursor: pointer;
+}
+
+.collapsible-markdown__toggle:hover {
+    color: rgba(129, 140, 248, 1);
+    text-decoration: underline;
+}

@@ -1,0 +1,5 @@
+# Orpheus TTS via LM Studio (optional — install when using tts.engine: orpheus)
+# Install via: pip install -r requirements-orpheus.txt
+snac>=1.2.1
+torch>=2.0.0
+requests>=2.25.0

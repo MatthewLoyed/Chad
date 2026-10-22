@@ -1,0 +1,13 @@
+{"ch":"thinking","frame":{"type":"run_started","run_id":"turn_77","thread_id":"turn_77"}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"I'll","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" search","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" the web.","append":true}}
+{"ch":"thinking","frame":{"type":"tool_start","correlation_id":"tc1","name":"web_search","params":{"query":"answer to everything"},"display_text":"Searching the web..."}}
+{"ch":"thinking","frame":{"type":"tool_end","correlation_id":"tc1","name":"web_search","success":true,"result":"42"}}
+{"ch":"thinking","frame":{"type":"reasoning","text":"Found","append":true}}
+{"ch":"thinking","frame":{"type":"reasoning","text":" it.","append":true}}
+{"ch":"caption","text":"The answer ","append":true}
+{"ch":"caption","text":"is 42.","append":true}
+{"ch":"token","frame":{"prompt_tokens":1200,"completion_tokens":40,"total_tokens":1240,"reasoning_tokens":20,"context_window":200000,"speed":50.0,"ttft":0.2,"stop_reason":"end_turn","estimated_prompt_tokens":null}}
+{"ch":"thinking","frame":{"type":"run_finished","run_id":"turn_77","response":"The answer is 42."}}
+{"ch":"state","state":"ready"}

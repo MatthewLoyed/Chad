@@ -1,0 +1,139 @@
+.ws-rail {
+    width: 60px;
+    height: 100vh;
+    flex-shrink: 0;
+    background: #08090e;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 14px;
+    gap: 6px;
+    z-index: 120;
+}
+
+.ws-rail__buddy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.ws-rail__group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.ws-rail__spacer {
+    flex: 1;
+}
+
+.ws-rail__item {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.ws-rail__item:hover {
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(1.08);
+}
+
+.ws-rail__item:active {
+    transform: scale(0.92);
+}
+
+.ws-rail__item.is-active {
+    color: #fff;
+}
+
+.ws-rail__active-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(var(--chad-purple-rgb), 0.9), rgba(112, 0, 255, 0.85));
+    box-shadow: 0 4px 16px rgba(var(--chad-purple-rgb), 0.4);
+    z-index: 0;
+}
+
+.ws-rail__item svg {
+    position: relative;
+    z-index: 1;
+}
+
+.ws-rail__item--ghost {
+    width: 40px;
+    height: 40px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.ws-rail__item--ghost.is-active-ghost {
+    color: #fff;
+    background: rgba(var(--chad-purple-rgb), 0.2);
+}
+
+/* Tooltip — appears on hover to the right of the rail */
+.ws-rail__tooltip {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    background: #1b1e29;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 5px 9px;
+    border-radius: 7px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+}
+
+.ws-rail__item:hover .ws-rail__tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Off-canvas drawer on narrow viewports (#191) — slides in with NavSidebar,
+   toggled via .chad-mobile-nav-toggle / .chad-root.mobile-nav-is-open. The
+   slide transform lives on the .chad-rail-wrapper (in App.tsx), not on
+   .ws-rail itself, because framer-motion keeps its own inline `transform`
+   style on .ws-rail (its mount-in animation) which would otherwise win. */
+@media (max-width: 768px) {
+    .ws-rail {
+        height: 100%;
+        padding-top: calc(12px + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .ws-rail__item {
+        width: 48px;
+        height: 48px;
+    }
+
+    .ws-rail__item--ghost {
+        width: 46px;
+        height: 46px;
+    }
+
+    /* No hover on touch devices — tooltips would stick open. */
+    .ws-rail__tooltip {
+        display: none;
+    }
+}

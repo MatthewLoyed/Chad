@@ -1,0 +1,76 @@
+.dash-lessons-card {
+    margin-bottom: 20px;
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.dash-lessons-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    text-align: left;
+}
+
+.dash-lessons-card__header:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.dash-lessons-card__icon {
+    color: rgba(129, 140, 248, 1);
+    flex-shrink: 0;
+}
+
+.dash-lessons-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.dash-lessons-card__count {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.35);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+
+.dash-lessons-card__chevron {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.45);
+    transition: transform 0.2s ease;
+}
+
+.dash-lessons-card__chevron--open {
+    transform: rotate(180deg);
+}
+
+.dash-lessons-card__body {
+    padding: 0 16px 16px;
+}
+
+.dash-lessons-card__hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0 0 12px;
+    line-height: 1.45;
+}
+
+.dash-lessons-card__empty {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+    line-height: 1.5;
+}

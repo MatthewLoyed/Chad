@@ -1,0 +1,67 @@
+.push-banner {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom) + 88px); /* above composer */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-2, #1e2028);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    max-width: min(360px, calc(100vw - 32px));
+    animation: push-banner-in 0.25s ease;
+}
+
+@keyframes push-banner-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.push-banner__icon {
+    color: var(--accent, #7c6aff);
+    flex-shrink: 0;
+}
+
+.push-banner__text {
+    font-size: 13px;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    line-height: 1.4;
+    flex: 1;
+}
+
+.push-banner__enable {
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--accent, #7c6aff);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.push-banner__enable:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.push-banner__dismiss {
+    background: none;
+    border: none;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.push-banner__dismiss:hover {
+    color: var(--text-primary, #fff);
+}

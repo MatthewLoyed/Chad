@@ -1,0 +1,49 @@
+"""
+Example native tool — copy to src/tools/<category>/your_tool.py and rename the class.
+
+Checklist:
+  [ ] format_action()  (or @tool_display) — backend label for the chat stream
+  [ ] tool-ui.tsx      — TOOL_METADATA + resolveToolUI() branch if params matter
+  [ ] get_schema() + execute()
+  [ ] If parameters include nested array/object shapes, add a case to
+      tests/unit/test_tool_schema_fidelity.py (see infrastructure/tools/README.md)
+"""
+
+from typing import Any, Dict, Optional
+
+from src.tools.base_tool import BaseTool
+from src.tools.display_helpers import truncate_label
+# from src.core.tools.formatter import tool_display  # alternative to format_action
+
+
+# @tool_display('Doing something with {query}...')
+class ExampleTool(BaseTool):
+    name = "example_tool"
+    description = "One-line description for the LLM tool picker."
+    category = "system"
+    is_side_effecting = False
+
+    def format_action(self, params: Dict[str, Any]) -> str:
+        query = truncate_label(str(params.get("query") or ""))
+        if query:
+            return f'Searching example index for "{query}"'
+        return "Searching example index"
+
+    def get_schema(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "What to look up.",
+                    },
+                },
+                "required": ["query"],
+            },
+        }
+
+    async def execute(self, query: str, **kwargs) -> Dict[str, Any]:
+        return {"success": True, "result": f"Found results for {query}"}

@@ -1,0 +1,1017 @@
+supervisor: lfm2.5-24b-a2b
+active_model: lfm2.5-24b-a2b
+# Opt-in cloud catalog for the Settings model picker. Selecting one of these sets
+# local_models.use_local: false — cloud is never the silent default (#448).
+available_cloud_models:
+- id: gemini-3.1-flash-lite-preview
+  name: Gemini 3.1 Flash Lite
+- id: gemini-3-pro-preview
+  name: Gemini 3 Pro
+- id: gemini-2.5-flash
+  name: Gemini 2.5 Flash
+- id: gemini-2.5-pro
+  name: Gemini 2.5 Pro
+- id: gemini/gemini-2.0-flash
+  name: Gemini 2.0 Flash
+- id: groq/llama-3.3-70b-versatile
+  name: Llama 3.3 (Groq)
+- id: anthropic/claude-3-5-sonnet-20240620
+  name: Claude 3.5 Sonnet
+# Category model map. With local_models.use_local: true (the committed default), the
+# router ignores this block and uses local_models.active_model / category_models.
+# These entries are the fallback when use_local is false and no cloud model was
+# picked — still local LM Studio IDs so a fresh clone never silently routes to Gemini.
+# Pick a cloud id from available_cloud_models (or preferences) to opt into cloud.
+# gemini_live adapter is DEPRECATED — see models/gemini_live.py.
+models:
+  web:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.7
+  system:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.3
+  chat:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.9
+  agent:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.7
+  voice:
+    type: litellm
+    model: qwen/qwen3.5-9b
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.7
+  autonomous:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.1
+  router:
+    type: litellm
+    model: qwen/qwen3.5-9b
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+  thinking:
+    type: litellm
+    model: qwen/qwen3.5-9b
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+  text:
+    type: litellm
+    model: google/gemma-4-26b-a4b-qat
+    base_url: http://localhost:1234/v1
+    api_key: lm-studio
+    temperature: 0.7
+caching:
+  enabled: false
+  ttl_minutes: 300
+  refresh_on_use: true
+  min_prefix_tokens: 32768
+audio:
+  input_sample_rate: 16000
+  output_sample_rate: 24000
+  channels: 1
+  chunk_size: 1024
+  format: paInt16
+  input_device_index: null          # Set to your mic's device index (run diagnose_audio.py to find it)
+  preferred_device_name: null       # Optional: set to your preferred mic name for auto-selection
+sounds:
+  sound_urls:
+    # Short wake-confirmation ding (0.32s), trimmed from the attack of
+    # mixkit-interface-hint-notification-911.wav (still present if you want it
+    # back). The original is a 1.7s sustained chime, which the recorder heard as
+    # your command and end-pointed on — the wake/earcon spam loop in #654. Keep
+    # this short, and keep voice_mode.earcon_guard_seconds >= its length.
+    activation: activation_short.wav
+    notification: new-notification.wav
+    startup: success.wav
+    success: success.wav
+    deactivate: deactivate.wav
+    thinking: thinking.wav
+wake_word:
+  # openWakeWord pretrained model name, used when keyword_path is unset.
+  keyword: hey_jarvis
+  # Custom trained "Hey Chad" model (see #649); overrides `keyword` above.
+  keyword_path: src/assets/hey_chad.onnx
+  # Detection confidence threshold (0-1, higher = fewer false positives).
+  # 0.45 allows reliable recognition of natural speech cadences, slight pauses
+  # between words, and headset/Bluetooth audio, while remaining >400x above ambient noise.
+  threshold: 0.45
+session:
+  timeout_seconds: 10.0
+  followup_timeout_seconds: 6.0
+  # DEPRECATED: live voice mode streamed mic audio to Gemini Live (cloud). No longer
+  # used — keep false. Hands-free use goes through the discrete local voice pipeline
+  # (voice_mode.* below). See models/gemini_live.py and docs/features/VOICE_MODE.md.
+  default_voice_mode: false
+enabled_tool_categories:
+- web
+- system
+- custom
+- visual
+visual:
+  # Kroki diagram server. Public instance works out of the box; self-host for privacy:
+  # docker run -p 8000:8000 yuzutech/kroki
+  kroki_url: https://kroki.io
+  # Typst CLI binary or full path (winget install Typst.Typst)
+  typst_bin: typst
+  # Marp CLI invocation. Default uses npx; override after global install:
+  # visual.marp_command: ["marp"]
+  marp_command: null
+  # Presenton AI deck generator (optional sidecar — issue #350). Unset = tool disabled.
+  # Start: docker compose -f docker/chad-services.yml --profile presenton up -d
+  # presenton_url: http://127.0.0.1:5000
+  presenton_url: null
+  # LM Studio / OpenAI-compatible URL the Presenton *container* uses (host.docker.internal)
+  presenton_llm_url: http://host.docker.internal:1234/v1
+  # Model id for Presenton deck generation — editable in Settings → Services
+  presenton_model: null
+  # false = sync v1 API (self-host default); true = v3 async + poll (cloud / long jobs)
+  presenton_use_async: false
+  presenton_poll_interval_seconds: 5
+  presenton_generation_timeout_seconds: 300
+  # ComfyUI local image generation server (http://127.0.0.1:8188)
+  comfyui_url: http://127.0.0.1:8188
+  comfyui_autostart: true
+
+script_runner:
+  scripts_folder: scripts
+  auto_execute_threshold: 70.0
+  confirm_threshold: 50.0
+file_opener:
+  auto_open_threshold: 70.0
+  confirm_threshold: 50.0
+file_writer:
+  open_after_write: true
+  editor: notepad.exe
+  blocked_extensions:
+  - .exe
+  - .bat
+  - .cmd
+  - .ps1
+  - .vbs
+  - .js
+  - .msi
+  - .dll
+dev_debug: false
+ui:
+  default_turn_mode: auto
+intent_router:
+  enabled: true
+  model: google/gemma-3-1b
+  skip_warmup: true
+  # Warm router when GUI connects (auto mode). Independent of skip_warmup (server-boot only).
+  preload_on_connect: false
+  unload_after_use: false
+  fallback_mode: agent
+  strict_model: true
+logging:
+  level: INFO
+tools:
+  decompose_queries: true
+  rag_tool_limit: 12
+  # --- HARNESS BOUNDARIES (tool side) -----------------------------------------
+  # Every boundary the model can hit is declared in src/core/tools/limits.py.
+  # `python -m src.core.tools.limits` prints all of them with live values.
+  # Default per-tool wall-clock budget. Per-tool exceptions live in
+  # src/core/tools/tool_timeouts.py. Was 60s (a cloud-API number) — too tight for
+  # local inference, and it was killing work that was about to succeed.
+  tool_timeout_default_s: 120
+  # Identical failing calls (same tool, same args) before the harness refuses.
+  # One of the few honest ceilings: a byte-identical repeat is futile by definition.
+  # 1 is probe-validated (#317) — first-failure blocking breaks browser loops
+  # faster than a two-strike rule.
+  repeat_failure_block_after: 1
+  # Identical successful calls (same tool, same args) before the harness refuses.
+  # The result is already in context — 3 is probe-validated to block cycling loops.
+  repeat_success_block_after: 3
+  # Context budget. Failed results are capped far tighter than successful ones —
+  # a failure needs its class and next actions, not its stack trace.
+  tool_output_max_chars: 8000
+  failed_output_max_chars: 1800
+  # Cosmetic GUI status-line filler (src/core/wait_theater/narrator.py). Off (refs #592):
+  # it opportunistically calls the 9B tool selector "if already resident" for pure UI
+  # decoration, unrelated to the actual turn. That check-then-call is a TOCTOU race
+  # against real model swaps, and it was the recurring cause behind every one of this
+  # issue's investigations (LM Studio's Auto-Evict killing a load the real tool selector
+  # was waiting on). Not worth the risk for filler text.
+  wait_narrator_enabled: false
+  # Web search backend for the `web_search` tool. `searxng` (default) uses the
+  # self-hosted metasearch instance (docker/searxng/ — unlimited/free, no API key) and
+  # falls back through whichever of Serper/Tavily/Brave have a key configured (all
+  # opt-in); `brave`/`serper`/`tavily` use only that one backend; `all` is API keys
+  # ONLY (no SearXNG, no Playwright) — round-robins across whichever of Serper/Tavily/
+  # Brave are configured, spreading usage across keys/quotas instead of always hitting
+  # the same one first. See docs/features/WEB_SEARCH.md.
+  search_backend: searxng
+  searxng_url: http://127.0.0.1:8080
+  # Max queries per `web_search` call (batch cap). Research agent prompts target this size.
+  web_search_max_queries: 10
+  # Default pages fetched+extracted per query (1-5; override per call via results_per_query).
+  web_search_results_per_query: 3
+  # Tier-2 fetch: headless Playwright when fetch_html + extract score is low (JS SPAs).
+  web_search_playwright_fallback: true
+  # Search-step fallback: scrape Startpage in headless Chromium when SearXNG JSON is empty.
+  web_search_playwright_search_fallback: true
+  llm_selector_model: qwen2.5-3b-instruct
+  llm_selector_fail_fast: true
+  # Hybrid selection: deterministic RAG shortlist -> 3B picks from it (vs 3B over the full
+  # catalog). Narrows run-to-run variance without dropping plausibly-needed tools.
+  # Env CHAD_HYBRID_SELECTION=0/1 overrides this for A/B benchmarking.
+  hybrid_selection: true
+  hybrid_shortlist_k: 20
+  # Tool RAG backend: 'local' (default) uses local SQLite + numpy cosine similarity over available_tools.
+  # 'supabase' uses remote Supabase pgvector RPC. Local-first avoids cloud sync drift and latency.
+  rag_backend: local
+  # Pin the configured selector model instead of silently reusing whatever LM Studio has loaded.
+  llm_selector_strict_model: true
+  # Unload the selector right after tool pick. Formerly true when running 9B + 26B,
+  # but with lightweight 3B selector (~2.1GB) and Bonsai 27B (~4.7GB), both models
+  # comfortably fit in 16GB VRAM (<7GB total). Keeping selector resident eliminates
+  # sequential unload stalls before supervisor generation and reload latency on next turn.
+  llm_selector_unload_after_select: false
+  # Explicit context length requested when JIT-loading the selector model in LM Studio.
+  # Without this, LM Studio uses whatever context length was last saved for that model in
+  # its UI (sometimes a small default) — the full-catalog fallback (hybrid shortlist empty)
+  # plus 2-turn history can exceed a small default and gets rejected with HTTP 400, which
+  # fail-fast mode then turns into a full turn abort. 32768 covers the largest catalog comfortably.
+  llm_selector_context_length: 32768
+  # Deterministic syntax gates on write_file / build_html_file (ast.parse, HTML balance,
+  # node --check, etc.). Rejects invalid code before save so the agent can self-correct.
+  code_verify_enabled: true
+  # Computer-use safeguards (issue #279 / #328): browser_agent approval dial.
+  # browser_approval_mode: allow_all | model_decide | ask_all
+  #   allow_all     — no approval pauses (good for testing / trusted sessions)
+  #   model_decide  — pause on writes + stricter off-allowlist clicks (default smart mode)
+  #   ask_all       — pause on every browser_* action including navigate/snapshot
+  browser_approval_mode: model_decide
+  # Domains here (or their subdomains) are treated as trusted for browser_agent;
+  # off-list destinations get stricter treatment under model_decide (any click/type/key-press
+  # pauses for approval, not just ones that look like a write). See browser_safety.py.
+  browser_write_allowlist:
+    - supabase.com
+    - discord.com
+    - github.com
+  # Kill-switch: hard cap on browser_* MCP calls per conversation before
+  # browser_agent is forced to stop and report back instead of continuing.
+  browser_max_actions_per_task: 60
+  # Vision-assist fallback: when a Playwright call fails, use a local vision model
+  # to ground coordinates. Disabled by default to avoid JIT-loading Qwen-VL-8B.
+  browser_vision_assist_enabled: false
+  browser_vision_assist_model: qwen/qwen3-vl-8b
+  # Chad Code — the OpenHands-backed coding harness (dispatch_coding_task / check_coding_task,
+  # epic #569). These override the code defaults in src/tools/dev/openhands_dispatch.py.
+  # LiteLLM model id the in-container agent uses (served by LM Studio on :1234). MoE 35B-a3b
+  # is the default; qwen/qwen3-coder-30b is the proven alternative (see docs/architecture/CHAD_CODE.md).
+  openhands_coder_model: openai/qwen/qwen3.6-35b-a3b
+  # Default agent iteration cap per dispatched job (overridable per call via max_iterations).
+  openhands_max_iterations: 30
+  # Legacy Qwen text-parser baseline. Models whose endpoint returns structured
+  # tool_calls use the exact-ID overrides below. See chad_headless_runner.py.
+  openhands_native_tool_calling: false
+  # LFM's LM Studio endpoint returns structured tool_calls; the Qwen text-mode
+  # baseline above remains unchanged. Keys are the exact LiteLLM model IDs.
+  openhands_native_tool_calling_by_model:
+    openai/lfm2.5-24b-a2b: true
+  # Give the agent OpenHands' native task_tracker tool (a plan/checklist it maintains and
+  # checks off). OFF by default: A/B on Tier-2 (evals/runs/chad_code) showed it adds ~33%
+  # latency + ~12K tokens with NO outcome gain at that scale — the planning tax only pays off
+  # on genuinely large multi-step tasks. Turn on for those. Issue #574.
+  openhands_use_task_tracker: false
+  # Sub-agent delegation via OpenHands' TaskToolSet: the coder can spawn a sub-agent that gets
+  # its OWN conversation context and returns only a result, so a long exploration doesn't
+  # pollute the parent's history (the same lever Chad's own subagents pull). NOTE: this is
+  # TaskToolSet — DelegateTool is deprecated in SDK 1.16.0 and removed in 1.23.0.
+  # OFF pending an A/B: a 3B-active MoE orchestrating sub-agents is unproven. Issue #358.
+  openhands_use_subagents: false
+  # Context condenser (LLMSummarizingCondenser): once history exceeds max_size events, older
+  # events are summarized so a long job can't die of context overflow. OFF pending an A/B —
+  # condensing too eagerly can quietly make the coder dumber on multi-file work by summarizing
+  # away a file it still needs. keep_first pins the opening events so the brief itself is never
+  # summarized away. Issue #358.
+  openhands_use_condenser: false
+  openhands_condenser_max_size: 240
+  openhands_condenser_keep_first: 2
+  # Production critic (EmptyPatchCritic): a structural verification signal for ordinary coding
+  # jobs — flags a run that finishes with no git diff (agent claimed done but changed nothing)
+  # and gives it one automatic retry via IterativeRefinementConfig. Distinct from the dev-only
+  # ChadEvalCritic (gated on CHAD_EVAL_SUITE, issue #358's self-eval loop). OFF pending an A/B
+  # (adds a critic pass per finish/message event). Issue #584.
+  openhands_use_critic: false
+  # MCP servers given to the coder: Context7 (hosted docs lookup) and live CHAD_EVENT: streaming
+  # default ON (cheap, no auth needed); GitHub MCP defaults OFF (needs a real
+  # GITHUB_PERSONAL_ACCESS_TOKEN — see docker/openhands/README.md). Issue #584.
+  openhands_context7_mcp: true
+  openhands_github_mcp: false
+  openhands_stream_events: true
+  # Stopped job containers older than this are swept before each new dispatch (they're kept,
+  # not --rm'd, so check_coding_task can read logs — this bounds the buildup). Issue #576.
+  openhands_job_ttl_hours: 24
+  # Wall-clock cap (seconds) per job. The in-container runner self-kills past this so a stuck
+  # model/agent can never hang a container forever, even if Chad never polls it. Issue #576.
+  openhands_job_timeout_s: 1800
+  # Safety: a coding job may only use a caller-supplied `workspace` that is inside a git repo if
+  # that path is under one of these allowlisted roots (the monorepo is NOT writable by default —
+  # epic non-goal). Fresh temp workspaces are always allowed. Issue #576.
+  openhands_workspace_allowlist: []
+  # OpenHands image + LM Studio wiring. Container reaches LM Studio via host.docker.internal;
+  # Chad's own model-ensure (on the host) uses localhost. Rarely need overriding.
+  openhands_image: docker.openhands.dev/openhands/openhands:latest
+  openhands_container_lmstudio_url: http://host.docker.internal:1234/v1
+  openhands_lmstudio_host_url: http://localhost:1234/v1
+  openhands_lmstudio_api_key: lmstudio
+  # Host dir root for job workspaces (default: <temp>/chad-code). Each job gets a subdir.
+  # chad_code_workspace_root: C:/path/to/chad-code-workspaces
+  # Fast-track commands: typed as "/<alias>" in chat, skip the LLM/planner entirely and
+  # call execute_tool() directly. Allowlist-only — a tool is only reachable here if it has
+  # an entry below AND is actually registered; nothing is fast-trackable by default.
+  # Add personal shortcuts in config/preferences.yaml under tools.fast_track_commands.
+  fast_track_commands: []
+# Supervisor loop boundaries. See src/core/tools/limits.py for the full registry.
+orchestration:
+  # Specialist subagent hard action ceiling (Hermes / 2026 harness rule).
+  # Prevents subagents from looping into deep execution black holes.
+  specialist_max_steps: 30
+  ui_automation_agent_max_steps: 40
+  browser_agent_max_steps: 60
+  # Keep legacy available for A/B evaluation; promote only after reviewing results.
+  browser_controller_enabled: false
+  browser_input_max_chars: 28000
+  browser_stall_limit: 3
+  browser_max_recoveries: 2
+  browser_task_timeout_seconds: 300
+  # Tool-turns before the supervisor is told how much runway is left and to start
+  # landing the plane. A HINT — nothing is cancelled.
+  supervisor_turns_soft: 15
+  # Tool-turns before the turn actually ends. Was a hardcoded, silent 25, which was
+  # also unreachable alongside the 20-turn per-step budget: a two-step plan could
+  # never finish and just died mid-step with no message.
+  supervisor_turns_max: 60
+planner:
+  # Tool-turns on one plan step before a "you may be looping" nudge / before the
+  # harness forces a different approach. Both keep the step OPEN — no work is lost.
+  step_turns_soft: 10
+  step_turns_max: 20
+  # Catch "I will now do X" deferral mid-stream and resend telling the model to act.
+  narration_nudge_enabled: true
+  # Master switch for the multi-step plan lane (scout -> plan -> approve -> execute).
+  # Disabled for the public release — the plan lane is still young and not reliable
+  # enough for general use (intent misrouting, re-scout loops). When false, requests
+  # that would enter the plan lane fall back to the normal agent lane. Flip to true
+  # once the planner is hardened. See src/core/orchestration/nodes/routing.py.
+  # Re-enabled for the plan-mode hardening effort (measuring/fixing the lane before launch).
+  enabled: true
+  # Plan validation (tool-name menu check in the planner + post-execution validator node).
+  # Disabled for now — the plan lane is still young and validation added complexity/cost
+  # (silent re-scout loops, an un-surfaced validator turn). Flip to true to re-enable both.
+  validation_enabled: false
+  # Scout inherits the active supervisor model for competent gather work.
+  # Enable secondary mode only when explicitly testing a separate Scout model.
+  scout_use_secondary_model: false
+  # Optional explicit override for the Scout model name; defaults to tools.llm_selector_model.
+  scout_model: null
+  # Scout gathers surface info directly (e.g. a couple of web_search calls) — it must NOT
+  # delegate to subagents (deep_research_agent, traversal_agent, etc). Deep/multi-item research
+  # is the planner's job to schedule as an execution step, never Scout's.
+  scout_allow_delegates: false
+  # Unused while scout_allow_delegates is false; kept for when a narrow delegate need returns.
+  scout_delegate_allowlist:
+    - traversal_agent
+    - deep_research_agent
+  # Soft budget for Scout tool calls. After this many, Scout gets a wrap-up nudge
+  # (scout_tool_calls_wrapup more calls), then a forced tool-free report turn.
+  scout_max_tool_calls: 20
+  scout_tool_calls_wrapup: 5
+  # While Scout runs on the secondary model, evict the heavy main model from LM Studio to
+  # free VRAM; the planner reloads it on its next call. Only acts when Scout differs from
+  # the main model. Set false to keep both resident.
+  scout_unload_main_model: true
+  # Reasoning-token runaway guard (see src/core/intelligence/nudges/). If a local model
+  # streams more than this many estimated reasoning tokens on one call without producing
+  # a tool call, the adapter cancels the stream and resends with a corrective nudge and
+  # thinking disabled. Set <= 0 to disable. Per-model override:
+  # local_models.model_settings.<model>.reasoning_token_cap.
+  reasoning_token_cap: 3000
+subagents:
+  # FAILED delegations to one specialist before the model is warned / before further
+  # ones are refused. Counts failures only — a successful delegation is not a strike
+  # and clears the counter. (It used to count every call, so three successes locked
+  # the specialist out with a "has failed 3 times" message.)
+  delegate_failures_soft: 2
+  delegate_failures_max: 4
+  # Swap the main model out of LM Studio while a subagent pinned to a different local
+  # model (e.g. code_agent -> qwen2.5-coder-14b) is running, then swap it back.
+  # is fully idle for the subagent's whole run anyway, so this is free latency to claw
+  # back — worth it for longer-running specialists (code_agent especially).
+  model_swap_enabled: true
+  # Parallel research fan-out (issue #508): the `parallel_research` tool researches N
+  # independent items concurrently on this many 9B workers per batch (extra items run in
+  # sequential batches of this size). Cap keeps VRAM/compute bounded and stops the
+  # orchestrator spawning a worker-per-trivial-subquery. Measured via
+  # `python -m evals.parallel_probe --sweep 1,2,3,4,6,8` (#510): aggregate throughput on this
+  # box peaks around 6 concurrent 9B workers (~2x, ~180 tok/s) then plateaus — a single 9B
+  # instance is GPU-bound, so 8 buys no more throughput and just holds more VRAM/queue depth.
+  # UNDER INVESTIGATION (2026-07-12): production parallel_research with 6-8 workers was
+  # observed NOT running truly concurrently, despite the isolated probe (and an earlier probe
+  # session) showing real ~8-10x parallel 9B generation directly against LM Studio. Root cause
+  # not yet confirmed — do not change this cap again until we've identified what differs
+  # between the isolated probe path and the production research_agent/ReAct path.
+  parallel_research_max_workers: 6
+  # Per-worker wall-clock cap (s) so one stuck item can't stall the whole batch.
+  parallel_research_worker_timeout_s: 300
+  # Shared task-scoped search budget (issue #524): total web_search result count every
+  # research_discover + parallel_research worker in ONE deep-research task can draw from
+  # together, decremented by results actually returned (not query count). Once exhausted,
+  # further web_search calls are denied and workers are expected to synthesize with what
+  # they have. Bounds worst-case paid-API (Serper/Tavily/Brave) volume from an unbounded
+  # fan-out to a fixed ceiling per task.
+  search_budget_per_task: 50
+  # Parallel sub-agent fan-out (issue #513): max concurrent delegate_to_* handoffs per batch
+  # when the supervisor emits several in one turn. Lower than parallel_research_max_workers
+  # (6) since specialist targets are heterogeneous/heavier models, not one shared 9B — actual
+  # concurrency is further gated per-batch by model_lifecycle.would_coexist() against
+  # local_models.lifecycle.vram_budget_gb + model_size_estimates_gb (below), so this cap is
+  # just an upper bound, not a guarantee that many will actually run concurrently.
+  parallel_delegate_max_workers: 4
+memory:
+  embedding_strategy: local
+  local_embedding_model: nomic-ai/nomic-embed-text-v2-moe
+  decompose_queries: true
+  # Storage for the memories table (Activity / catalogs / session logs).
+  # Bulk data stays on sqlite — NEVER mirrored to Supabase.
+  # - local: sqlite only (default; also the unset default)
+  # - local_then_supabase: accepted for back-compat but does NOT mirror memories
+  # - supabase: cloud-primary escape hatch (not recommended; bulk sources still forced local)
+  # Optional Supabase backup is limited to personal knowledge graph + persona prompts
+  # (see knowledge_graph.storage). Chrome/Gmail/filesystem/drive catalogs stay on-disk.
+  storage: local
+  # Gmail → personal_index (From/To/Subject + short snippet — not full body).
+  # Default query: inbox OR sent, drop promotions/social/forums + noreply senders
+  # so multi-year lookback stays focused on real-person / conversational mail.
+  # 0 lookback = uncapped date range; 0 max_results = paginate until done.
+  gmail_lookback_days: 1100   # ~3 years (covers Jun 2025+ with margin)
+  gmail_max_results: 8000
+  gmail_include_sent: true
+  gmail_exclude_noreply: true
+  gmail_exclude_categories:
+    - promotions
+    - social
+    - forums
+  # Optional extra Gmail search operators, e.g. '-category:updates'
+  gmail_extra_query: ""
+# Local embeddings: in-process SentenceTransformers (CPU). On this machine (AMD
+# 7800X3D + RX 9070 XT) ST batch ~120/s for short catalog/email lines beats LM
+# Studio /v1/embeddings (~26/s batched, ~0.5/s single) because of per-HTTP
+# round-trip overhead — keep use_api false unless CUDA/ROCm ST is unavailable
+# and you must accel via LM Studio. SyncManager batches via embeddings.batch_size.
+embeddings:
+  use_api: false
+  api_model: text-embedding-nomic-embed-text-v2-moe
+  base_url: http://localhost:1234/v1
+  batch_size: 64
+  api_timeout_seconds: 120
+  api_check_timeout_seconds: 8
+# Conversation checkpointing (LangGraph state): local-first by default, same policy as
+# memory.storage / drive_catalog.storage below. Set to 'supabase' to checkpoint directly
+# to Postgres instead (no local copy — trades local-first for live inspection via
+# Supabase/LangGraph Studio). Requires Supabase to also be configured/enabled.
+langgraph:
+  checkpointer_storage: local
+knowledge_graph:
+  enabled: true
+  # Local files are always primary (personal_knowledge.md + knowledge_graph.json).
+  # This is the main optional Supabase backup for "who you are" personal facts.
+  # - local: no cloud copy (use while testing)
+  # - local_then_supabase: after save, best-effort mirror facts to Supabase;
+  #   also backs up persona prompt overlays (files remain source of truth)
+  # - supabase: unused for reads (graph always loads from local files)
+  # Unset + Supabase enabled → local_then_supabase.
+  storage: local
+  graph_path: data/knowledge_graph.json
+  # Quality gate on manage_user_memory saves (src/core/intelligence/memory_write_gate.py).
+  # Thresholds measured, not guessed: restatements of a known fact score 0.83-1.00,
+  # genuinely new facts top out at ~0.43. Re-measure before changing.
+  write:
+    max_fact_chars: 200
+    min_fact_chars: 8
+    duplicate_threshold: 0.80   # at/above this, skip as already known
+    conflict_threshold: 0.55    # at/above this, save but flag possible supersession
+  # Node representing the user themself — seeded alongside any other entity match
+  # so naming another person surfaces the edge that connects them to the user.
+  # Unset = auto-detect the most-connected Person entity (in your own graph, you).
+  # Pin it (e.g. `ego_node_id: Person:Alex`) only if auto-detection picks wrong.
+  ego_node_id:
+  # Always-on identity block injected into every user-facing system prompt.
+  # Source of truth is the `## _core_profile` section of personal_knowledge.md.
+  core_profile_max_chars: 800
+  max_results: 6
+  activity_max_results: 3
+  # Measured on the atomized graph: worst true-positive top-1 ~0.28, best
+  # true-negative top-1 ~0.23. Below this, coding/general questions pulled personal
+  # facts in. Re-measure with scripts/probe_memory_recall.py if the fact set changes.
+  relevance_threshold: 0.25
+  activity_relevance_threshold: 0.22
+  max_item_chars: 120
+  # Typed-walk injection (#609): total char budget for the boost block
+  max_boost_chars: 800
+  walk_hops: 2
+  # Drop personal_index hits older than this many days from ACTIVITY CONTEXT
+  activity_max_age_days: 120
+# Full Google Drive file/folder catalog (name + path) for DOCUMENT CONTEXT injection.
+# Synced by DriveCatalogIngestor via daemons.ingestion_sync (enable in Settings → Capabilities).
+drive_catalog:
+  enabled: true
+  # Drive location catalog is local-only (never mirrored to Supabase — too large).
+  # - local: sqlite only (default)
+  # - local_then_supabase: treated as local (no catalog cloud copy)
+  # - supabase: escape hatch only (not recommended)
+  storage: local
+  # Skip video/* (and similar) so they don't burn max_files; titles alone aren't worth it
+  skip_videos: true
+  # 0 = no file-count cap (list whole Drive). Real Drive API limit is quota units/min
+  # (files.list=100 units; ~325k units/user/min) — catalog listing is cheap; embedding is slower.
+  max_files: 0
+  max_results: 5
+  # Precision-first automatic context: live recipient-only distractors scored 0.44.
+  # Weak title matches may require explicit Drive search instead of auto-injection.
+  relevance_threshold: 0.50
+  include_shared_with_me: true
+  include_shared_drives: true
+  full_reconcile_days: 7
+  # Reconcile may drop rows for files gone from Drive — refuse mass deletes so a
+  # truncated/failed listing cannot wipe a healthy local catalog.
+  max_reconcile_delete_ratio: 0.25
+  allow_empty_catalog_wipe: false
+# Past conversation exchanges (User+Chad pairs), indexed from the local LangGraph
+# checkpoint store by SessionHistoryIngestor via daemons.ingestion_sync. Stored under
+# memories category=session_log. v1 covers the local sqlite checkpointer only.
+session_history:
+  enabled: true
+  max_results: 3
+  relevance_threshold: 0.25
+# Local filesystem catalog (issue #601): indexes filename + path + mtime under
+# user-allowlisted roots so Chad can answer "where's that file?" without full-body
+# content indexing. Storage follows memory.storage above (local by default) since
+# these rows go through the normal personal_index create_memory path, same as
+# Chrome/Gmail/Drive activity -- no separate storage key needed here. Empty roots
+# (the default) means no scan, even if the ingestion_sync daemon is on. NEVER add a
+# whole drive root (e.g. "C:\") -- list specific folders only.
+filesystem_catalog:
+  enabled: false
+  roots: []
+  exclude_globs:
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/__pycache__/**"
+  - "**/.venv/**"
+  - "**/venv/**"
+  - "**/AppData/**"
+  - "**/$RECYCLE.BIN/**"
+  - "**/System Volume Information/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.next/**"
+  - "**/.turbo/**"
+  - "**/target/**"
+  - "**/.pytest_cache/**"
+  - "**/.mypy_cache/**"
+  - "**/.tox/**"
+  # Embedded browser (WebView2/CEF) runtime cache dirs that desktop apps drop next to
+  # their data, and Unity/dotnet build cache -- pure runtime junk, not documents.
+  - "**/webview_cache/**"
+  - "**/EBWebView/**"
+  - "**/Library/**"
+  - "**/Temp/**"
+  - "**/obj/**"
+  - "**/bin/Debug/**"
+  - "**/bin/Release/**"
+  - "**/packages/**"
+  # Sqlite WAL/journal sidecar files are rewritten continuously by ANY app using
+  # them -- their mtime changes on basically every write, so cataloging them isn't
+  # just noise, it can make a file look "always new".
+  - "**/*.db-wal"
+  - "**/*.db-shm"
+  - "**/*.db-journal"
+  skip_videos: true
+  # Prunes traversal into any dot-prefixed directory (.git, .venv, .cache, .vscode,
+  # .lmstudio, .ollama, ...) -- catches tool config/cache dirs generically instead of
+  # needing every one enumerated above.
+  skip_hidden_dirs: true
+  # .safetensors/.gguf/.ckpt/.onnx/.pt/.pth -- model weights, not personal documents.
+  skip_model_weights: true
+  # Files over this size are almost never "that document I'm looking for" (model
+  # checkpoints, VM images, ISOs). Metadata-only catalog doesn't care about size for
+  # cost -- this is purely a noise filter.
+  max_file_size_mb: 1024
+  max_files: 20000
+tool_sync:
+  # Generates real INTENT/QUERIES/KEYWORDS RAG preambles for tools not covered by
+  # MANUAL_PREAMBLES, using the user's active local model (LM Studio/Ollama). Free
+  # and default-on since generation is local; falls back to a static, content-free
+  # preamble when no local model is configured or generation fails.
+  automatic_preambles: true
+mcp_servers:
+  playwright:
+    command:
+    - npx
+    - -y
+    - '@playwright/mcp'
+    - --browser
+    - chrome
+    # Keep Chromium sandbox ON for headed ChadBrowser on the desktop (clears the yellow
+    # "--no-sandbox … security will suffer" infobar). Only use --no-sandbox in Docker/root/CI
+    # where user namespaces aren't available — never the default for this local profile.
+    - --sandbox
+    - --user-data-dir
+    # Dedicated automation profile ONLY — never Google\Chrome\User Data (locks daily Chrome).
+    # Enforced at runtime by src/shared/chad_browser_profile.py (rewrites forbidden paths).
+    # Seed from real Chrome: scripts/maintenance/seed_chrome_profile.ps1
+    - '%LOCALAPPDATA%\ChadBrowser\UserData'
+    - --output-dir
+    - .playwright-snapshots
+    connect_timeout_seconds: 30.0
+    env: {}
+
+  # Windows UI Automation (desktop windows/mouse/keyboard/screenshot, element-ID based
+  # click/type/read, native window list/move/resize/monitor-targeting). Revived 2026-07-26
+  # after being silently dropped from config.yaml on 2026-06-13 during an unrelated YAML
+  # reformat commit (254b3ffd) - not a deliberate removal. Locally-installed binary, not
+  # an npm package.
+  windows-semantic-ui:
+    command:
+    - '%USERPROFILE%\Documents\Coding\Tools\Sbroenne.WindowsMcp.exe'
+    env: {}
+    excluded_tools:
+    - app  # Owned by local tool: src/tools/os/app_launcher.py (open_app resolves profile-configured custom app paths this tool can't see)
+  brave-search:
+    command:
+    - npx
+    - -y
+    - '@modelcontextprotocol/server-brave-search'
+    env:
+      BRAVE_API_KEY: '%BRAVE_API_KEY%'
+    min_delay_seconds: 1.2
+  todoist:
+    command:
+    - npx
+    - -y
+    - '@ganiev/todoist-mcp-server'
+    env:
+      TODOIST_API_TOKEN: '%TODOIST_API_TOKEN%'
+  fetch:
+    command:
+    - npx
+    - -y
+    - mcp-fetch-server
+  github:
+    command:
+    - npx
+    - -y
+    - '@modelcontextprotocol/server-github'
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: '%GITHUB_PERSONAL_ACCESS_TOKEN%'
+  google-drive:
+    command:
+    - npx
+    - -y
+    - '@piotr-agier/google-drive-mcp'
+    env:
+      GOOGLE_DRIVE_OAUTH_CREDENTIALS: '%GOOGLE_DRIVE_OAUTH_CREDENTIALS%'  # Path to your credentials.json
+      GOOGLE_DRIVE_MCP_TOKEN_PATH: '%GOOGLE_DRIVE_MCP_TOKEN_PATH%'        # Path to your token_node.json
+    timeout_seconds: 30
+    excluded_tools:
+    - search
+    - listFolder
+    - readGoogleDoc
+    - getGoogleDocContent
+    - downloadFile
+    - createGoogleDoc
+    - updateGoogleDoc
+    - insertText
+    - findAndReplaceInDoc
+  notion:
+    command:
+    - npx
+    - -y
+    - '@suekou/mcp-notion-server'
+    env:
+      NOTION_API_TOKEN: '%NOTION_API_TOKEN%'
+    timeout_seconds: 30
+  # Optional — whiteboard-style diagrams via a live Excalidraw canvas (issue #354).
+  # Canvas sidecar: docker compose -f docker/chad-services.yml --profile excalidraw up -d
+  # Load src/skills/excalidraw/SKILL.md before calling any of its 26 tools.
+  excalidraw:
+    command:
+    - npx
+    - -y
+    - mcp-excalidraw-server
+    env:
+      EXPRESS_SERVER_URL: http://127.0.0.1:3000
+      ENABLE_CANVAS_SYNC: 'true'
+local_models:
+  enabled: true
+  providers:
+    lmstudio:
+      base_url: http://localhost:1234/v1
+      api_key: lm-studio
+      enabled: true
+    ollama:
+      base_url: http://localhost:11434/v1
+      api_key: ollama
+      enabled: false
+  # lmstudio-gate: a cross-process priority queue in front of whichever local backend
+  # is currently active (src/infrastructure/llm/lmstudio_gate.py -- name kept for
+  # continuity, but it's vendor-agnostic: LM Studio, Ollama, llama.cpp server, vLLM
+  # all share the identical single-model-slot contention problem). The Brain process
+  # and the separate eval-runner process both hit the one local model slot; the
+  # in-process model-lifecycle coordinator can't span processes, so this out-of-process
+  # sidecar serializes INFERENCE calls by priority (interactive jumps ahead of
+  # background/eval, never preempts an in-flight call). Management calls (model
+  # load/unload/list) bypass it. If the gate is off or unreachable, inference falls
+  # back to hitting the backend directly -- nothing breaks, you just lose queuing.
+  # See issue #478, #450.
+  gate:
+    # Alpha installers use direct inference. The source-only sidecar launches
+    # python -m; a frozen Brain is not a general-purpose Python interpreter.
+    enabled: false
+    port: 1235
+    # #510: max_concurrent=1 was silently serializing EVERY inference call in production —
+    # including parallel_research's whole worker fan-out — to strict single-flight, one at a
+    # time, regardless of how many workers asyncio.gather fired. The isolated parallel_probe.py
+    # hits LM Studio (port 1234) directly, bypassing this gate (port 1235) entirely, which is
+    # why it showed real concurrent 9B generation while production didn't. Raised to 6 to match
+    # the measured real LM Studio concurrency ceiling (parallel_probe.py --sweep) so same-model
+    # worker batches can actually run in parallel, while still keeping the gate's original
+    # cross-process serialization protection (issue #478) for genuinely conflicting requests.
+    max_concurrent: 6
+    # Upstream resolution (see lmstudio_gate._upstream_base_url): explicit override
+    # here first, else the user's currently ACTIVE local model
+    # (local_models.active_model.base_url -- set by the setup wizard's backend
+    # chooser, #499, or the Settings model picker), else the LM Studio default.
+    # Leave unset so the gate automatically follows whichever backend is active.
+    upstream_base_url: null
+    # Shed (HTTP 503) a request that has waited longer than this in the queue, so a
+    # wedged upstream can't grow the backlog unbounded.
+    queue_max_age_s: 300
+  supervisor: lfm2.5-24b-a2b
+  active_model: lfm2.5-24b-a2b
+  # category_models overrides supervisor for a specific turn category — use ONLY
+  # for pipelines that must always diverge from the user's picked chat model (e.g.
+  # voice wants a fast model regardless of what's selected for typed chat). Never
+  # add 'agent' or 'chat' here: those are the default chat categories the
+  # model selector itself controls, and an override here would silently fight the
+  # picker (the GUI shows the picked model while turns actually run a different one).
+  category_models:
+    voice: qwen/qwen3.5-9b
+  use_local: true
+  lifecycle:
+    # Main supervisor stays resident; aux models (selector, router) load in addition.
+    preload_on_connect: true
+    default_ui_turn_mode: auto
+    # Best-effort VRAM budget enforced by the shared model-lifecycle coordinator
+    # (src/core/intelligence/model_lifecycle.py) before loading a model that isn't already
+    # resident — set to match your card. <= 0 disables budget-aware eviction entirely
+    # (falls back to LM Studio's own auto-evict, which doesn't know which models we still want).
+    # Override per machine in config/preferences.yaml (e.g. local_models.lifecycle.vram_budget_gb).
+    vram_budget_gb: 8
+    # Substring-matched (case-insensitive) against the model id -> rough size in GB. Used only
+    # to decide whether an incoming model fits alongside what's currently claimed resident.
+    model_size_estimates_gb:
+      "1b": 1
+      "3b": 2.5
+      "9b": 6
+      "vl-8b": 6
+      "14b": 10
+      "26b": 16
+      "27b": 16
+      "bonsai": 16
+      "30b": 19
+      "16GB": 16
+      "lfm": 14
+      "24b": 14
+      # The Chad Code coder (qwen3.6-35b-a3b). Without an entry it fell through to
+      # _UNKNOWN_MODEL_SIZE_GB (8.0), so the coordinator believed it could sit alongside the
+      # 16GB main model inside a 16GB budget and skipped the eviction — the exact
+      # double-load OOM model_lifecycle exists to prevent. MoE, so ~18GB resident at q4
+      # despite only 3B active.
+      "35b": 18
+      "a3b": 18
+    # Always-resident set. Substring-matched (case-insensitive) against the model id, same as
+    # model_size_estimates_gb above. Models listed here never evict EACH OTHER, even when the
+    # pair exceeds vram_budget_gb — LM Studio spills the overflow to CPU RAM rather than
+    # failing (#592). A non-pinned model (coder-35b, browser VL-8B) still evicts them normally.
+    #
+    # Empty by default: only worth setting on a box where the main chat model and the 9B tool
+    # selector can't co-exist in VRAM, so every single turn paid a full main-model reload
+    # (~15.6GB off disk for gemma-4-26b) just to run tool selection. That reload is what makes
+    # the whole desktop stutter while Chad idles in the background. Set it in
+    # config/preferences.yaml, e.g.:
+    #   pinned_models: ["gemma-4-26b", "qwen3.5-9b"]
+    pinned_models: []
+    # How long a "background" priority ensure_resident call (heartbeat/cron/autonomous) will
+    # wait for an active interactive turn to go idle before proceeding anyway.
+    background_queue_timeout_s: 120
+    # A "live interactive turn" signal decays after this many seconds of no interactive
+    # ensure_resident calls — after that, background/autonomous callers stop waiting.
+    interactive_active_window_s: 20
+  model_settings:
+    google/gemma-4-26b-a4b-qat:
+      thinking: true
+      thinking_level: high
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1.05
+    qwen/qwen3-14b:
+      thinking: true
+      thinking_level: high
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1.05
+    qwen/qwen3.5-9b:
+      thinking: true
+      thinking_level: high
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1.05
+    qwen/qwen2.5-coder-14b:
+      thinking: false
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1.05
+    qwen/qwen3-coder-30b:
+      thinking: false
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1.05
+    qwen/qwen3.6-35b-a3b:
+      thinking: true
+      reasoning_effort: high
+      thinking_budget: 32768
+      top_p: 0.8
+      top_k: 20
+      repeat_penalty: 1
+# Specialist agents that are not ready for general use are disabled by default.
+# browser_agent + system_agent + ui_automation_agent cover "computer use" — powerful
+# but still maturing / higher-risk, so off for the public release. Re-enable per-agent
+# here (or per-profile via prefs.disabled_subagents) once you've vetted them.
+disabled_subagents:
+- ui_automation_agent
+- system_agent
+- browser_agent
+consolidation:
+  enabled: true
+  profile: balanced
+  keep_tokens: 20000
+  # Added resume context stays below ~600 tokens for ordinary English (~7.5% of
+  # an 8K window), separate from the existing summary/recent-history budgets.
+  # Target is advisory to the extractor; max bounds the rendered data block.
+  resume_context_target_chars: 1800
+  resume_context_max_chars: 2400
+daemons:
+  # Alpha: background activity is opt-in through Settings -> Automations.
+  enabled: false
+  cron: true
+  heartbeat: true
+  gmail_webhook: true
+  ingestion_sync: false  # opt-in: reads Chrome history, enable via Settings -> Capabilities
+  heartbeat_interval_minutes: 30
+  ingestion_sync_interval_minutes: 60
+# Self-updating: when auto_update is on, the Brain polls origin/master on an interval
+# and applies updates the same way the in-GUI "Update Chad" button does (pull + rebuild
+# changed subsystems + graceful restart), so the always-on box stays current hands-free.
+# Off by default. Toggle from Settings → System, or flip here.
+updates:
+  auto_update: false
+  auto_update_interval_minutes: 60   # min 5; how often to check origin/master
+# Reflective self-learning. Runs on a slow sub-cycle of the heartbeat. PROPOSE-ONLY by
+# default: reflect() over recent history -> gatekeeper -> graph-dedup, then persist the
+# proposal report (evals/runs/reflect_proposal_latest.md), surface each lesson/question
+# in the GUI's Reflection review panel, and ping Telegram. Each lesson is approved (or
+# dismissed) individually in the GUI/CLI unless auto_write_confidence_floor opts a
+# high-confidence lesson into being written immediately.
+reflection:
+  enabled: false
+  interval_hours: 24            # how often the propose-only cycle runs
+  model: null                   # capable local judge (LM Studio) — defaults to active supervisor model
+  convos: 15                    # recent conversations to reflect over
+  confidence_floor: 0.7
+  notify_telegram: false         # ping the default chat when lessons/questions are proposed
+  auto_write_confidence_floor: null   # e.g. 0.9 to auto-apply lessons at/above this confidence; null disables auto-write
+  propose_on_failure: false    # Opt-in proposals on tool errors / corrections; never automatic writes
+  failure_reflection_confidence_floor: 0.75
+# Sleep cognify (#611, docs/research/TYPED_GRAPH_MEMORY.md Slice B) — offline-only
+# heartbeat cycle that extracts typed edges/observations from the knowledge graph's
+# fact corpus. Non-sensitive items are written directly; Tier-1 sensitive facts
+# (health/financial/legal/relationship-conflict) and any core-profile rewrite ALWAYS
+# go through the same review queue as Reflective Lessons (#194) — never auto-applied.
+# Opt-in (disabled by default) — enable once MVP A3 (#610) acceptance has been reviewed.
+sleep_cognify:
+  enabled: false
+  interval_hours: 24                  # how often the propose-only cycle runs
+  night_hours_only: true              # only fire inside [night_start_hour, night_end_hour) local time
+  night_start_hour: 1
+  night_end_hour: 5
+  model: google/gemma-4-26b-a4b-qat   # capable local judge (LM Studio) — never cloud
+  confidence_floor: 0.6
+  core_profile_max_chars: 800
+notifications:
+  gmail:
+    destination: telegram
+tts:
+  enabled: true
+  engine: kokoro
+  # Voice names are per-engine and NOT interchangeable: `voice` is the Orpheus
+  # name (tara|leah|jess|leo|dan|mia|zac|zoe), `kokoro_voice` is the Kokoro
+  # name (af_*/am_* etc), `gemini_voice` is the Gemini name.
+  voice: am_michael
+  kokoro_voice: am_michael
+  gemini_voice: Puck
+  model: gemini-3.1-flash-tts-preview
+  strip_markdown: true
+  fallback_engine: null
+  announce_autonomous: true
+  orpheus:
+    model_id: orpheus-3b-0.1-ft
+    base_url: http://localhost:1234/v1
+    load_strategy: coload
+    temperature: 0.6
+    top_p: 0.9
+    repetition_penalty: 1.1
+    max_tokens: 1200
+# Speech-to-text for the discrete "voice mode" pipeline (local, offline).
+stt:
+  engine: faster_whisper   # local CTranslate2 Whisper; free + offline
+  model: small             # tiny|base|small|medium|large-v3 (small ~= real-time on CPU)
+  device: cpu              # cpu | cuda (cuda needs CUDA + cuDNN installed)
+  compute_type: int8       # int8 (CPU) | float16 (GPU)
+  language: en
+  beam_size: 1             # 1 = fastest; raise for marginal accuracy gains
+  vad_filter: true         # trim silence inside Whisper for cleaner transcripts
+# Discrete, turn-based hands-free voice mode (wake word -> STT -> normal run -> TTS).
+# Distinct from Gemini Live "live voice mode" (session.default_voice_mode).
+# Opt-in: flip `enabled: true` to arm the wake word whenever the Brain is running.
+# Requires faster-whisper + openwakeword (requirements-voice.txt) — no API key
+# or account needed. Degrades gracefully (logs + no-op) if a dependency or
+# audio hardware is missing.
+voice_mode:
+  # Alpha: enable after installing and testing the optional voice dependencies.
+  enabled: false
+  # Voice Brain lane: category=voice → fast model, fixed tools (hubspace + escalate), light persona/memory.
+  # escalate_to_agent re-runs the utterance on agent lane.
+  memory_max_results: 6
+  silence_timeout: 0.5       # trailing silence (s) that ends a spoken command (snappy cutoff)
+  max_utterance_seconds: 15  # hard cap on a single command length
+  start_timeout: 6.0         # give up if no speech begins after the earcon
+  vad_threshold: 0.01        # RMS level above which audio counts as speech
+  earcon: true               # play activation/deactivate sounds when listening starts/stops
+  # Audio discarded after the earcon fires, before listening for your command.
+  # The earcon plays on a background thread, so it is still sounding once
+  # recording starts and otherwise reads as speech at vad_threshold — the
+  # recorder then end-points on the beep and captures no command (#654).
+  # Raise if you hear the beep get clipped into the transcript; must be >= the
+  # activation sound's length (currently 0.32s, decayed by 0.28s).
+  earcon_guard_seconds: 0.4
+  # Live-voice Phase 1 (epic #291): don't block speech on the full harness.
+  filler_timeout: 0.6        # seconds to wait for run_turn before speaking a filler
+  filler_phrases:            # canned rotation spoken if run_turn is still running
+  - "Let me think..."
+  - "One sec..."
+  - "Working on it..."
+  - "Give me a moment..."
+  # Dynamic filler disabled to prevent concurrent LM Studio resource contention
+  dynamic_filler: false
+  # Issue #654 follow-up: any local model call floors at several seconds on this
+  # hardware regardless of prompt size, so the dynamic filler essentially never
+  # wins the short filler_timeout race above -- the first filler spoken is almost
+  # always canned. This is how much LONGER to wait, after that, for the dynamic
+  # filler to resolve and be spoken as a follow-up update if run_turn is still
+  # pending -- turns a long tier-2/tier-3 wait into an actual tailored update
+  # partway through instead of dead air until the real answer.
+  dynamic_filler_wait: 8.0
+buddy:
+  observer:
+    enabled: false
+    model: qwen/qwen3.5-9b
+    interval_minutes: 30
+    cooldown_s: 1800
+    comment_display_s: 45
+    all_screens: true
+    skip_unchanged: true
+    trigger_on_turn_complete: false
+    event_cooldown_s: 1800
+    max_tokens: 64
+    temperature: 0.7

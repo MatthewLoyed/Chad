@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- iOS PWA (#192): home-screen install + standalone full-screen launch -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Chad" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0f1115" />
+    <title>Chad AI - Assistant</title>
+    <style>
+      /* Solid background, not transparent: WebView2's transparent-background mode
+         is unreliable (Microsoft confirms it often renders solid black instead of
+         true transparency - MicrosoftEdge/WebView2Feedback#888, #2419). Match the
+         native window's own background_color so there's no gap either way. */
+      html, body, #root {
+        background: #0f1115;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- INSTANT LOADING SKELETON SCREEN -->
+      <div style="display:flex; height:100vh; width:100%; background:linear-gradient(135deg, #0f1115 0%, #1a1d24 100%); font-family: system-ui, -apple-system, sans-serif;">
+        <!-- Static Sidebar Placeholder -->
+        <div style="width:260px; height:100%; background:#0f1115; border-right:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; padding:24px 16px; gap:20px; box-sizing:border-box; flex-shrink:0;">
+          <!-- Logo area -->
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:28px; height:28px; background:rgba(139, 92, 246, 0.2); border:1px solid rgba(139, 92, 246, 0.3); border-radius:6px;"></div>
+            <div style="height:14px; width:80px; background:rgba(255,255,255,0.1); border-radius:4px;"></div>
+          </div>
+          <div style="height:1px; background:rgba(255,255,255,0.05); width:100%; margin: 4px 0;"></div>
+          <!-- Nav action items -->
+          <div style="height:38px; background:rgba(255,255,255,0.04); border-radius:8px;"></div>
+          <div style="height:32px; width:85%; background:rgba(255,255,255,0.03); border-radius:6px; margin-top:10px;"></div>
+          <div style="height:32px; width:75%; background:rgba(255,255,255,0.03); border-radius:6px;"></div>
+          <div style="height:32px; width:80%; background:rgba(255,255,255,0.03); border-radius:6px;"></div>
+        </div>
+        
+        <!-- Main View Placeholder -->
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+          <!-- Minimal Central Ambient Glow (Matches Orb placeholder) -->
+          <div style="width:200px; height:200px; border-radius:50%; background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0) 70%); opacity: 0.8; animation: skeleton-pulse 2s ease-in-out infinite;"></div>
+          
+          <style>
+            @keyframes skeleton-pulse {
+              0% { transform: scale(0.95); opacity: 0.6; }
+              50% { transform: scale(1.05); opacity: 0.9; }
+              100% { transform: scale(0.95); opacity: 0.6; }
+            }
+          </style>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

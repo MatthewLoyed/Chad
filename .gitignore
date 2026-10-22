@@ -1,0 +1,196 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+.codegraph/
+
+# .claude/ — ignore everything by default (worktree checkouts, local session
+# state, permission allowlists), but share skills/agents/commands across
+# every worktree via git instead of leaving them stuck in one checkout.
+.claude/*
+!.claude/skills/
+!.claude/agents/
+!.claude/commands/
+!.claude/settings.json
+
+# Maintainer dev workspace (local only — copy from CLAUDE.md.example; see docs/guides/DEV_WORKSPACE.md)
+CLAUDE.md
+CONTEXT.md
+TODOS.md
+.agent/
+opencode.json
+.backups/
+
+# Maintainer session notes (local working docs — not product documentation)
+docs/HANDOFF_*.md
+docs/SESSION_*.md
+docs/DESIGN_reflective-lessons.md
+docs/architecture/SECOND_BRAIN_HANDOFF.md
+docs/plans/10x/
+
+# Personal / machine-specific eval cases (generic suites stay tracked)
+evals/datasets/wedding_*.jsonl
+evals/datasets/_staging/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Audio files (large binary files - uncomment if you don't want to track them)
+# *.wav
+# *.mp3
+# *.ppn
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+# Browser Data
+chad_browser_data/
+browser_data/
+.playwright-snapshots/
+.gemini/
+
+# Google OAuth
+credentials.json
+token.json
+token_node.json
+config/*.stale*
+*.stale*
+data/gui_logs/
+
+# Secrets and Sensitive Data
+config/secrets.yaml
+config/preferences.yaml
+config/personal_knowledge.md
+config/finance_accounts.json
+data/finance_*.json
+# Personal persona overlay (#589) — overrides prompts/persona/*.md per fragment id.
+# The generic baseline in prompts/persona/ IS tracked; only a user's own edits are not.
+config/persona/
+data/*.db
+data/*.db.bak*
+# SQLite WAL/SHM sidecars for ignored DBs (LangGraph checkpoints, local chad.db)
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+
+# Project Specific
+process.lock
+*.lock
+TEST_REMINDER_INSTRUCTIONS.md
+test_cli.py
+test_reminder.py
+
+#node modules
+node_modules/
+
+# Sandbox (Chad's workspace)
+sandbox/
+artifacts/
+
+
+# Data Cache
+data/webview_cache/
+data/tool_cache.json
+data/skill_cache.json
+data/startup_timings.jsonl
+config/local_model_tool_support_cache.yaml
+# Memory purge backups (contain personal data — never commit)
+data/memories_flatfact_backup_*.json
+# Knowledge graph is runtime-generated from personal_knowledge.md — contains personal data
+data/knowledge_graph.json
+# Runtime entity grounding accumulates the user's browsing and query history.
+data/grounded_entities.json
+# WebView load marker — runtime only (see ui_build.py); distinct from ui_build_version.json
+data/ui_loaded_version.json
+# Deployed-build stamp — rewritten by every local rebuild (see record_ui_build_version in
+# ui_build.py); tracking it caused a permanent local diff that made the one-click Update
+# button's `git checkout -B` fail with "local changes would be overwritten by checkout"
+data/ui_build_version.json
+# Dev stack PID tracker — rewritten every Chad Dev launch
+data/dev_logs/dev_stack.pids
+# Per-process boot stamps (brain/gui) — used for deployed-vs-running update checks
+data/runtime/
+# VAPID keys for Web Push — server-specific secrets, never commit
+data/push_vapid.json
+/mcp/
+
+
+
+# Ephemeral experimentation
+scratch/
+tests/data/
+
+# Production supervisor logs
+data/prod_logs/
+scripts/prod/.stop
+
+# Aider coding assistant
+.aider-desk/
+.aider.input.history
+.aider.tags.cache.v4/
+
+# Local secret-scan tool downloads (scripts/security/scan_secrets.ps1)
+.tools/
+
+# Temporary development/debug dumps
+data/*_prompt_current.txt
+data/*_prompt_dump.txt
+data/*_audit.txt
+data/persona_always_fragments.txt
+data/planner_prompt_current.txt
+data/scout_prompt_dump.txt
+
+
+# Pre-reconciliation persona overlay snapshot (2026-07-24) — personal, never commit
+config/persona.bak-*/
+
+# SQLite WAL/SHM sidecars (LangGraph checkpoints, etc.) — runtime only
+*.db-shm
+*.db-wal
+
+# Generated project-context evaluation reports (not canonical documentation)
+evals/runs/project_context_*.md
+evals/runs/project_context_*.json

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "chad-maps": {
+      "command": "python",
+      "args": ["-m", "src.mcp_servers.maps"]
+    }
+  }
+}

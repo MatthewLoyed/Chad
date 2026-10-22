@@ -1,0 +1,59 @@
+active_profile: "default"
+profiles:
+   default:
+      name: "User"
+      memory_db: "data/profiles/default/memory.db"
+      voice: "Charon"
+      monitors:
+         layout: [ "primary" ]
+
+      # --- Persona Settings ---
+      persona:
+         name: "CHAD"
+         identity: "The ultimate OS Automator. An elite, socially intelligent partner
+            that lives in the hardware."
+         vibe: "Elite Tech Bro. 20 years old in spirit. Not corporate. Witty, sharp, and
+            casually brilliant."
+         dynamic_mirroring: true
+
+      # Local model for drafting routines from natural language (Routines workspace).
+      routine_builder_model: qwen/qwen3.5-9b
+
+      apps:
+          chrome:
+             path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+             process: "chrome.exe"
+             titles: [ "Google Chrome", "Chrome" ]
+          notepad:
+             path: "C:\\Windows\\System32\\notepad.exe"
+             process: "notepad.exe"
+             titles: [ "Notepad" ]
+          word:
+             path: "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE"
+             process: "WINWORD.EXE"
+             titles: [ "Word" ]
+
+      # Personal app entries, monitor layout, and launch routines belong in
+      # config/preferences.yaml under the `profile:` key (gitignored overlay).
+      routines: {}
+
+      # --- Workspace Settings ---
+      workspace:
+         coding_roots:
+            - "%USERPROFILE%\\Documents"
+
+      # --- Tool Path Personalization ---
+      file_opener:
+         search_paths:
+            - "%USERPROFILE%\\Desktop"
+            - "%USERPROFILE%\\Documents"
+            - "%USERPROFILE%\\Downloads"
+
+      file_writer:
+         # Project-local artifacts/ (cwd-relative); same convention as sandbox auto-delivery.
+         default_directory: artifacts
+         allowed_directories:
+            - artifacts
+            - "%USERPROFILE%\\Documents"
+            - "%USERPROFILE%\\Desktop"
+            - "%USERPROFILE%\\Downloads"

@@ -1,0 +1,115 @@
+.chad-dropdown {
+    position: relative;
+    width: 100%;
+    font-family: inherit;
+}
+
+.chad-dropdown__trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    /* Matching form-select */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    /* Slightly rounded */
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.chad-dropdown__trigger:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chad-dropdown--open .chad-dropdown__trigger {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #6366F1;
+    /* Chad Purple focus */
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+.chad-dropdown--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.chad-dropdown__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 8px;
+}
+
+.chad-dropdown__icon {
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.chad-dropdown__icon--open {
+    transform: rotate(180deg);
+    color: #6366F1;
+}
+
+/* Menu */
+.chad-dropdown__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 6px;
+    background: #1e1e24;
+    /* Darker, solid background for menu */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    /* Deep shadow */
+    z-index: 1000;
+    /* Above modal content */
+    overflow: hidden;
+    padding: 6px;
+}
+
+.chad-dropdown__scroll {
+    max-height: 250px;
+    overflow-y: auto;
+    /* Uses global scrollbar style automatically */
+}
+
+/* Option */
+.chad-dropdown__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.chad-dropdown__option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.chad-dropdown__option--selected {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818CF8;
+    font-weight: 500;
+}
+
+.chad-dropdown__option--selected:hover {
+    background: rgba(99, 102, 241, 0.25);
+}
+
+.chad-dropdown__check {
+    color: #6366F1;
+    margin-left: 8px;
+}

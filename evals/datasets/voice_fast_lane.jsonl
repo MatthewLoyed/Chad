@@ -1,0 +1,23 @@
+{"id":"vfl_open_youtube","query":"open youtube","expect_lane":"fast","expect_action":"open"}
+{"id":"vfl_open_claude","query":"open claude","expect_lane":"fast","expect_action":"open"}
+{"id":"vfl_open_discord","query":"launch discord","expect_lane":"fast","expect_action":"open"}
+{"id":"vfl_open_gmail","query":"go to gmail","expect_lane":"fast","expect_action":"open"}
+{"id":"vfl_open_paraphrase","query":"pull up the flight tracker site","expect_lane":"fast","expect_action":"open"}
+{"id":"vfl_search_pizza","query":"search for pizza places near me","expect_lane":"fast","expect_action":"web_search"}
+{"id":"vfl_search_weather","query":"look up the weather for tomorrow","expect_lane":"fast","expect_action":"web_search"}
+{"id":"vfl_search_google","query":"google best hiking trails in huntsville","expect_lane":"fast","expect_action":"web_search"}
+{"id":"vfl_search_paraphrase","query":"can you find out what time the game starts tonight","expect_lane":"fast","expect_action":"web_search"}
+{"id":"vfl_media_play","query":"play some music","expect_lane":"fast","expect_action":"media"}
+{"id":"vfl_media_playlist","query":"play my workout playlist","expect_lane":"fast","expect_action":"media"}
+{"id":"vfl_media_paraphrase","query":"throw on some music","expect_lane":"fast","expect_action":"media"}
+{"id":"vfl_smarthome_lamp_on","query":"turn on the lamp","expect_lane":"fast","expect_action":"smart_home"}
+{"id":"vfl_smarthome_lights_off","query":"turn off the living room lights","expect_lane":"fast","expect_action":"smart_home"}
+{"id":"vfl_smarthome_dim","query":"dim the bedroom lights","expect_lane":"fast","expect_action":"smart_home"}
+{"id":"vfl_escalate_email","query":"check my email for the invoice from last week","expect_lane":"escalate"}
+{"id":"vfl_escalate_calendar","query":"what's on my calendar for tomorrow afternoon","expect_lane":"escalate"}
+{"id":"vfl_escalate_multi_step","query":"close spotify, open chrome, and pull up my calendar","expect_lane":"escalate"}
+{"id":"vfl_escalate_research","query":"help me plan a weekend trip to chicago with flights and a hotel","expect_lane":"escalate"}
+{"id":"vfl_escalate_reminder","query":"remind me to call the vet at 3pm","expect_lane":"escalate"}
+{"id":"vfl_escalate_code","query":"refactor the auth module in src slash remote slash server dot py","expect_lane":"escalate"}
+{"id":"vfl_escalate_conversation","query":"hey how are you doing today","expect_lane":"escalate"}
+{"id":"vfl_escalate_ambiguous","query":"do the thing we talked about earlier","expect_lane":"escalate"}

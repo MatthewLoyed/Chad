@@ -1,0 +1,103 @@
+/* Shared loading / error / empty states — see AsyncState.tsx.
+   Deliberately mirrors the existing .workspace-empty look so adopting these
+   in a pane is a visual no-op for the states that were already correct. */
+
+.async-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 64px 24px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Compact variant for states rendered inside a card/section rather than a pane. */
+.async-state--inline {
+    padding: 28px 16px;
+}
+
+.async-state-skeleton-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 24px 20px;
+    box-sizing: border-box;
+}
+
+.async-state__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--chad-purple-light);
+    background: rgba(var(--chad-purple-rgb), 0.1);
+    border: 1px solid rgba(var(--chad-purple-rgb), 0.2);
+    margin-bottom: 4px;
+}
+
+.async-state__icon--danger {
+    color: var(--chad-danger);
+    background: var(--chad-danger-faint);
+    border-color: var(--chad-danger-border);
+}
+
+.async-state__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.async-state__hint {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 42ch;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.async-state--loading {
+    flex-direction: row;
+    gap: 8px;
+    padding: 40px 24px;
+}
+
+.async-state__spinner {
+    animation: async-state-spin 1s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes async-state-spin {
+    to { transform: rotate(360deg); }
+}
+
+.async-state__retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out-soft),
+                border-color var(--dur-fast) var(--ease-out-soft);
+}
+
+.async-state__retry:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.async-state__retry:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
