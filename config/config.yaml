@@ -1,5 +1,5 @@
-supervisor: lfm2.5-24b-a2b
-active_model: lfm2.5-24b-a2b
+supervisor: null
+active_model: null
 # Opt-in cloud catalog for the Settings model picker. Selecting one of these sets
 # local_models.use_local: false — cloud is never the silent default (#448).
 available_cloud_models:
@@ -767,8 +767,8 @@ local_models:
     # Shed (HTTP 503) a request that has waited longer than this in the queue, so a
     # wedged upstream can't grow the backlog unbounded.
     queue_max_age_s: 300
-  supervisor: lfm2.5-24b-a2b
-  active_model: lfm2.5-24b-a2b
+  supervisor: null
+  active_model: null
   # category_models overrides supervisor for a specific turn category — use ONLY
   # for pipelines that must always diverge from the user's picked chat model (e.g.
   # voice wants a fast model regardless of what's selected for typed chat). Never

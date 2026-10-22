@@ -28,12 +28,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from pathlib import Path
 
 LMSTUDIO_BASE_URL = "http://localhost:1234/v1"
 
@@ -136,7 +138,28 @@ class Report:
 
 
 def find_lms_cli() -> str | None:
-    return shutil.which("lms")
+    """Find the CLI even when Chad predates an installer PATH update."""
+    on_path = shutil.which("lms")
+    if on_path:
+        return on_path
+    filename = "lms.exe" if sys.platform == "win32" else "lms"
+    for directory in (Path.home() / ".lmstudio" / "bin",
+                      Path.home() / ".cache" / "lm-studio" / "bin"):
+        candidate = directory / filename
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def find_lmstudio_app() -> str | None:
+    """Check common Windows install locations, independently of the CLI."""
+    roots = [os.environ.get("LOCALAPPDATA"), os.environ.get("ProgramFiles")]
+    for root in filter(None, roots):
+        for suffix in ("Programs/LM Studio/LM Studio.exe", "LM Studio/LM Studio.exe"):
+            candidate = Path(root) / suffix
+            if candidate.is_file():
+                return str(candidate)
+    return None
 
 
 def is_server_running(base_url: str = LMSTUDIO_BASE_URL) -> bool:
