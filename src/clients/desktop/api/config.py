@@ -191,7 +191,7 @@ class ConfigAPIMixin:
                 thinking_enabled = bool(thinking_val) if thinking_val is not None else None
                 return {
                     "mode": "local",
-                    "name": model_id or "Unknown",
+                    "name": model_id or "Choose a model",
                     "provider": cfg.get("provider", "lmstudio"),
                     "supports_tools": cfg.get("supports_tools", True),
                     "thinking_enabled": thinking_enabled,

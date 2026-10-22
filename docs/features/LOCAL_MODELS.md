@@ -29,6 +29,30 @@ A handful of LM Studio-specific bugs (Qwen3's json_schema binding to the reasoni
 
 Every flag defaults off for any provider not explicitly listed, so a new backend added to `config/model_registry.py` never inherits an LM Studio workaround by accident. `tests/unit/test_provider_capabilities.py` proves each workaround fires for LM Studio and stays inert for Ollama/static endpoints.
 
+## First-launch Chat setup
+
+Fresh installs leave the main model unselected. The desktop shows a startup
+screen while its local service and setup status become available, with retry
+if startup cannot complete. Once setup is ready, choose LM Studio, Ollama, or
+another compatible model server. Existing saved choices are preserved even
+when their server is temporarily offline.
+
+For LM Studio, install/open the app, download a chat model suitable for your
+computer, and start its Local Server from the Developer view. Chad checks the
+server address directly and lists the chat models it exposes. The CLI is not
+a prerequisite for connecting; installation detection and server readiness
+are separate checks. If the server cannot be reached, the wizard shows what
+to check and allows retry, Back, or Finish later. Finish later does not mark
+Chat as ready: reopening Chad returns to setup until a model is chosen.
+
+Select a model and save it to open Chat. The model label updates immediately;
+the first message exercises actual inference. Listing a model is not proof
+that it can generate a reply or call tools. Agent/tool compatibility and
+optional accounts are configured separately in Settings. Core Chat does not
+require downloading the specialist model catalog used by the developer script
+below. This flow is implemented in the setup wizard and setup service; a new
+installer still needs clean Windows acceptance before release.
+
 ## Quick automated setup (issue #406)
 
 ```powershell

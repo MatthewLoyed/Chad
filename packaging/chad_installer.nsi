@@ -107,14 +107,14 @@ Section "Chad (required)" SecCore
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section /o "Start Brain automatically at login" SecAutostart
+Section /o "Start Chad when I sign in to Windows" SecAutostart
   CreateDirectory "$SMSTARTUP"
   CreateShortCut "$SMSTARTUP\Chad-Brain.lnk" "$INSTDIR\Chad-Brain\Chad-Brain.exe" "" "$INSTDIR\Chad-Brain\Chad-Brain.exe" "" SW_SHOWMINIMIZED
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "The Chad app and Brain server (required)."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} "Keep the Brain running in the background so Chad is ready as soon as you sign in. Off by default lets it start on demand instead."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "Install Chad on this computer."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} "Keep Chad ready in the background when you sign in to Windows. No window will open. Leave unchecked to start Chad only when you open it."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; --- Uninstall ------------------------------------------------------------
