@@ -19,6 +19,11 @@ bootstrap_frozen()
 # before anything else prints, so failures are never invisible.
 _gui_log_path = redirect_stdio_for_frozen_windowed()
 
+# sys.executable is Chad.exe when frozen, not a Python interpreter. Helpers
+# must dispatch before importing WebView or acquiring the GUI singleton lock.
+from src.shared.frozen_bootstrap import dispatch_frozen_helper
+dispatch_frozen_helper()
+
 # Stamp which git SHA / UI bundle this GUI process loaded (deployed vs running checks).
 from src.shared.runtime_identity import record_runtime_identity
 record_runtime_identity("gui")
