@@ -170,6 +170,9 @@ file_writer:
 dev_debug: false
 ui:
   default_turn_mode: auto
+setup:
+  hardware_probe_timeout_s: 8.0
+
 intent_router:
   enabled: true
   model: google/gemma-3-1b
