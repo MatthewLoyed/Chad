@@ -64,6 +64,16 @@ def test_existing_registry_refreshes_selector_after_setup(monkeypatch):
     assert tools._llm_selector is fresh
 
 
+def test_shared_selector_follows_later_main_model_changes(monkeypatch):
+    monkeypatch.setattr(ConfigManager, '_loaded', True)
+    monkeypatch.setattr(ConfigManager, '_config', {'setup': {'share_main_model': True},
+        'tools': {'llm_selector_model': 'old-main'}, 'local_models': {'use_local': True,
+        'supervisor': {'name': 'new-main'}}})
+    assert ConfigManager.get_llm_selector_model() == 'new-main'
+    ConfigManager._config['setup']['share_main_model'] = False
+    assert ConfigManager.get_llm_selector_model() == 'old-main'
+
+
 def test_uncached_embeddings_cannot_download_without_opt_in(monkeypatch):
     import sys
     from types import SimpleNamespace

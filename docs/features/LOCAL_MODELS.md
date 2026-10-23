@@ -112,6 +112,10 @@ compatible specialists, and disables the separate intent router. Explicit
 specialist overrides remain respected. Pass
 `--include-optional` to also grab the specialist models below.
 
+`setup.share_main_model` keeps the selector aligned with later main-model
+picker changes and refreshes an already-created selector without a Brain
+restart. Set it false before deliberately configuring a separate selector.
+
 ### Optional / advanced models
 
 | Model | Role | Approx. VRAM | Notes |

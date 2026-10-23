@@ -2,6 +2,14 @@
 from typing import Any, Callable
 
 
+def resolve_selector_model(get: Callable[..., Any], default: str) -> str:
+    """Keep one-model setup aligned when the main model later changes."""
+    configured = get("tools.llm_selector_model", default)
+    if get("setup.share_main_model", False) and get("local_models.use_local", False):
+        return resolve_active_model(get, use_local=True) or configured
+    return configured
+
+
 def resolve_active_model(get: Callable[..., Any], *, use_local: bool) -> str:
     """Prefer the user's model aliases; legacy cloud configuration may fall back."""
     active = (get("local_models.supervisor") or get("supervisor")
