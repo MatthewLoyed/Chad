@@ -1,7 +1,8 @@
 # Routines, skills, and automations
 
-Chad's current saved routines are ordered, literal tool calls. The Routines
-workspace and `run_saved_routine` use the same executor. Parameters do not support
+Chad's current saved routines are ordered, literal tool calls. The GUI calls
+these **Saved actions**, under **Automations**, alongside **Schedules & triggers**.
+Saved actions and `run_saved_routine` use the same executor. Parameters do not support
 variables, references to previous results, or agent reasoning. Labels and
 descriptions are display text. Creating a routine does not execute it.
 
@@ -28,6 +29,24 @@ If continuing is explicitly enabled, the overall outcome still reports failure.
 Terminology differs by product. UiPath describes on-demand routines implemented
 as skills, while Anthropic describes cloud routines with schedules/API/events.
 Neither implies that Chad's literal-step runner can execute an adaptive plan.
+
+## Navigation and activity
+
+**Feed** presents the existing autonomous run log, newest first. It refreshes
+when opened and on Refresh, showing the latest batch supplied by
+`get_automations_summary` (currently 30 runs). Quiet all-clear checks are hidden
+unless **Show quiet checks** is selected. Failed refreshes show an error while
+retaining cached activity. Feed does not create suggestions, goals, or schedules.
+**Automations** owns recurring schedules, one-time tasks/reminders, event triggers,
+and background checks; **Saved actions** retains the existing on-demand builder.
+The internal `routines` route and API names remain compatible.
+
+### Decisions and tradeoffs
+
+The GUI separates updates (Feed) from configuration (Automations), inspired by
+[Muse's background-task model](https://ai.meta.com/muse/). This is an initial
+activity feed, not Muse feature parity or a new autonomy engine. Fixed tool
+sequences remain available as saved actions rather than a primary destination.
 
 ## Assignment-setup acceptance case
 

@@ -1,0 +1,5 @@
+.activity-feed { max-width: 820px; margin: 0 auto; }
+.activity-feed__filter { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 13px; color: rgba(255,255,255,.6); }
+.activity-feed .auto-run-card { padding: 18px; }
+.activity-feed .auto-run-card__head { flex-wrap: wrap; }
+.activity-feed .auto-run-card__summary { white-space: pre-wrap; overflow-wrap: anywhere; }

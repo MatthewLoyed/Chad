@@ -191,7 +191,12 @@
 }
 
 /* Nested Sub-Stream Styles */
-.tool-bubble--has-children {
+.tool-bubble.tool-bubble--has-children {
+    /* Override the legacy inline-bubble row in index.css. Details belong below
+       the summary, including when the full app stylesheet loads after ours. */
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
     width: 100%; /* Expand to fill when containing nested trees */
     box-sizing: border-box;
 }
@@ -200,7 +205,7 @@
     cursor: pointer;
     user-select: none;
     transition: background 0.2s ease;
-    margin: -8px -12px; /* Invert bubble padding to fill hover */
+    margin: -8px -12px 0; /* Fill hover without overlapping expanded details */
     padding: 8px 12px;
 }
 

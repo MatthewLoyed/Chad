@@ -19,7 +19,6 @@ import { resolveMapDisplay } from '../../utils/mapDisplay';
 import { useWaitTheaterStatus } from '../../hooks/useWaitTheaterStatus';
 import { useWaitNarratorLine } from '../../hooks/useWaitNarratorLine';
 import { Check, X, Copy, Pencil, FileText, Image as ImageIcon, ThumbsUp, ThumbsDown, Zap, Layers, ChevronDown, Loader2, RotateCw } from 'lucide-react';
-import { ChadAvatar, ChadAvatarLive } from '../common/chad-avatar';
 import type { ChatMessage } from '../../store';
 import './ChatStream.css';
 
@@ -66,7 +65,7 @@ function mapStopReason(reason?: string): string {
     if (!reason) return 'Unknown';
     switch (reason) {
         case 'task_completed':
-            return 'EOS Token Found';
+            return 'Completed';
         case 'awaiting_approval':
             return 'Awaiting plan approval';
         case 'awaiting_input':
@@ -96,9 +95,9 @@ function TelemetryRow({ speed, tokens, stopReason }: TelemetryRowProps) {
     return (
         <div className="chat-message__telemetry">
             {speed !== undefined && speed > 0 && (
-                <span className="telemetry-pill" title="Tokens per second">
+                <span className="telemetry-pill" title="Completion tokens divided by total turn time, including prompt processing, orchestration, and tools. Not model generation speed.">
                     <Zap size={12} className="telemetry-icon" />
-                    {speed.toFixed(2)} tok/sec
+                    {speed.toFixed(2)} tok/s · turn avg
                 </span>
             )}
             {tokens !== undefined && tokens > 0 && (
@@ -107,7 +106,7 @@ function TelemetryRow({ speed, tokens, stopReason }: TelemetryRowProps) {
                     {tokens} tokens
                 </span>
             )}
-            {stopReason && (
+            {stopReason && stopReason !== 'task_completed' && (
                 <span className="telemetry-pill" title={`Stop reason: ${mapStopReason(stopReason)}`}>
                     Stop reason: {mapStopReason(stopReason)}
                 </span>
@@ -474,11 +473,6 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     >
-                        {/* AI avatar chip — only on first message in a run */}
-                        {msg.role === 'ai' && !isContinued && (
-                            <ChadAvatar variant="hero" label="Chad" prominent mode="idle" />
-                        )}
-
                         <div className={`chat-message chat-message--${msg.role}${msg.clarifyingReply || clarifyingReplyFromPrior(prevMsg, msg) ? ' chat-message--clarifying-reply' : ''}`}>
                             {msg.role === 'ai' ? (
                                 <>
@@ -777,9 +771,6 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
                     >
-                        {/* AI avatar chip for active turn */}
-                        <ChadAvatarLive variant="hero" label="Chad" prominent />
-
                         {/* Unified AI Message Bubble for active turn */}
                         <div className="chat-message chat-message--ai">
                             {isModelLoading && (

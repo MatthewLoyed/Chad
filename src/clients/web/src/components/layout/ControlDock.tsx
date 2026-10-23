@@ -40,7 +40,7 @@ export default function ControlDock({
         { icon: LayoutDashboard, onClick: onDashboardClick, title: 'Dashboard', badge: 0 },
         { icon: Zap, onClick: onAutomationsClick, title: 'Automations', badge: 0 },
         { icon: Kanban, onClick: onKanbanClick, title: 'Kanban Board', badge: 0 },
-        { icon: ListOrdered, onClick: onRoutinesClick, title: 'Routines', badge: 0 },
+        { icon: ListOrdered, onClick: onRoutinesClick, title: 'Saved actions', badge: 0 },
     ];
 
     return (

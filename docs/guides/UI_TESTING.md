@@ -76,6 +76,27 @@ If **any link** in that chain is broken, the component never receives data. Stor
 
 ## Tier 1 — Storybook Component Gallery
 
+### Chat cleanup verification
+
+Assistant messages omit per-message avatar headers; the workspace rail retains
+Chad's identity. Telemetry speed is explicitly **turn avg**, since
+`TurnResponsePostProcessor.process` divides completion tokens by the full turn
+duration, including orchestration and tool time. It is not LM Studio decode
+throughput. Normal task completion is not evidence that an EOS token was observed
+and no longer adds a stop-reason pill. Exceptional stop reasons remain visible.
+
+Tool details start collapsed even while running and retain the user's expansion
+choice when execution finishes. Expand by click, Enter, or Space; JSON strings
+are indented under **Result**, with long output available through Show more.
+This keeps results inspectable, consistent with
+[Cursor's inline terminal output](https://cursor.com/docs/agent/tools/terminal)
+and [Cline's expandable execution summaries](https://github.com/cline/cline/blob/main/apps/examples/desktop-app/CHANGELOG.md).
+Verify pending → completed transitions with details both open and closed.
+In the sidebar, Projects and Categories actions belong together beside the
+right-hand chevron at expanded and minimum widths.
+
+Feed and automation navigation are described in [Routines](../features/ROUTINES.md#navigation-and-activity).
+
 ### Starting Storybook
 
 ```
