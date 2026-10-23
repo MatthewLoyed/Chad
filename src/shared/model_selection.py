@@ -2,6 +2,19 @@
 from typing import Any, Callable
 
 
+def describe_endpoint_model(config: dict, settings: dict | None = None) -> dict:
+    """Describe explicit-endpoint routing without implying inference is on-device."""
+    settings = settings or {}
+    thinking = settings.get("thinking")
+    return {"mode": "local", "hosting": config.get("hosting", "unknown"),
+            "name": config.get("name") or "Choose a model",
+            "provider": config.get("provider", "lmstudio"),
+            "supports_tools": config.get("supports_tools", False),
+            "tools_verified": config.get("tools_verified", False),
+            "thinking_enabled": bool(thinking) if thinking is not None else None,
+            "model_settings": settings}
+
+
 def resolve_selector_model(get: Callable[..., Any], default: str) -> str:
     """Keep one-model setup aligned when the main model later changes."""
     configured = get("tools.llm_selector_model", default)

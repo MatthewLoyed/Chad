@@ -339,7 +339,7 @@ class ConfigManager:
                 or cls.get("supervisor")
                 or cls.get("active_model")
             )
-        logger.debug(f"[ CONFIG ] Local model for category={category!r}: {active}")
+        logger.debug(f"[ CONFIG ] Resolving endpoint model for category={category!r} (credentials omitted)")
         if not active:
             return {}
         if isinstance(active, dict):

@@ -24,6 +24,7 @@ const meta = {
             }),
             get_model_setup_job: async () => ({ running: false, done: false }),
             probe_local_backend: async () => ({ reachable: true, models: [{ id: 'example-chat', display_name: 'Example Chat 8B' }] }),
+            test_setup_model: async () => ({ success: true, reply: 'Hello! This fictional model is ready for a chat.' }),
             save_provider_choice: async () => ({ success: true }),
             start_model_setup_job: async () => ({ success: false, detail: 'Preview only. No download was started.' }),
         } };

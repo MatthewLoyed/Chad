@@ -49,6 +49,14 @@ if startup cannot complete. Once setup is ready, choose LM Studio, Ollama, or
 another compatible model server. Existing saved choices are preserved even
 when their server is temporarily offline.
 
+**Use a cloud API** is a separate first-run route for hosted OpenAI-compatible
+Chat Completions endpoints, with OpenRouter/DeepSeek address presets and manual
+model-ID entry when discovery is unavailable. It requires no local model app or
+hardware scan. The screen explains account/API-key requirements, possible usage
+charges and where messages go. Native Anthropic Messages, Gemini and Responses
+API onboarding is not provided by this route; existing credential-based cloud
+routing and its model picker are a separate legacy configuration path.
+
 For LM Studio, install/open the app, download a chat model suitable for your
 computer, and start its Local Server from Model Server (Developer in older
 versions). Chad checks the
@@ -58,13 +66,25 @@ are separate checks. If the server cannot be reached, the wizard shows what
 to check and allows retry, Back, or Finish later. Finish later does not mark
 Chat as ready: reopening Chad returns to setup until a model is chosen.
 
-Select a model and save it to open Chat. The model label updates immediately;
-the first message exercises actual inference. Listing a model is not proof
-that it can generate a reply or call tools. Agent/tool compatibility and
+Select or enter a model ID, then explicitly send a short greeting through the
+Brain's inference adapter before saving it to open Chat. The test can load a
+local model or incur hosted usage, so it never runs automatically. It uses a
+small requested output budget and checks for a usable text reply. Changing the
+endpoint, credential or model invalidates the result. This establishes basic
+inference, not a complete orchestrated Agent turn. Agent/tool compatibility and
 optional accounts are configured separately in Settings. Core Chat does not
 require downloading the specialist model catalog used by the developer script
 below. This flow is implemented in the setup wizard and setup service; a new
 installer still needs clean Windows acceptance before release.
+
+For explicit hosted endpoints, preserve the complete provider model ID (including
+namespaces) and do not send LM Studio/Ollama engine parameters. Physical hosting
+metadata is separate from the legacy `local_models` explicit-endpoint routing
+flag; that flag alone does not imply messages stay on this computer. Cloud
+endpoint selections display a cloud indicator and omit local engine settings.
+Discovery does not verify tool calling. DeepSeek's documented thinking switch
+is scoped to its official API host; its multi-turn thinking/tool reasoning replay
+is still unverified. Do not certify a provider from a successful greeting.
 
 The [setup journey acceptance checklist](https://github.com/MatthewLoyed/Chad/issues/5#setup-journey-contract--proposed-acceptance-2026-10-23)
 tracks proposed task-based model guidance, installation from nothing, existing

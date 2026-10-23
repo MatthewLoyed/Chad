@@ -10,6 +10,7 @@
 .chad-setup summary { cursor: pointer; color: #bfc1d0; font-size: 14px; padding: 4px 0; }
 .setup-stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .setup-body { overflow-y: auto; min-height: 0; padding: 4px; margin: -4px; scrollbar-width: thin; scrollbar-color: #555063 transparent; }
+.setup-body > * { flex-shrink: 0; }
 .setup-footer { flex-shrink: 0; }
 .setup-details { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; }
 .setup-brand { color: #c4b5fd; font-size: 12px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }

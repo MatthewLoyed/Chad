@@ -75,6 +75,10 @@ class Limit:
 LIMITS: Dict[str, Limit] = {
     lim.name: lim
     for lim in [
+        Limit("setup_test_timeout", "setup.test_timeout_s", 60.0, HINT,
+              "Explicit onboarding chat test timeout; the user can retry after checking the provider."),
+        Limit("setup_test_tokens", "setup.test_max_tokens", 64, HINT,
+              "Requested output budget for a user-confirmed onboarding chat test, including hosted providers."),
         Limit(
             "setup_network_timeout", "setup.network_timeout_s", 30.0, HINT,
             "Setup download read/connect timeout; partial files remain resumable on explicit retry.",
