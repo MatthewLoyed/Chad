@@ -1,4 +1,5 @@
 from src.shared.config_manager import ConfigManager
+from .setup import SetupAPIMixin
 from src.shared.logger import setup_logger
 from src.application.commands import (
     SetVoiceCommand,
@@ -30,17 +31,12 @@ from src.application.commands import (
     StartSearxngSidecarCommand,
     GetSupabaseSettingsCommand,
     BootstrapSupabaseCommand,
-    GetSetupStatusCommand,
-    StartLMStudioSetupCommand,
-    GetLMStudioSetupProgressCommand,
-    ProbeLocalBackendCommand,
-    SaveProviderChoiceCommand,
 )
 
 logger = setup_logger("WebViewAPI")
 
 
-class ConfigAPIMixin:
+class ConfigAPIMixin(SetupAPIMixin):
     """Mixin for configuration-related WebView API methods (models, voice, preferences)."""
 
     def get_voice(self):
@@ -673,52 +669,5 @@ class ConfigAPIMixin:
                 db_url=str(db_url or ""),
             ),
             timeout=600.0,
-            default_fallback={"success": False, "error": "Command execution failed."},
-        )
-
-    def get_setup_status(self):
-        """Whether the first-run setup wizard should be shown (issue #428)."""
-        return self._execute_command(
-            GetSetupStatusCommand(),
-            timeout=10.0,
-            # Unknown while the Brain boots; do not falsely report setup complete.
-            default_fallback={},
-        )
-
-    def start_lmstudio_setup(self):
-        """Kick off the LM Studio model check/download in a background thread."""
-        return self._execute_command(
-            StartLMStudioSetupCommand(),
-            timeout=10.0,
-            default_fallback={"success": False, "error": "Command execution failed."},
-        )
-
-    def get_lmstudio_setup_progress(self):
-        """Poll the state of a background start_lmstudio_setup() job."""
-        return self._execute_command(
-            GetLMStudioSetupProgressCommand(),
-            timeout=10.0,
-            default_fallback={"running": False, "done": True, "log": [], "report": None},
-        )
-
-    def probe_local_backend(self, provider, base_url, api_key=""):
-        """Probe an Ollama / custom OpenAI-compatible endpoint for the setup wizard (issue #499)."""
-        return self._execute_command(
-            ProbeLocalBackendCommand(provider=str(provider or ""), base_url=str(base_url or ""), api_key=str(api_key or "")),
-            timeout=10.0,
-            default_fallback={"reachable": False, "models": [], "download_url": None},
-        )
-
-    def save_provider_choice(self, provider, base_url, api_key, model_id, supports_tools=True):
-        """Persist the wizard's chosen backend + model (issue #499)."""
-        return self._execute_command(
-            SaveProviderChoiceCommand(
-                provider=str(provider or ""),
-                base_url=str(base_url or ""),
-                api_key=str(api_key or ""),
-                model_id=str(model_id or ""),
-                supports_tools=bool(supports_tools),
-            ),
-            timeout=10.0,
             default_fallback={"success": False, "error": "Command execution failed."},
         )

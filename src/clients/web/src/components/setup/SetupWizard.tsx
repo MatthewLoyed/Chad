@@ -146,7 +146,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                         <ol style={styles.list}>
                             <li>Install and open LM Studio.</li>
                             <li>Download a chat model that fits your computer.</li>
-                            <li>In LM Studio, open Developer and start the Local Server. Use its server address below.</li>
+                            <li>In LM Studio, open Model Server (called Developer in older versions) and start the Local Server. Use its server address below.</li>
                         </ol>
                         <button style={styles.secondaryBtn} onClick={() => void openDownload('https://lmstudio.ai/download')}>
                             <ExternalLink size={14} /> Download LM Studio

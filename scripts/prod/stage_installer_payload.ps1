@@ -65,6 +65,19 @@ foreach ($appName in @("Chad", "Chad-Brain")) {
     if (Test-Path $staleHome) { Remove-Item $staleHome -Force }
 }
 
+# PyTorch also needs the C++ standard library at the bundle DLL search root.
+# The sklearn wheel already redistributes this exact runtime, but its private
+# .libs directory is not searched when torch loads c10.dll on a clean machine.
+$BrainInternal = Join-Path $PayloadDir "Chad-Brain\_internal"
+$CppRuntime = Join-Path $BrainInternal "msvcp140.dll"
+if ((Test-Path (Join-Path $BrainInternal "torch\lib\c10.dll")) -and -not (Test-Path $CppRuntime)) {
+    $BundledRuntime = Join-Path $BrainInternal "sklearn\.libs\msvcp140.dll"
+    if (-not (Test-Path $BundledRuntime)) {
+        throw "The Brain is missing its bundled MSVC C++ runtime. Rebuild with the sklearn wheel runtime included."
+    }
+    Copy-Item -LiteralPath $BundledRuntime -Destination $CppRuntime
+}
+
 Write-Host "[..] Copying config templates ..." -ForegroundColor Cyan
 $ConfigDest = Join-Path $PayloadDir "config"
 New-Item -ItemType Directory -Path $ConfigDest | Out-Null

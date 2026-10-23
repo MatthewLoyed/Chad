@@ -86,6 +86,22 @@ def test_failed_save_does_not_report_setup_complete(fresh, monkeypatch):
     assert ConfigManager.get_local_model_config() == {}
 
 
+@pytest.mark.parametrize("success", [True, False])
+def test_desktop_refreshes_its_separate_cache_after_setup(fresh, monkeypatch, success):
+    from src.clients.desktop.api.config import ConfigAPIMixin
+
+    bridge = ConfigAPIMixin()
+    bridge._execute_command = MagicMock(return_value={"success": success})
+    selected = {"local_models": {"use_local": True,
+                "supervisor": {"name": "fictional-chat", "provider": "lmstudio"}}}
+    reload_config = MagicMock(side_effect=lambda: setattr(ConfigManager, "_config", selected))
+    monkeypatch.setattr(ConfigManager, "load_config", reload_config)
+
+    assert bridge.save_provider_choice("lmstudio", "http://localhost:1234/v1", "", "fictional-chat")["success"] == success
+    assert ConfigManager.get_active_model() == ("fictional-chat" if success else "")
+    assert reload_config.call_count == int(success)
+
+
 def test_legacy_template_model_is_not_a_completed_setup(fresh, monkeypatch):
     ConfigManager._config["local_models"]["active_model"] = {
         "name": "old-template-model", "provider": "lmstudio", "base_url": "http://localhost:1234/v1"

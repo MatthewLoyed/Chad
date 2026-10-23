@@ -38,7 +38,8 @@ another compatible model server. Existing saved choices are preserved even
 when their server is temporarily offline.
 
 For LM Studio, install/open the app, download a chat model suitable for your
-computer, and start its Local Server from the Developer view. Chad checks the
+computer, and start its Local Server from Model Server (Developer in older
+versions). Chad checks the
 server address directly and lists the chat models it exposes. The CLI is not
 a prerequisite for connecting; installation detection and server readiness
 are separate checks. If the server cannot be reached, the wizard shows what
