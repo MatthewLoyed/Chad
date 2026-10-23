@@ -30,9 +30,28 @@ for (const width of [1280, 390]) {
         await expect(page.getByText('Step 4 of 4')).toBeVisible();
         await expect(page.getByLabel('API key (only if your server requires one)')).toBeHidden();
         await page.getByRole('button', { name: 'Check connection', exact: true }).click();
+        await page.getByRole('button', { name: 'Send a short test message' }).click();
+        await expect(page.getByText('Your model answered')).toBeVisible();
         await expect(page.getByRole('button', { name: 'Use this model and open Chat' })).toBeVisible();
         await page.getByRole('button', { name: 'Back', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'Example Chat 4B' })).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     });
+}
+
+for (const width of [1280, 390]) {
+test(`cloud API works without local installation at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/iframe.html?id=setup-first-conversation--guided-setup&viewMode=story');
+    await page.getByRole('button', { name: 'Get started' }).click();
+    await page.getByRole('button', { name: /Use a cloud API/ }).click();
+    await expect(page.getByRole('button', { name: 'Find a model for me' })).toHaveCount(0);
+    await expect(page.getByText(/Start your model app/)).toHaveCount(0);
+    await page.screenshot({ path: test.info().outputPath(`cloud-${width}.png`) });
+    await page.getByLabel('Provider API key').fill('fictional-key');
+    await page.getByLabel('Model ID (from your model app or provider)').fill('vendor/fictional-chat');
+    await page.getByRole('button', { name: 'Send a short test message' }).click();
+    await expect(page.getByText('Your model answered')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Use this model and open Chat' })).toBeVisible();
+});
 }

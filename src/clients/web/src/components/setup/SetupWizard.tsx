@@ -10,8 +10,8 @@ import { styles } from './SetupWizard.styles';
 import HardwareSetup from './HardwareSetup';
 import './SetupWizard.css';
 
-type Step = 'welcome' | 'backend-choice' | 'lmstudio-install' | 'lmstudio' | 'lmstudio-connect' | 'ollama' | 'custom' | 'later';
-type Provider = 'lmstudio' | 'ollama' | 'custom';
+type Step = 'welcome' | 'backend-choice' | 'lmstudio-install' | 'lmstudio' | 'lmstudio-connect' | 'ollama' | 'custom' | 'cloud' | 'later';
+type Provider = 'lmstudio' | 'ollama' | 'custom' | 'cloud';
 interface SetupStatus {
     lmstudio_installed?: boolean;
     lms_cli_found?: boolean;
@@ -20,48 +20,52 @@ interface SetupStatus {
     error?: string;
 }
 interface Model { id: string; display_name: string; supports_tools?: boolean; }
-interface Probe { reachable?: boolean; models?: Model[]; }
+interface Probe { reachable?: boolean; models?: Model[]; detail?: string; success?: boolean; }
 const DEFAULT_URLS: Record<Provider, string> = {
-    lmstudio: 'http://localhost:1234/v1', ollama: 'http://localhost:11434/v1', custom: 'http://localhost:8000/v1',
+    lmstudio: 'http://localhost:1234/v1', ollama: 'http://localhost:11434/v1', custom: 'http://localhost:8000/v1', cloud: 'https://openrouter.ai/api/v1',
 };
 
 export default function SetupWizard({ onComplete }: { onComplete: () => void }) {
     const [step, setStep] = useState<Step>('welcome');
     const [baseUrl, setBaseUrl] = useState(DEFAULT_URLS.lmstudio);
     const [apiKey, setApiKey] = useState('');
+    const [cloudService, setCloudService] = useState(DEFAULT_URLS.cloud);
     const [probe, setProbe] = useState<Probe | null>(null);
     const [selected, setSelected] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [testReply, setTestReply] = useState('');
     // Ignore late replies after navigating away, editing the endpoint, or unmounting.
     const generation = useRef(0);
     useEffect(() => () => { generation.current++; }, []);
     const api = window.pywebview?.api;
-    const provider: Provider = step === 'ollama' ? 'ollama' : step === 'custom' ? 'custom' : 'lmstudio';
+    const provider: Provider = step === 'ollama' ? 'ollama' : step === 'custom' ? 'custom' : step === 'cloud' ? 'cloud' : 'lmstudio';
     const navigate = (next: Step) => {
         generation.current++;
-        setBusy(false); setError(''); setMessage(''); setProbe(null); setSelected('');
+        setBusy(false); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply('');
         setStep(next);
     };
     const choose = (next: Provider) => {
-        setBaseUrl(DEFAULT_URLS[next]); setApiKey(''); navigate(next === 'lmstudio' ? 'lmstudio-install' : next);
+        setBaseUrl(DEFAULT_URLS[next]); setCloudService(DEFAULT_URLS.cloud); setApiKey(''); navigate(next === 'lmstudio' ? 'lmstudio-install' : next);
     };
     const resetConnection = () => {
-        generation.current++; setBusy(false); setProbe(null); setSelected(''); setError(''); setMessage('');
+        generation.current++; setBusy(false); setProbe(null); setSelected(''); setError(''); setMessage(''); setTestReply('');
     };
     const check = async () => {
         const request = ++generation.current;
-        setBusy(true); setError(''); setMessage(''); setProbe(null); setSelected('');
+        setBusy(true); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply('');
         try {
             if (!api?.probe_local_backend) throw new Error('Chad is still connecting. Please try again.');
             // Probe HTTP first: CLI discovery must never gate a usable model server.
-            const result = await setupRequest(api.probe_local_backend(provider, baseUrl, apiKey)) as Probe;
+            const result = await setupRequest(api.probe_local_backend(provider === 'cloud' ? 'custom' : provider, baseUrl, apiKey)) as Probe;
             if (request !== generation.current) return;
             setProbe(result);
             if (result?.reachable && result.models?.length) {
                 setSelected(result.models[0].id);
-                setMessage('Connected. Choose a model below.');
+                setMessage('Model list received. Choose a model, then try a short chat test.');
+            } else if (result?.detail) {
+                setMessage(result.detail);
             } else if (provider === 'lmstudio') {
                 if (!api.get_setup_status) throw new Error('Chad could not check LM Studio. Please try again.');
                 const found = await setupRequest(api.get_setup_status()) as SetupStatus;
@@ -83,7 +87,22 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             if (request === generation.current) setBusy(false);
         }
     };
+    const invalidateTest = () => { generation.current++; setBusy(false); setTestReply(''); setError(''); };
+    const testChat = async () => {
+        const request = ++generation.current;
+        setBusy(true); setError(''); setTestReply('');
+        try {
+            if (provider === 'cloud' && !baseUrl.startsWith('https://')) throw new Error('Use your cloud provider’s HTTPS API address. A local server can use the existing model server option.');
+            if (!api?.test_setup_model) throw new Error('Chad is still connecting. Please try again.');
+            const result = await setupRequest(api.test_setup_model(baseUrl, apiKey, selected, true), 95000) as { success?: boolean; reply?: string; detail?: string };
+            if (request !== generation.current) return;
+            if (!result?.success || !result.reply?.trim()) throw new Error(result?.detail || 'The model did not answer. Check its load state, API key and model ID, then retry.');
+            setTestReply(result.reply);
+        } catch (e) { if (request === generation.current) setError(e instanceof Error ? e.message : 'The chat test could not finish.'); }
+        finally { if (request === generation.current) setBusy(false); }
+    };
     const save = async () => {
+        if (!testReply) return;
         const request = ++generation.current;
         setBusy(true); setError('');
         try {
@@ -92,7 +111,8 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             if (request !== generation.current) return;
             if (!result?.success) throw new Error(result?.error || 'The model choice could not be saved. Please try again.');
             useAppStore.getState().setActiveModel({
-                mode: 'local', name: selected, provider: provider === 'custom' ? 'static' : provider,
+                mode: 'local', name: selected, provider: provider === 'custom' || provider === 'cloud' ? 'static' : provider,
+                hosting: provider === 'cloud' ? 'cloud' : 'unknown',
                 supports_tools: false,
                 thinking_enabled: null,
             });
@@ -111,10 +131,10 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             setError(e instanceof Error ? e.message : 'The download page could not be opened.');
         }
     };
-    const connecting = step === 'lmstudio-connect' || step === 'ollama' || step === 'custom';
+    const connecting = step === 'lmstudio-connect' || step === 'ollama' || step === 'custom' || step === 'cloud';
     const hasModels = probe?.reachable && !!probe.models?.length;
 
-    const stage = step === 'welcome' || step === 'later' ? 0 : step === 'backend-choice' || step === 'lmstudio-install' ? 1 : step === 'lmstudio' ? 2 : 3;
+    const stage = step === 'welcome' || step === 'later' ? 0 : step === 'backend-choice' || step === 'lmstudio-install' ? 1 : step === 'lmstudio' || (step === 'cloud' && !testReply) ? 2 : 3;
     const heading = useRef<HTMLHeadingElement>(null);
     useEffect(() => {
         const activeHeading = Array.from(document.querySelectorAll<HTMLElement>('.chad-setup h1')).find(element => !element.closest('[hidden]'));
@@ -126,7 +146,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             <section style={styles.card} aria-label="Chad setup">
                 <div className="setup-brand">CHAD · SETUP</div>
                 <nav aria-label="Setup progress"><ol className="setup-progress">
-                    {['Welcome', 'Model app', 'Choose a model', 'Start chatting'].map((label, index) => <li key={label} aria-current={stage === index ? 'step' : undefined} className={index < stage ? 'is-complete' : ''}>
+                    {['Welcome', 'Connection', 'Choose a model', 'Start chatting'].map((label, index) => <li key={label} aria-current={stage === index ? 'step' : undefined} className={index < stage ? 'is-complete' : ''}>
                         <span className="setup-step-number">{index < stage ? <Check size={14} aria-label="Complete" /> : index + 1}</span>{label}
                     </li>)}
                 </ol><p style={{ ...styles.hint, marginTop: 12 }}>Step {stage + 1} of 4</p></nav>
@@ -134,17 +154,21 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 {step === 'welcome' && <>
                     <h1 ref={heading} tabIndex={-1} style={styles.title}>Welcome to Chad</h1>
                     <div className="setup-hero-icon"><Sparkles size={30} /></div>
-                    <p style={styles.hint}>Let’s get your first conversation ready. We’ll help you find an AI model that suits your computer and connect it to Chad.</p>
+                    <p style={styles.hint}>Let’s get your first conversation ready. Choose a model on your computer or connect a cloud service. We’ll guide you to your first answer.</p>
                     <div className="setup-note"><ShieldCheck size={18} style={{ verticalAlign: 'middle', marginRight: 8, color: '#c4b5fd' }} />No cloud account needed. With a local model, your chats run on your computer.</div>
                     <button style={styles.primaryBtn} onClick={() => navigate('backend-choice')}>Get started</button>
                 </>}
                 {step === 'backend-choice' && <>
-                    <h1 ref={heading} tabIndex={-1} style={styles.title}>Choose your model app</h1>
-                    <p style={styles.hint}>These apps run the AI model that answers your messages.</p>
+                    <h1 ref={heading} tabIndex={-1} style={styles.title}>Where should your AI run?</h1>
+                    <p style={styles.hint}>Use this computer for local chat, or bring an API key for a cloud service.</p>
                     <div style={styles.backendGrid}>
                         <button style={styles.backendCard} onClick={() => choose('lmstudio')}>
                             <span style={styles.backendCardTitle}>LM Studio <span style={styles.recommendedBadge}>Recommended</span></span>
                             <span style={styles.backendCardHint}>Choose and download a model in a desktop app.</span>
+                        </button>
+                        <button style={styles.backendCard} onClick={() => choose('cloud')}>
+                            <span style={styles.backendCardTitle}>Use a cloud API</span>
+                            <span style={styles.backendCardHint}>No local model download. Requires a provider account and API key; usage may cost money.</span>
                         </button>
                         <details><summary>I already use another model app</summary><div className="setup-details">
                         <button style={styles.backendCard} onClick={() => choose('ollama')}>
@@ -172,32 +196,59 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     <HardwareSetup baseUrl={baseUrl} apiKey={apiKey} modelId={selected} onContinue={() => navigate('lmstudio-connect')} />
                 </div>}
                 {connecting && <>
-                    <h1 ref={heading} tabIndex={-1} style={styles.title}>{step === 'lmstudio-connect' ? 'Connect and start chatting' : step === 'ollama' ? 'Connect Ollama' : 'Connect your model server'}</h1>
+                    <h1 ref={heading} tabIndex={-1} style={styles.title}>{step === 'lmstudio-connect' ? 'Connect and start chatting' : step === 'ollama' ? 'Connect Ollama' : step === 'cloud' ? 'Connect your cloud model' : 'Connect your model server'}</h1>
                     {step === 'lmstudio-connect' ? <>
                         <p style={styles.hint}>One last step in LM Studio, then you’re ready.</p>
                         {!hasModels && <ol className="setup-checklist"><li>Load your downloaded chat model in LM Studio.</li><li>Open <strong>Model Server</strong> (or <strong>Developer</strong>) and turn on the <strong>Local Server</strong>.</li><li>Return here and check the connection.</li></ol>}
-                    </> : <p style={styles.hint}>Start your model app’s server, then enter its connection details below.</p>}
+                    </> : <p style={styles.hint}>{step === 'cloud' ? 'Choose a provider and bring its API key. No local model download is needed.' : 'Start your model app’s server, then enter its connection details below.'}</p>}
                     {step === 'ollama' && <button style={styles.secondaryBtn} onClick={() => void openDownload('https://ollama.com/download')}>Download Ollama</button>}
-                    <details open={step !== 'lmstudio-connect'}><summary>Connection settings (advanced)</summary><div className="setup-details">
-                    <p style={styles.hint}>The default connects to LM Studio on this computer. Only change this for a different server. A remote address sends your chats there.</p>
-                    <label style={styles.fieldLabel} htmlFor="setup-url">Server address</label>
-                    <input id="setup-url" style={styles.textInput} value={baseUrl} disabled={busy} onChange={e => { setBaseUrl(e.target.value); resetConnection(); }} />
-                    <label style={styles.fieldLabel} htmlFor="setup-key">API key (only if your server requires one)</label>
+                    {step === 'cloud' && <div className="setup-stack">
+                        <p style={styles.hint}>Your messages go to this provider and usage may cost money. API billing can be separate from a chat subscription.</p>
+                        <label style={styles.fieldLabel} htmlFor="setup-cloud-service">Cloud service</label>
+                        <select id="setup-cloud-service" style={styles.textInput} value={cloudService} disabled={busy} onChange={e => { setCloudService(e.target.value); setBaseUrl(e.target.value); setApiKey(''); resetConnection(); }}>
+                            <option value="https://openrouter.ai/api/v1">OpenRouter</option>
+                            <option value="https://api.deepseek.com/v1">DeepSeek</option>
+                            <option value="">Another compatible API</option>
+                        </select>
+                        <label style={styles.fieldLabel} htmlFor="setup-cloud-key">Provider API key</label>
+                        <input id="setup-cloud-key" type="password" autoComplete="off" style={styles.textInput} value={apiKey} disabled={busy} onChange={e => { setApiKey(e.target.value); resetConnection(); }} />
+                    </div>}
+                    <details open={step === 'ollama' || step === 'custom' || (step === 'cloud' && !cloudService)}><summary>{step === 'cloud' ? 'API address and compatibility' : 'Connection settings (advanced)'}</summary><div className="setup-details">
+                    <p style={styles.hint}>{step === 'lmstudio-connect' ? 'The default connects to LM Studio on this computer.' : 'Use the provider’s API base address, not its chat website or a /chat/completions URL.'} A remote address sends your chats there.</p>
+                    <label style={styles.fieldLabel} htmlFor="setup-url">{step === 'cloud' ? 'API base address' : 'Server address'}</label>
+                    <input id="setup-url" style={styles.textInput} value={baseUrl} disabled={busy} onChange={e => { setBaseUrl(e.target.value); setApiKey(''); if (step === 'cloud') setCloudService(''); resetConnection(); }} />
+                    {step !== 'cloud' && <><label style={styles.fieldLabel} htmlFor="setup-key">API key (only if your server requires one)</label>
                     <input id="setup-key" type="password" autoComplete="off" style={styles.textInput} value={apiKey} disabled={busy} onChange={e => { setApiKey(e.target.value); resetConnection(); }} />
+                    </>}
+                    {step === 'cloud' && <p style={styles.hint}>This setup uses OpenAI-compatible Chat Completions. Native Anthropic Messages, Gemini and Responses API setup is not available here yet. A model name does not establish the API format.</p>}
                     </div></details>
-                    {!hasModels && <button style={styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void check()}>
+                    {!hasModels && <button style={step === 'cloud' ? styles.secondaryBtn : styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void check()}>
                         {busy && <Loader2 size={14} className="is-spinning" />}
-                        {busy ? 'Checking…' : step === 'lmstudio-connect' ? 'Check connection' : 'Test connection'}
+                        {busy ? 'Checking…' : step === 'lmstudio-connect' ? 'Check connection' : 'Find available models'}
                     </button>}
                     {message && <p role="status" className="setup-status" style={styles.hint}>{message}</p>}
-                    {!!probe?.models?.length && probe.reachable && <>
+                    {hasModels && <>
                         <label style={styles.fieldLabel} htmlFor="setup-model">Chat model</label>
-                        <select id="setup-model" style={styles.textInput} value={selected} disabled={busy} onChange={e => setSelected(e.target.value)}>
-                            {probe.models.map(model => <option key={model.id} value={model.id}>{model.display_name}</option>)}
+                        <select id="setup-model" style={styles.textInput} value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); invalidateTest(); }}>
+                            {probe?.models?.map(model => <option key={model.id} value={model.id}>{model.display_name}</option>)}
                         </select>
-                        <button style={styles.primaryBtn} disabled={busy || !selected} onClick={() => void save()}>Use this model and open Chat</button>
-                        <p style={styles.hint}>You can change your model and add optional tools later in Settings.</p>
                     </>}
+                    {(provider === 'cloud' || provider === 'custom' || (probe && !hasModels)) && <>
+                        <label style={styles.fieldLabel} htmlFor="setup-model-id">Model ID (from your model app or provider)</label>
+                        <input id="setup-model-id" style={styles.textInput} value={selected} disabled={busy} placeholder="Exact model ID" onChange={e => { setSelected(e.target.value); invalidateTest(); }} />
+                        <p style={styles.hint}>Some providers do not list models. You can enter an ID and test it directly.</p>
+                    </>}
+                    {selected && <>
+                        {!testReply ? <>
+                            <p style={styles.hint}>Try one short greeting with this model. It may load a local model; a hosted service may charge for this request. No tools will run.</p>
+                            <button style={styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void testChat()}>{busy ? 'Testing…' : 'Send a short test message'}</button>
+                        </> : <>
+                            <div className="setup-status setup-stack" role="status"><strong>Your model answered</strong><p style={styles.hint}>{testReply}</p></div>
+                            <button style={styles.primaryBtn} disabled={busy} onClick={() => void save()}>Use this model and open Chat</button>
+                        </>}
+                        <p style={styles.hint}>Chat setup does not verify tool calling, images or reasoning modes. You can change models and configure those features later.</p>
+                    </>}
+
                 </>}
                 {step === 'later' && <>
                     <h1 ref={heading} tabIndex={-1} style={styles.title}>You can finish setup later</h1>

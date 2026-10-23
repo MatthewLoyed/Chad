@@ -5,12 +5,22 @@ from src.application.commands import (
     StartLMStudioSetupCommand,
     GetLMStudioSetupProgressCommand,
     ProbeLocalBackendCommand,
+    TestSetupModelCommand,
     SaveProviderChoiceCommand,
 )
 
 
 class SetupAPIMixin:
     """Relay setup commands and refresh the desktop cache after a saved choice."""
+
+    def test_setup_model(self, base_url, api_key, model_id, confirmed=False):
+        from src.core.tools.limits import get as limit
+        from src.core.tools.failure import failure, UNAVAILABLE
+        return self._execute_command(
+            TestSetupModelCommand(str(base_url or ""), str(api_key or ""), str(model_id or ""), confirmed),
+            timeout=limit("setup_test_timeout") + limit("setup_network_timeout"),
+            default_fallback=failure("The local service did not finish the chat test. Try again.", failure_class=UNAVAILABLE),
+        )
 
     def assess_model_hardware(self, storage_path="", context=8192, manual=None):
         """Scan the local Limb host; deliberately never send hardware to the Brain."""
