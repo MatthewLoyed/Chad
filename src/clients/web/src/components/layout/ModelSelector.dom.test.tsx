@@ -7,8 +7,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ModelSelector from './ModelSelector';
 import { useAppStore } from '../../store';
 import type { LocalModelInfo } from '../../store';
@@ -74,4 +74,16 @@ describe('ModelSelector local list overflow', () => {
             /\.model-selector__list--local\s*\{[^}]*min-height:\s*0/s
         );
     });
+});
+
+
+it('finishes empty discovery without automatically restarting it', async () => {
+    const discover = vi.fn().mockResolvedValue([]);
+    Object.assign(window, { pywebview: { api: { discover_local_models: discover } } });
+    render(<ModelSelector />);
+    fireEvent.click(screen.getByTitle(/Active:/));
+    await waitFor(() => expect(screen.getByText('Could not find any local models.')).toBeTruthy());
+    expect(discover).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Cloud models require your own API key/)).toBeTruthy();
+    Object.assign(window, { pywebview: undefined });
 });

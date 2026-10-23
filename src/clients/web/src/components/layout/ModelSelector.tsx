@@ -2,7 +2,7 @@
  * ModelSelector — Local AI Model Picker
  *
  * A compact dropdown that lets the user switch between:
- *   • ☁️ Gemini (cloud, always available)
+ *   • ☁️ Cloud models with configured credentials
  *   • 🖥️ Local models from LM Studio / Ollama
  *
  * This version uses global state from useAppStore for available models,
@@ -61,6 +61,7 @@ export default function ModelSelector() {
     const setIsLocalScanning = useAppStore(state => state.setIsLocalScanning);
     
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const attemptedDiscovery = useRef(false);
     const isRefreshing = isLocalScanning; // Sync for legacy UI references
 
     // ── Manual Refresh ────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export default function ModelSelector() {
             return;
         }
 
+        attemptedDiscovery.current = true;
         setIsLocalScanning(true);
         try {
             const models = await withTimeout(
@@ -80,7 +82,7 @@ export default function ModelSelector() {
             setAvailableLocalModels(Array.isArray(models) ? models : []);
         } catch (e) {
             console.warn('[ModelSelector] discover_local_models failed or timed out:', e);
-            setAvailableLocalModels([]);
+            // Preserve usable cached models when a refresh fails.
         } finally {
             setIsLocalScanning(false);
         }
@@ -181,7 +183,7 @@ export default function ModelSelector() {
     // ── JIT Lazy Scanning ─────────────────────────────────────────────────────
     // Trigger local model discovery only when user actively engages the dropdown
     useEffect(() => {
-        if (isOpen && localModels.length === 0 && !isRefreshing) {
+        if (isOpen && localModels.length === 0 && !isRefreshing && !attemptedDiscovery.current) {
             console.log('[ModelSelector] Dropdown opened with empty cache, triggering JIT scan...');
             refreshModels();
         }
@@ -244,8 +246,7 @@ export default function ModelSelector() {
                         <div className="model-selector__list">
                             {cloudModels.length === 0 ? (
                                 <div className="model-selector__scanning">
-                                    <Loader2 size={14} className="spin" />
-                                    <span>Syncing cloud models...</span>
+                                    <span>Cloud models require your own API key. No cloud provider credentials are configured. Provider charges may apply.</span>
                                 </div>
                             ) : cloudModels.map((cm) => (
                                 <button
@@ -297,7 +298,7 @@ export default function ModelSelector() {
                                 </div>
                             ) : null}
 
-                            {!isRefreshing && localModels.map((m) => (
+                            {localModels.map((m) => (
                                 <button
                                     key={m.name}
                                     type="button"
