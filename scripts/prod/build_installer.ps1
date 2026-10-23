@@ -24,6 +24,7 @@
 #>
 param(
     [string]$Version,
+    [string]$PayloadName = "installer_payload",
     [switch]$SkipBuild,
     [string]$Python
 )
@@ -57,9 +58,9 @@ if (-not $SkipBuild) {
     Write-Host "[--] Skipping PyInstaller build (reusing existing dist\Chad, dist\Chad-Brain)." -ForegroundColor DarkGray
 }
 
-& (Join-Path $PSScriptRoot "stage_installer_payload.ps1")
+& (Join-Path $PSScriptRoot "stage_installer_payload.ps1") -PayloadName $PayloadName
 
-$PayloadDir = Join-Path $DistRoot "installer_payload"
+$PayloadDir = Join-Path $DistRoot $PayloadName
 $OutFile = Join-Path $DistRoot "Chad-Setup-$Version.exe"
 $NsiScript = Join-Path $RepoRoot "packaging\chad_installer.nsi"
 

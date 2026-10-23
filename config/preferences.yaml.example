@@ -10,16 +10,13 @@
 
 local_models:
   use_local: true
-  active_model:
-    name: google/gemma-4-26b-a4b-qat
-    provider: lmstudio
-    base_url: http://localhost:1234/v1
-    api_key: lm-studio
-    supports_tools: true
+  # Set by onboarding or the model picker, never by the template.
+  supervisor: null
+  active_model: null
 
 ui:
   # Chat input mode dropdown: auto | agent | chat | plan
-  default_turn_mode: auto
+  default_turn_mode: chat
 
 # Optional profile overlay (machine-specific apps, routines, monitors).
 # profile:

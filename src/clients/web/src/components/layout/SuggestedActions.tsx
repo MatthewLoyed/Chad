@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import './SuggestedActions.css';
+import { useChatTurnMode } from '../../store';
+import { turnModeCategory } from '../../utils/turn-mode';
 
 interface SuggestedActionsProps {
-    onSelect: (text: string) => void;
+    onSelect: (text: string, category: string) => void;
 }
 
 const morningActions = [
@@ -28,6 +30,7 @@ const eveningActions = [
 ];
 
 export default function SuggestedActions({ onSelect }: SuggestedActionsProps) {
+    const mode = useChatTurnMode();
     const actions = useMemo(() => {
         const hour = new Date().getHours();
         if (hour < 12) return morningActions;
@@ -41,7 +44,7 @@ export default function SuggestedActions({ onSelect }: SuggestedActionsProps) {
                 <motion.button
                     key={index}
                     className="suggested-action-btn"
-                    onClick={() => onSelect(action.prompt)}
+                    onClick={() => onSelect(action.prompt, turnModeCategory(mode))}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
