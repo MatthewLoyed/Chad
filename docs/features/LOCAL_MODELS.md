@@ -123,6 +123,51 @@ follow-up work, not part of this initial pass.
 
 ## Supported Backends
 
+### Hardware recommendation engine (issue #5)
+
+`model_recommendations.py` ranks a deliberately small offline catalog in
+`config/hardware_models.json`. Artifact filenames, immutable Hub revisions,
+file sizes, architecture dimensions, model-card links and verification dates
+are explicit. Refresh those fields together when adding or replacing a model;
+`capability_rank` is a curated preference, not a benchmark score. Current
+candidates cover Qwen3 4B/8B/14B, Qwen3.5 4B/9B Q4_K_M, and a larger
+Qwen3.6 35B-A3B UD-Q4_K_M option. Other models can
+still be selected through the existing picker.
+
+Fit uses weights + an FP16 K/V bound + runtime buffers, reserves the larger
+of 4 GiB/15% RAM for the OS, the larger of 1 GiB/15% dedicated VRAM for display
+and runtime headroom, and 3 GiB RAM for CPU embeddings. Host RAM also reserves
+the mapped model weights even for GPU placement. Available memory caps
+the budget. Hybrid-attention models deliberately use a conservative full-layer
+K/V bound pending native validation. MoE speed uses active parameters while
+memory always includes all expert weights. Each GPU is assessed separately; partial
+CPU offload remains an advanced manual choice rather than a fast-path promise.
+The 40–50 generated-token/sec target is a floor around 40, not an upper cap.
+Known desktop GPUs receive a broad bandwidth heuristic; CPU/offload, unknown
+and mobile GPUs get unknown speed. This is not measured performance or tool
+quality certification. Longer context, thinking and concurrency change latency.
+
+`lmstudio_assessment.py` checks the installed CLI's advertised flags and exact
+downloaded model key before `lms load --estimate-only`. It never loads or
+unloads a model or changes saved defaults. An explicitly confirmed benchmark
+uses LM Studio's native API and its generation/first-token/load timing, with
+chat storage disabled. This can JIT-load a model or change residency; it does
+not benchmark remote endpoints. Unsupported API versions remain unknown.
+
+`setup_assets.py` runs one explicitly confirmed background setup operation at
+a time. Downloads use catalog-pinned artifacts, size verification and resumable
+`.part` files under the user-selected LM Studio model directory, with catalog
+SHA-256 validation before finalization. No servers,
+drivers or installers are started. Polling does not download anything. Failed
+operations require an explicit retry. `setup.network_timeout_s`,
+`setup.download_timeout_s`, `setup.model_assessment_timeout_s` and
+`setup.model_benchmark_tokens` own the transfer/measurement budgets.
+
+The approach was researched against Odysseus's Cookbook/HW Fit and its llmfit
+attribution; this implementation contains no copied upstream code. See the
+[Odysseus implementation](https://github.com/odysseus-dev/odysseus/tree/dev/services/hwfit)
+and [upstream attribution](https://github.com/odysseus-dev/odysseus/blob/dev/ACKNOWLEDGMENTS.md).
+
 ### 1. LM Studio
 - **Port**: `1234`
 - **Protocol**: OpenAI-compatible API.

@@ -76,6 +76,22 @@ LIMITS: Dict[str, Limit] = {
     lim.name: lim
     for lim in [
         Limit(
+            "setup_network_timeout", "setup.network_timeout_s", 30.0, HINT,
+            "Setup download read/connect timeout; partial files remain resumable on explicit retry.",
+        ),
+        Limit(
+            "setup_download_timeout", "setup.download_timeout_s", 7200.0, HINT,
+            "Setup model download session budget; expiry pauses the transfer without discarding progress.",
+        ),
+        Limit(
+            "model_assessment_timeout", "setup.model_assessment_timeout_s", 60.0, HINT,
+            "LM Studio estimate or benchmark request timeout; a failed measurement leaves performance unknown.",
+        ),
+        Limit(
+            "model_benchmark_tokens", "setup.model_benchmark_tokens", 256, HINT,
+            "Output tokens requested for an opt-in short local generation measurement.",
+        ),
+        Limit(
             "hardware_probe_timeout", "setup.hardware_probe_timeout_s", 8.0, HINT,
             "Read-only hardware subprocess timeout; failed probes leave fields unknown and permit manual entry.",
         ),
