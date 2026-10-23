@@ -486,6 +486,9 @@ memory:
 # round-trip overhead — keep use_api false unless CUDA/ROCm ST is unavailable
 # and you must accel via LM Studio. SyncManager batches via embeddings.batch_size.
 embeddings:
+  # Setup offers an explicit asset download. Uncached optional embeddings must
+  # not initiate network transfers while Chat or memory is starting.
+  allow_download: false
   use_api: false
   api_model: text-embedding-nomic-embed-text-v2-moe
   base_url: http://localhost:1234/v1

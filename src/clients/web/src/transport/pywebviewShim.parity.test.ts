@@ -21,6 +21,10 @@ const SHIM = path.join(SRC, 'transport', 'pywebviewShim.ts');
  * name here is a claim that the UI degrades gracefully without it.
  */
 const DESKTOP_ONLY: Record<string, string> = {
+    assess_model_hardware: 'desktop-only local hardware; never upload to a remote Brain',
+    start_model_setup_job: 'explicit local setup operations; no browser execution surface',
+    get_model_setup_job: 'desktop setup job progress',
+    cancel_model_setup_job: 'desktop setup job cancellation',
     get_setup_status: 'first-run wizard is desktop-only (App.tsx guards on isBrowserTransport)',
     probe_local_backend: 'first-run wizard is desktop-only',
     save_provider_choice: 'first-run wizard is desktop-only',
@@ -101,6 +105,9 @@ describe('browser shim / UI parity', () => {
         // exception from the rest: not "this pane degrades on the phone" but
         // "this must never be reachable from the phone". It hands back the server
         // Raised 11 -> 12 for `trigger_ingestion_sync` (reads local Chrome profile).
-        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(12);
+        // Issue #5 adds four intentionally local-only hardware/download job
+        // methods. Exposing them over the network would scan the wrong host
+        // and turn a desktop installer into a remote execution surface.
+        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(16);
     });
 });

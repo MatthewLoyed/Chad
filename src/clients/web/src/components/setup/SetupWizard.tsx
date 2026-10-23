@@ -7,6 +7,7 @@ import { Loader2, ExternalLink, Server } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { setupRequest } from './setupRequest';
 import { styles } from './SetupWizard.styles';
+import HardwareSetup from './HardwareSetup';
 
 type Step = 'welcome' | 'backend-choice' | 'lmstudio' | 'ollama' | 'custom' | 'later';
 type Provider = 'lmstudio' | 'ollama' | 'custom';
@@ -154,6 +155,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     </>}
                     {step === 'ollama' && <button style={styles.secondaryBtn} onClick={() => void openDownload('https://ollama.com/download')}>Download Ollama</button>}
                     <p style={styles.hint}>One chat model is enough to start. Requests go to the server address you enter; a remote address sends them to that server.</p>
+                    {step === 'lmstudio' && <HardwareSetup baseUrl={baseUrl} apiKey={apiKey} modelId={selected} />}
                     <label style={styles.fieldLabel} htmlFor="setup-url">Server address</label>
                     <input id="setup-url" style={styles.textInput} value={baseUrl} disabled={busy} onChange={e => { setBaseUrl(e.target.value); resetConnection(); }} />
                     <label style={styles.fieldLabel} htmlFor="setup-key">API key (only if your server requires one)</label>
