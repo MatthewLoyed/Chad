@@ -28,12 +28,15 @@
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\prod\stage_installer_payload.ps1
 #>
-param()
+param([string]$PayloadName = "installer_payload")
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $DistRoot = Join-Path $RepoRoot "dist"
-$PayloadDir = Join-Path $DistRoot "installer_payload"
+if ($PayloadName -notmatch '^installer_payload(?:_[A-Za-z0-9-]+)?$') {
+    throw "PayloadName must be installer_payload or installer_payload_<build-id>."
+}
+$PayloadDir = Join-Path $DistRoot $PayloadName
 
 Write-Host "=== Stage installer payload ===" -ForegroundColor Green
 
@@ -47,7 +50,7 @@ foreach ($appName in @("Chad", "Chad-Brain")) {
 if (Test-Path $PayloadDir) {
     $ResolvedPayload = (Resolve-Path -LiteralPath $PayloadDir).Path
     $ResolvedDist = (Resolve-Path -LiteralPath $DistRoot).Path
-    if ($ResolvedPayload -ne (Join-Path $ResolvedDist "installer_payload")) {
+    if ($ResolvedPayload -ne (Join-Path $ResolvedDist $PayloadName)) {
         throw "Refusing to replace an unexpected payload path: $ResolvedPayload"
     }
     Remove-Item -LiteralPath $ResolvedPayload -Recurse -Force
