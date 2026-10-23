@@ -25,7 +25,10 @@ from src.application.commands import (
 logger = setup_logger("WebViewAPI")
 
 
-class SystemAPIMixin:
+from src.clients.desktop.api.status import StatusAPIMixin
+
+
+class SystemAPIMixin(StatusAPIMixin):
     """Mixin for system, file dialogs, and platform integration WebView API methods."""
 
     def get_capability_suggestions(self, limit=5):
@@ -111,13 +114,6 @@ class SystemAPIMixin:
         window = self.main_window_ref()
         if window:
             return window.current_caption_text
-        return ""
-    
-    def get_status(self):
-        """JavaScript can call this to get current status text."""
-        window = self.main_window_ref()
-        if window:
-            return window.current_status_text
         return ""
     
     def get_dashboard_feed(self, limit=50):

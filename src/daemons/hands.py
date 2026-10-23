@@ -41,6 +41,13 @@ def _resolve_daemon_url() -> str:
         return f"{base}/ws/daemon"
     return "ws://localhost:8767/ws/daemon"
 
+def _profile_auth_token():
+    """Read first-run credentials after the Brain has generated them on disk."""
+    from src.shared.config_manager import ConfigManager
+    ConfigManager.load_config()
+    return ConfigManager.get_secret("CHAD_SERVER_TOKEN") or ConfigManager.get_secret("CHAD_REMOTE_TOKEN")
+
+
 class HandsDaemon:
     def __init__(self, server_url: Optional[str] = None):
         self.server_url = server_url or _resolve_daemon_url()
@@ -89,7 +96,7 @@ class HandsDaemon:
         # 1. Perform Authentication Handshake
         await ws.send(json.dumps({
             "type": "auth",
-            "auth_token": self.auth_token
+            "auth_token": self.auth_token or _profile_auth_token()
         }))
         
         auth_resp_raw = await ws.recv()

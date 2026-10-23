@@ -159,8 +159,7 @@ export default function ModelsTab() {
                 <div className="models-tab__grid">
                     {cloudModels.length === 0 ? (
                         <div className="models-tab__empty">
-                            <Loader2 size={14} className="models-tab__spin" />
-                            Loading cloud models…
+                            Cloud models require your own API key. No cloud provider credentials are configured.
                         </div>
                     ) : cloudModels.map((cm) => {
                         const active = isCloudActive(cm.id, cm.name);

@@ -10,6 +10,7 @@ import { DriveBrowserModal } from '../modals';
 import ModelSelector from './ModelSelector';
 import TokenUsageTicker from '../data-display/TokenUsageTicker';
 import './ChatInput.css';
+import { turnModeCategory } from '../../utils/turn-mode';
 
 export interface AttachedFile {
     id: string;
@@ -474,14 +475,7 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
             const readyFiles = attachedFiles.filter(f => f.status === 'ready');
             
             // Map UI modes to backend category flags
-            let backendCategory = 'agent';
-            if (chatMode === 'chat') {
-                backendCategory = 'chat';
-            } else if (chatMode === 'plan') {
-                backendCategory = 'planning';
-            } else if (chatMode === 'auto') {
-                backendCategory = 'auto';
-            }
+            const backendCategory = turnModeCategory(chatMode);
             
             onSend(finalPrompt, contentBlocks, readyFiles, backendCategory, showThinkingToggle ? thinkingOn : undefined);
             setValue('');

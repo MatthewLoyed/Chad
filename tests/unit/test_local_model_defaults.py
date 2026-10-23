@@ -24,8 +24,10 @@ def test_committed_config_defaults_to_local_models():
     cfg = _load_committed_config()
     local = cfg["local_models"]
     assert local.get("use_local") is True
-    assert local.get("active_model"), "A local default model must be configured"
-    assert cfg.get("active_model") == local["active_model"]
+    # The provider is local-first, but the user chooses the actual model.
+    for surface in (cfg, local):
+        assert surface.get("active_model") is None
+        assert surface.get("supervisor") is None
 
     models = cfg.get("models") or {}
     assert models, "models category map must be present"

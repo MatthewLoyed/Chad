@@ -63,7 +63,13 @@ def get_setup_status() -> Dict[str, Any]:
 
     from src.shared.config_manager import ConfigManager
     selected = ConfigManager.get_local_model_config()
-    if (selected.get("provider") in {"static", "ollama"}
+    # Older installers copied a sample LM Studio model into preferences. That
+    # alone is not a user choice. Modern picker writes both model aliases.
+    explicit_lmstudio = bool(ConfigManager.get("setup.model_selected", False)) or isinstance(
+        ConfigManager.get("local_models.supervisor"), dict
+    )
+    if ((selected.get("provider") in {"static", "ollama"}
+            or (selected.get("provider") == "lmstudio" and explicit_lmstudio))
             and selected.get("name") and selected.get("base_url")):
         # Setup records a choice, not server liveness. A stopped custom server
         # should produce a connection error, not restart LM Studio onboarding.
@@ -71,22 +77,16 @@ def get_setup_status() -> Dict[str, Any]:
                 "provider": selected["provider"]}
 
     lms_path = _lms.find_lms_cli()
-    downloaded = _lms.list_downloaded_models(lms_path) if lms_path else []
-    missing = [
-        spec.model_id for spec in _lms.REQUIRED_MODELS
-        if not _lms._is_already_present(spec.model_id, downloaded)
-    ]
-    server_running = _lms.is_server_running() if lms_path else False
+    # Chat needs one chosen model, not the entire specialist model catalog.
+    # A working HTTP server does not require the lms command to be on PATH.
+    server_running = _lms.is_server_running()
+    app_path = _lms.find_lmstudio_app()
 
     return {
-        "needs_setup": not lms_path or bool(missing) or not server_running,
+        "needs_setup": True,
+        "lmstudio_installed": bool(app_path or lms_path or server_running),
         "lms_cli_found": lms_path is not None,
         "server_running": server_running,
-        "models_missing": missing,
-        "required_models": [
-            {"model_id": s.model_id, "role": s.role, "approx_vram_gb": s.approx_vram_gb}
-            for s in _lms.REQUIRED_MODELS
-        ],
         "lmstudio_download_url": _lms.LMSTUDIO_DOWNLOAD_URL,
     }
 
@@ -254,16 +254,12 @@ def save_provider_choice(
 
     provider = (provider or "custom").strip().lower()
     base_url = (base_url or "").strip().rstrip("/")
-    provider_key = "ollama" if provider == "ollama" else "static"
+    provider_key = provider if provider in {"ollama", "lmstudio"} else "static"
 
     from src.infrastructure.repositories import ConfigRepository
     from src.shared.config_manager import ConfigManager
 
     config_repo = ConfigRepository()
-    config_repo.update_preference(
-        f"local_models.providers.{provider_key}",
-        {"base_url": base_url, "api_key": api_key or "", "enabled": True},
-    )
     active_model = {
         "name": model_id,
         "provider": provider_key,
@@ -271,16 +267,20 @@ def save_provider_choice(
         "api_key": api_key or "",
         "supports_tools": supports_tools,
     }
-    config_repo.update_preference("local_models.use_local", True)
-    config_repo.update_preference("local_models.active_model", active_model)
-    config_repo.update_preference("local_models.supervisor", active_model)
+    update = {"setup": {"model_selected": True}, "local_models": {
+        "use_local": True, "active_model": active_model, "supervisor": active_model,
+        "providers": {provider_key: {"base_url": base_url, "api_key": api_key or "", "enabled": True}},
+    }}
+    preferences = config_repo.load("preferences", use_cache=False)
+    ConfigManager._recursive_update(preferences, update)
+    if not config_repo.save("preferences", preferences, update_cache=True):
+        return {"success": False, "error": "Your model choice could not be saved. Check that Chad can write its settings, then try again."}
 
     # Keep in-memory config in sync so a subsequent get_setup_status()/discovery call
     # in the same process sees the choice immediately (mirrors set_local_model).
     ConfigManager._recursive_update(
         ConfigManager._config,
-        {"local_models": {"use_local": True, "active_model": active_model,
-                          "supervisor": active_model}},
+        update,
     )
 
     logger.info(f"[ SETUP ] Backend chosen: {provider_key} / '{model_id}' at {base_url}")
