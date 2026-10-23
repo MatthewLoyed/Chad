@@ -43,6 +43,9 @@ jobs:
       # "Brain won't start" bugs like missing lifespan imports fail CI, not prod.
       - name: Unit tests
         if: always()
+        env:
+          HF_HUB_OFFLINE: '1'
+          TRANSFORMERS_OFFLINE: '1'
         run: python -m pytest tests/unit/ -v
 
       # CI has no `config/persona/` (gitignored), so this audits the committed baseline —

@@ -87,3 +87,10 @@ def test_uncached_embeddings_cannot_download_without_opt_in(monkeypatch):
     monkeypatch.setitem(sys.modules, 'sentence_transformers', SimpleNamespace(SentenceTransformer=transformer))
     with pytest.raises(OSError, match='No fictional embedding cache'):
         LocalEmbeddingModel('example/embedding').ensure_local_transformer()
+
+
+def test_optional_embedding_failure_does_not_abort_voice_fallback():
+    from src.core.orchestration.nodes.voice_fast_lane import match_fast_lane
+    router = MagicMock()
+    router.match.side_effect = OSError('Optional assets are not cached')
+    assert match_fast_lane('check my email for the invoice', embedding_router=router) is None
