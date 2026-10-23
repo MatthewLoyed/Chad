@@ -75,6 +75,10 @@ class Limit:
 LIMITS: Dict[str, Limit] = {
     lim.name: lim
     for lim in [
+        Limit(
+            "hardware_probe_timeout", "setup.hardware_probe_timeout_s", 8.0, HINT,
+            "Read-only hardware subprocess timeout; failed probes leave fields unknown and permit manual entry.",
+        ),
         # --- supervisor loop -------------------------------------------------
         Limit(
             "supervisor_turns_soft", "orchestration.supervisor_turns_soft", 15, HINT,

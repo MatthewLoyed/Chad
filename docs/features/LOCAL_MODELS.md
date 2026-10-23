@@ -4,6 +4,18 @@ Chad supports a high-performance local AI orchestration layer that allows the as
 
 ## Overview
 
+### Local hardware inventory (issue #5)
+
+`src/infrastructure/services/hardware_assessment.py` provides a read-only scan
+of the process host: physical CPU cores, total/available RAM, individual GPUs,
+dedicated/free VRAM where reliable, and available model storage. It does not
+probe remote inference hosts or upload hardware telemetry. Missing tools,
+drivers or capacity values remain unknown; no detected GPU permits CPU-only
+assessment. Windows uses NVIDIA's query or the registry's QWORD memory value,
+never the truncated WMI `AdapterRAM` DWORD. Shared GPU memory is not extra RAM.
+`setup.hardware_probe_timeout_s` bounds each external probe. Callers should run
+the scan outside the UI thread and permit rescan/manual correction.
+
 The local model integration uses an OpenAI-compatible adapter to bridge between the `ConversationOrchestrator` and local inference servers. It supports:
 - **Automatic Discovery**: Scans for running servers on local ports.
 - **Capability Verification**: Sends a "probe" request to verify if the model supports tool-calling (ReAct).
