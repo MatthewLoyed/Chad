@@ -170,6 +170,13 @@ file_writer:
 dev_debug: false
 ui:
   default_turn_mode: auto
+setup:
+  network_timeout_s: 30.0
+  download_timeout_s: 7200.0
+  model_assessment_timeout_s: 60.0
+  model_benchmark_tokens: 256
+  hardware_probe_timeout_s: 8.0
+
 intent_router:
   enabled: true
   model: google/gemma-3-1b
