@@ -43,6 +43,10 @@ async def isolated_graph_client(tmp_path, monkeypatch):
 
     client = graph_rag_client_module.GraphRAGClient()
     await client.initialize()
+    # Test retrieval/ranking with deterministic vectors, not a multi-GB cached
+    # model. Real optional-asset download/offline load is verified separately.
+    monkeypatch.setattr(client, "_get_embedding", lambda text:
+                        [1.0, 0.0] if any(word in text.lower() for word in ("cpu", "hardware", "ryzen")) else [0.0, 1.0])
     return client
 
 
