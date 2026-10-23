@@ -251,3 +251,7 @@ The **ModelSelector** in the Chad GUI provides a unified view of all available m
 - ✅ llama.cpp `server` (representative for `StaticEndpointLifecycle`, which vLLM also resolves to): same script run against a real `llama-server` instance serving `Qwen3.5-9B` via config only (`provider: static`, arbitrary `base_url`/`api_key`) — no code changes, tool call + follow-up both correct. A 1.5B coder-tuned GGUF was tried first and failed to emit native `tool_calls` (its chat template has no tool-call format), which is a model/template limitation, not a `StaticEndpointLifecycle` bug — swapping to a tool-tuned model fixed it, so pick models with tool-calling support regardless of backend.
 
 Verification script: `tests/manual/verify_ollama_e2e.py` drives `LiteLLMAdapter` directly (same class production uses via `ModelRouter`) against a given `--base-url`/`--model`, independent of `config/preferences.yaml` — safe to run without touching a live server's config.
+
+The model picker lists cloud catalogue entries only when their provider has configured credentials. A configured key does not guarantee validity or available credit. Without credentials, the picker explains that a personal API key is required. Local discovery runs once per picker mount, with explicit refresh for subsequent attempts; cached models remain selectable during refresh. Startup uses an indeterminate activity bar because readiness has no measurable percentage.
+
+Hardware-based model and LM Studio settings recommendations are tracked in [issue #5](https://github.com/MatthewLoyed/Chad/issues/5).

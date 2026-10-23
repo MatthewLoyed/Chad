@@ -66,27 +66,8 @@ class ConfigAPIMixin(SetupAPIMixin):
 
     def get_available_models(self):
         """JavaScript can call this to get list of available models from config."""
-        # Priority: Config file allowed list -> fallback defaults
-        models = ConfigManager.get("available_cloud_models")
-        
-        logger.debug(f"[ BRIDGE ] fetching available_cloud_models: {models}")
-        
-        if models and isinstance(models, list):
-            return models
-            
-        # Decoupled Fallback: If config is empty, list what we CAN use by scanning keys
-        from src.core.intelligence.provider_failover import scan_available_providers
-        providers = scan_available_providers()
-        
-        fb = []
-        if 'gemini' in providers:
-            fb.append({'id': 'gemini-2.0-flash', 'name': 'Gemini 2.0 Flash'})
-        if 'anthropic' in providers:
-            fb.append({'id': 'claude-3-5-sonnet-latest', 'name': 'Claude 3.5 Sonnet'})
-        if 'openai' in providers:
-            fb.append({'id': 'gpt-4o', 'name': 'GPT-4o'})
-            
-        return fb if fb else [{'id': ConfigManager.get_active_model(), 'name': 'Default Cloud Model'}]
+        from src.clients.desktop.api.cloud_models import available_cloud_models
+        return available_cloud_models()
 
     def set_model(self, model_name):
         """Set the text mode model and persist to config."""

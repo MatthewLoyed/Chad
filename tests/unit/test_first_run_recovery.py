@@ -110,3 +110,14 @@ def test_legacy_template_model_is_not_a_completed_setup(fresh, monkeypatch):
     # A current model-picker choice is preserved even when its server is down.
     ConfigManager._config["local_models"]["supervisor"] = dict(ConfigManager._config["local_models"]["active_model"])
     assert wizard.get_setup_status()["needs_setup"] is False
+
+
+@pytest.mark.parametrize("providers, expected", [([], []), (["gemini"], ["gemini-2.5-flash"]), (["anthropic"], ["anthropic/claude-example"])])
+def test_cloud_picker_requires_provider_credentials(monkeypatch, providers, expected):
+    from src.clients.desktop.api.cloud_models import available_cloud_models
+    from src.core.intelligence import provider_failover
+    monkeypatch.setattr(provider_failover, "scan_available_providers", lambda: providers)
+    monkeypatch.setattr(ConfigManager, "get", lambda *args: [
+        {"id": "gemini-2.5-flash"}, {"id": "anthropic/claude-example"}, {"id": "unknown"}
+    ])
+    assert [m["id"] for m in available_cloud_models()] == expected
