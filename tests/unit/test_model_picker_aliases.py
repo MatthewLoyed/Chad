@@ -77,6 +77,9 @@ def test_setup_choice_routes_immediately_and_survives_reload(monkeypatch, isolat
     monkeypatch.setattr(setup_wizard._lms, 'find_lms_cli', lambda: pytest.fail('Custom setup must not require LM Studio'))
     assert ConfigManager.get_active_model() == 'qwen3-smoke'
     assert setup_wizard.get_setup_status()['needs_setup'] is False
+    assert ConfigManager.get('setup.share_main_model') is True
+    assert ConfigManager.get('tools.llm_selector_model') == 'qwen3-smoke'
+    assert ConfigManager.get('intent_router.enabled') is False
 
 
 def test_slow_child_boot_does_not_spawn_another_brain():

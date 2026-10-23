@@ -170,6 +170,15 @@ file_writer:
 dev_debug: false
 ui:
   default_turn_mode: auto
+setup:
+  test_timeout_s: 60.0
+  test_max_tokens: 64
+  network_timeout_s: 30.0
+  download_timeout_s: 7200.0
+  model_assessment_timeout_s: 60.0
+  model_benchmark_tokens: 256
+  hardware_probe_timeout_s: 8.0
+
 intent_router:
   enabled: true
   model: google/gemma-3-1b
@@ -479,6 +488,9 @@ memory:
 # round-trip overhead — keep use_api false unless CUDA/ROCm ST is unavailable
 # and you must accel via LM Studio. SyncManager batches via embeddings.batch_size.
 embeddings:
+  # Setup offers an explicit asset download. Uncached optional embeddings must
+  # not initiate network transfers while Chat or memory is starting.
+  allow_download: false
   use_api: false
   api_model: text-embedding-nomic-embed-text-v2-moe
   base_url: http://localhost:1234/v1

@@ -75,6 +75,30 @@ class Limit:
 LIMITS: Dict[str, Limit] = {
     lim.name: lim
     for lim in [
+        Limit("setup_test_timeout", "setup.test_timeout_s", 60.0, HINT,
+              "Explicit onboarding chat test timeout; the user can retry after checking the provider."),
+        Limit("setup_test_tokens", "setup.test_max_tokens", 64, HINT,
+              "Requested output budget for a user-confirmed onboarding chat test, including hosted providers."),
+        Limit(
+            "setup_network_timeout", "setup.network_timeout_s", 30.0, HINT,
+            "Setup download read/connect timeout; partial files remain resumable on explicit retry.",
+        ),
+        Limit(
+            "setup_download_timeout", "setup.download_timeout_s", 7200.0, HINT,
+            "Setup model download session budget; expiry pauses the transfer without discarding progress.",
+        ),
+        Limit(
+            "model_assessment_timeout", "setup.model_assessment_timeout_s", 60.0, HINT,
+            "LM Studio estimate or benchmark request timeout; a failed measurement leaves performance unknown.",
+        ),
+        Limit(
+            "model_benchmark_tokens", "setup.model_benchmark_tokens", 256, HINT,
+            "Output tokens requested for an opt-in short local generation measurement.",
+        ),
+        Limit(
+            "hardware_probe_timeout", "setup.hardware_probe_timeout_s", 8.0, HINT,
+            "Read-only hardware subprocess timeout; failed probes leave fields unknown and permit manual entry.",
+        ),
         # --- supervisor loop -------------------------------------------------
         Limit(
             "supervisor_turns_soft", "orchestration.supervisor_turns_soft", 15, HINT,

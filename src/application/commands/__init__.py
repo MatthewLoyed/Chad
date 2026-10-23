@@ -96,6 +96,7 @@ from .config_commands import (
     StartLMStudioSetupCommand,
     GetLMStudioSetupProgressCommand,
     ProbeLocalBackendCommand,
+    TestSetupModelCommand,
     SaveProviderChoiceCommand,
 )
 from .dashboard_commands import (
@@ -224,6 +225,7 @@ __all__ = [
     'StartLMStudioSetupCommand',
     'GetLMStudioSetupProgressCommand',
     'ProbeLocalBackendCommand',
+    'TestSetupModelCommand',
     'SaveProviderChoiceCommand',
     'SearchChatsCommand',
     'PinConversationCommand',

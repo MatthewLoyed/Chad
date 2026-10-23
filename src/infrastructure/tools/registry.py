@@ -17,6 +17,22 @@ except ImportError:
 
 logger = setup_logger("ToolRegistry")
 
+
+def _build_llm_selector():
+    """Resolve the selector's model and endpoint together for one-model setup."""
+    from src.shared.config_manager import ConfigManager
+
+    shared = ConfigManager.get("setup.share_main_model", False)
+    provider = ConfigManager.get_local_model_config() if shared else ConfigManager.get_local_provider_config("lmstudio")
+    return LLMToolSelector(
+        model_id=ConfigManager.get_llm_selector_model(),
+        base_url=provider.get("base_url", "http://localhost:1234/v1"),
+        strict_model=bool(ConfigManager.get("tools.llm_selector_strict_model", True)),
+        unload_after_select=bool(ConfigManager.get("tools.llm_selector_unload_after_select", True)),
+        context_length=int(ConfigManager.get("tools.llm_selector_context_length", 32768)),
+    )
+
+
 class ToolRegistry:
     """
     Unified entry point for tool management, discovery, and retrieval.
@@ -83,25 +99,7 @@ class ToolRegistry:
                                   # always be in the menu or the planner loops on an unsatisfiable contract
         }
         
-        # LLM-based tool selector (Qwen 3.5 9B via LM Studio).
-        # Picks the exact tools needed from the full catalog, replacing the RAG pipeline.
-        # Falls back to RAG automatically if LM Studio is unreachable.
-        from src.shared.config_manager import ConfigManager
-        _lm_cfg = ConfigManager.get_local_provider_config("lmstudio")
-        _selector_model = ConfigManager.get_llm_selector_model()
-        # strict_model pins the configured selector model instead of silently reusing whatever
-        # is already loaded in LM Studio — the silent-reuse path makes selection non-deterministic
-        # (different turns, different models). Default on so the 9B is actually the selector.
-        _strict_selector = bool(ConfigManager.get("tools.llm_selector_strict_model", True))
-        _unload_after_select = bool(ConfigManager.get("tools.llm_selector_unload_after_select", True))
-        _selector_context_length = int(ConfigManager.get("tools.llm_selector_context_length", 32768))
-        self._llm_selector = LLMToolSelector(
-            model_id=_selector_model,
-            base_url=_lm_cfg.get("base_url", "http://localhost:1234/v1"),
-            strict_model=_strict_selector,
-            unload_after_select=_unload_after_select,
-            context_length=_selector_context_length,
-        )
+        self._llm_selector = _build_llm_selector()
         
         # Register skill management tools at init
         self._register_skill_tools()

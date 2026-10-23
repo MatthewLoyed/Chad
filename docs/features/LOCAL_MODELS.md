@@ -4,6 +4,18 @@ Chad supports a high-performance local AI orchestration layer that allows the as
 
 ## Overview
 
+### Local hardware inventory (issue #5)
+
+`src/infrastructure/services/hardware_assessment.py` provides a read-only scan
+of the process host: physical CPU cores, total/available RAM, individual GPUs,
+dedicated/free VRAM where reliable, and available model storage. It does not
+probe remote inference hosts or upload hardware telemetry. Missing tools,
+drivers or capacity values remain unknown; no detected GPU permits CPU-only
+assessment. Windows uses NVIDIA's query or the registry's QWORD memory value,
+never the truncated WMI `AdapterRAM` DWORD. Shared GPU memory is not extra RAM.
+`setup.hardware_probe_timeout_s` bounds each external probe. Callers should run
+the scan outside the UI thread and permit rescan/manual correction.
+
 The local model integration uses an OpenAI-compatible adapter to bridge between the `ConversationOrchestrator` and local inference servers. It supports:
 - **Automatic Discovery**: Scans for running servers on local ports.
 - **Capability Verification**: Sends a "probe" request to verify if the model supports tool-calling (ReAct).
@@ -37,6 +49,14 @@ if startup cannot complete. Once setup is ready, choose LM Studio, Ollama, or
 another compatible model server. Existing saved choices are preserved even
 when their server is temporarily offline.
 
+**Use a cloud API** is a separate first-run route for hosted OpenAI-compatible
+Chat Completions endpoints, with OpenRouter/DeepSeek address presets and manual
+model-ID entry when discovery is unavailable. It requires no local model app or
+hardware scan. The screen explains account/API-key requirements, possible usage
+charges and where messages go. Native Anthropic Messages, Gemini and Responses
+API onboarding is not provided by this route; existing credential-based cloud
+routing and its model picker are a separate legacy configuration path.
+
 For LM Studio, install/open the app, download a chat model suitable for your
 computer, and start its Local Server from Model Server (Developer in older
 versions). Chad checks the
@@ -46,15 +66,44 @@ are separate checks. If the server cannot be reached, the wizard shows what
 to check and allows retry, Back, or Finish later. Finish later does not mark
 Chat as ready: reopening Chad returns to setup until a model is chosen.
 
-Select a model and save it to open Chat. The model label updates immediately;
-the first message exercises actual inference. Listing a model is not proof
-that it can generate a reply or call tools. Agent/tool compatibility and
+Select or enter a model ID, then explicitly send a short greeting through the
+Brain's inference adapter before saving it to open Chat. The test can load a
+local model or incur hosted usage, so it never runs automatically. It uses a
+small requested output budget and checks for a usable text reply. Changing the
+endpoint, credential or model invalidates the result. This establishes basic
+inference, not a complete orchestrated Agent turn. Agent/tool compatibility and
 optional accounts are configured separately in Settings. Core Chat does not
 require downloading the specialist model catalog used by the developer script
 below. This flow is implemented in the setup wizard and setup service; a new
 installer still needs clean Windows acceptance before release.
 
+For explicit hosted endpoints, preserve the complete provider model ID (including
+namespaces) and do not send LM Studio/Ollama engine parameters. Physical hosting
+metadata is separate from the legacy `local_models` explicit-endpoint routing
+flag; that flag alone does not imply messages stay on this computer. Cloud
+endpoint selections display a cloud indicator and omit local engine settings.
+Discovery does not verify tool calling. DeepSeek's documented thinking switch
+is scoped to its official API host; its multi-turn thinking/tool reasoning replay
+is still unverified. Do not certify a provider from a successful greeting.
+
+The [setup journey acceptance checklist](https://github.com/MatthewLoyed/Chad/issues/5#setup-journey-contract--proposed-acceptance-2026-10-23)
+tracks proposed task-based model guidance, installation from nothing, existing
+and remote setups, offline/recovery paths, accessibility and first-reply
+verification. It distinguishes current evidence from unimplemented stories;
+the hardware scan and mocked UI checks do not establish complete onboarding.
+
 ## Quick automated setup (issue #406)
+
+New desktop installs use four setup stages: Welcome, Model app, Choose a model,
+and Start chatting. **Find a model for me** (issue #5) scans with sensible defaults
+and presents one recommendation; comparing models and viewing suggested load
+settings are separate disclosures. Model folder/context overrides, detected
+hardware, manual corrections, and optional assets live under Advanced.
+Downloads require confirmation. Existing models can skip the scan and connect
+directly. Memory validation is read-only;
+benchmarking is a separate confirmation because it may change residency.
+The CLI below retains the legacy multi-model preset for advanced users; it is
+not the hardware-aware onboarding default and can exceed smaller machines.
 
 ```powershell
 # Report-only: what's downloaded, is the server up
@@ -72,7 +121,9 @@ on PATH by the installer — nothing extra to install). It never touches
 anything beyond LM Studio's model catalog and local server: **embeddings
 (`nomic-ai/nomic-embed-text-v2-moe`) are not fetched through LM Studio at
 all** — they run locally via `sentence-transformers` (`requirements.txt`),
-auto-downloaded from Hugging Face on first use. If `lms` isn't found on
+downloaded only after explicit setup confirmation (or an intentional
+`embeddings.allow_download: true` override). Uncached embeddings leave semantic
+search/memory unavailable while basic Chat remains usable. If `lms` isn't found on
 PATH, the script explains how to get it and falls back to the manual steps
 below.
 
@@ -84,9 +135,15 @@ below.
 | `qwen/qwen3.5-9b` | Tool selector | ~6GB | `tools.llm_selector_model` |
 | `google/gemma-3-1b` | Intent router | ~1GB | `intent_router.model` |
 
-These three are the ones Chad needs to boot and hold a normal tool-using
-conversation with the default (16GB VRAM) configuration. Pass
+These three are the legacy CLI preset, not a prerequisite for basic Chat.
+Desktop setup selects one chat model, shares it with the tool selector and
+compatible specialists, and disables the separate intent router. Explicit
+specialist overrides remain respected. Pass
 `--include-optional` to also grab the specialist models below.
+
+`setup.share_main_model` keeps the selector aligned with later main-model
+picker changes and refreshes an already-created selector without a Brain
+restart. Set it false before deliberately configuring a separate selector.
 
 ### Optional / advanced models
 
@@ -106,10 +163,67 @@ single resident `qwen/qwen3.5-9b`: set `local_models.active_model` to
 `qwen/qwen3.5-9b` and point `tools.llm_selector_model` at the same model
 instead of loading a second one. This gives up some main-chat quality
 compared to the 26B path but fits comfortably with room left for
-embeddings and KV cache. A first-class smaller-VRAM tier is tracked as
-follow-up work, not part of this initial pass.
+embeddings and KV cache. For new installs, use the desktop hardware assessment
+rather than downloading the legacy preset.
+
+### Optional embedding assets
+
+The hardware panel enumerates the optional Nomic CPU embedding assets (about
+1.8 GiB of weights/tokenizer files and a small cross-repository custom-code
+dependency). Download progress is pollable; completed Hugging Face cache files
+survive retry and offline use. Both the primary Nomic snapshot and its
+`nomic-ai/nomic-bert-2048` code are cached. Automatic runtime downloads default
+off via `embeddings.allow_download`; source and frozen clients use the same
+explicit job. A remote Brain needs its own cache: a local desktop download does
+not provision a different machine. Optional voice/image/specialist models are
+not required to finish this setup.
 
 ## Supported Backends
+
+### Hardware recommendation engine (issue #5)
+
+`model_recommendations.py` ranks a deliberately small offline catalog in
+`config/hardware_models.json`. Artifact filenames, immutable Hub revisions,
+file sizes, architecture dimensions, model-card links and verification dates
+are explicit. Refresh those fields together when adding or replacing a model;
+`capability_rank` is a curated preference, not a benchmark score. Current
+candidates cover Qwen3 4B/8B/14B, Qwen3.5 4B/9B Q4_K_M, and a larger
+Qwen3.6 35B-A3B UD-Q4_K_M option. Other models can
+still be selected through the existing picker.
+
+Fit uses weights + an FP16 K/V bound + runtime buffers, reserves the larger
+of 4 GiB/15% RAM for the OS, the larger of 1 GiB/15% dedicated VRAM for display
+and runtime headroom, and 3 GiB RAM for CPU embeddings. Host RAM also reserves
+the mapped model weights even for GPU placement. Available memory caps
+the budget. Hybrid-attention models deliberately use a conservative full-layer
+K/V bound pending native validation. MoE speed uses active parameters while
+memory always includes all expert weights. Each GPU is assessed separately; partial
+CPU offload remains an advanced manual choice rather than a fast-path promise.
+The 40–50 generated-token/sec target is a floor around 40, not an upper cap.
+Known desktop GPUs receive a broad bandwidth heuristic; CPU/offload, unknown
+and mobile GPUs get unknown speed. This is not measured performance or tool
+quality certification. Longer context, thinking and concurrency change latency.
+
+`lmstudio_assessment.py` checks the installed CLI's advertised flags and exact
+downloaded model key before `lms load --estimate-only`. It never loads or
+unloads a model or changes saved defaults. An explicitly confirmed benchmark
+uses LM Studio's native API and its generation/first-token/load timing, with
+chat storage disabled. This can JIT-load a model or change residency; it does
+not benchmark remote endpoints. Unsupported API versions remain unknown.
+
+`setup_assets.py` runs one explicitly confirmed background setup operation at
+a time. Downloads use catalog-pinned artifacts, size verification and resumable
+`.part` files under the user-selected LM Studio model directory, with catalog
+SHA-256 validation before finalization. No servers,
+drivers or installers are started. Polling does not download anything. Failed
+operations require an explicit retry. `setup.network_timeout_s`,
+`setup.download_timeout_s`, `setup.model_assessment_timeout_s` and
+`setup.model_benchmark_tokens` own the transfer/measurement budgets.
+
+The approach was researched against Odysseus's Cookbook/HW Fit and its llmfit
+attribution; this implementation contains no copied upstream code. See the
+[Odysseus implementation](https://github.com/odysseus-dev/odysseus/tree/dev/services/hwfit)
+and [upstream attribution](https://github.com/odysseus-dev/odysseus/blob/dev/ACKNOWLEDGMENTS.md).
 
 ### 1. LM Studio
 - **Port**: `1234`

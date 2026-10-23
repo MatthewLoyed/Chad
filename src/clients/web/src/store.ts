@@ -293,6 +293,8 @@ export type ModelSettings = {
 
 export type ActiveModelInfo = {
     mode: 'local' | 'cloud';
+    /** Physical hosting is separate from explicit-endpoint adapter routing. */
+    hosting?: 'cloud' | 'unknown';
     name: string;
     provider: string;
     supports_tools: boolean;

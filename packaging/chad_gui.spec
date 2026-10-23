@@ -37,6 +37,8 @@ _COLLECT = [
     "supabase",
     "postgrest",
     "websockets",
+    "huggingface_hub",  # explicit optional embedding download, no inference stack
+    "tqdm",
 ]
 
 datas = []
@@ -78,6 +80,7 @@ hiddenimports += collect_submodules("src")
 
 # Bundle the production React build inside the app (loaded when frozen).
 datas += [(os.path.join(ROOT, "src", "clients", "web", "dist"), "web/dist")]
+datas += [(os.path.join(ROOT, "config", "hardware_models.json"), "config")]
 
 a = Analysis(
     [os.path.join(ROOT, "main_gui.py")],

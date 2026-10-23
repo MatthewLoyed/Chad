@@ -5,12 +5,43 @@ from src.application.commands import (
     StartLMStudioSetupCommand,
     GetLMStudioSetupProgressCommand,
     ProbeLocalBackendCommand,
+    TestSetupModelCommand,
     SaveProviderChoiceCommand,
 )
 
 
 class SetupAPIMixin:
     """Relay setup commands and refresh the desktop cache after a saved choice."""
+
+    def test_setup_model(self, base_url, api_key, model_id, confirmed=False):
+        from src.core.tools.limits import get as limit
+        from src.core.tools.failure import failure, UNAVAILABLE
+        return self._execute_command(
+            TestSetupModelCommand(str(base_url or ""), str(api_key or ""), str(model_id or ""), confirmed),
+            timeout=limit("setup_test_timeout") + limit("setup_network_timeout"),
+            default_fallback=failure("The local service did not finish the chat test. Try again.", failure_class=UNAVAILABLE),
+        )
+
+    def assess_model_hardware(self, storage_path="", context=8192, manual=None):
+        """Scan the local Limb host; deliberately never send hardware to the Brain."""
+        from src.infrastructure.services.hardware_setup import assess
+
+        return assess(storage_path, context, manual)
+
+    def start_model_setup_job(self, operation, options, confirmed=False):
+        from src.infrastructure.services.setup_assets import start
+
+        return start(operation, options, confirmed)
+
+    def get_model_setup_job(self):
+        from src.infrastructure.services.setup_assets import progress
+
+        return progress()
+
+    def cancel_model_setup_job(self):
+        from src.infrastructure.services.setup_assets import cancel
+
+        return cancel()
 
     def get_setup_status(self):
         """Whether the first-run setup wizard should be shown (issue #428)."""
