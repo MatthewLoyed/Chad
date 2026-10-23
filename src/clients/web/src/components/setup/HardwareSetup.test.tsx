@@ -17,16 +17,15 @@ const assessment = {
 function mount(api: NonNullable<NonNullable<Window['pywebview']>['api']>) {
     window.pywebview = { api };
     render(<HardwareSetup baseUrl="http://localhost:1234/v1" apiKey="" modelId="" />);
-    fireEvent.click(screen.getByText('Find models for this computer'));
 }
 
 it('scans without downloading, reports unknown speed and requires explicit confirmation', async () => {
     const start = vi.fn().mockResolvedValue({ success: true });
     mount({ assess_model_hardware: vi.fn().mockResolvedValue(assessment), start_model_setup_job: start });
-    fireEvent.click(screen.getByRole('button', { name: 'Scan and recommend' }));
-    await screen.findByText(/Speed unknown/);
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
+    await screen.findByText(/Needs a speed test/);
     expect(start).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Download this model…' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Download Example Chat' }));
     expect(start).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm download' }));
     await waitFor(() => expect(start).toHaveBeenCalledWith('download', { catalog_id: 'example', storage_path: '' }, true));
@@ -35,24 +34,34 @@ it('scans without downloading, reports unknown speed and requires explicit confi
 it('invalidates recommendations after changing context and discards late replies', async () => {
     let resolve!: (value: unknown) => void;
     mount({ assess_model_hardware: vi.fn().mockReturnValue(new Promise(r => { resolve = r; })) });
-    fireEvent.click(screen.getByRole('button', { name: 'Scan and recommend' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
     fireEvent.change(screen.getByLabelText('Context tokens'), { target: { value: '32768' } });
     resolve(assessment);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Scan and recommend' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Find a model for me' })).toBeTruthy());
     expect(screen.queryByText('Example Chat · Q4_K_M')).toBeNull();
 });
 
 it('explains insufficient memory and disables the incompatible download', async () => {
     mount({ assess_model_hardware: vi.fn().mockResolvedValue({ ...assessment, recommended_id: null,
         models: [{ ...assessment.models[0], fits: false, reasons: ['Insufficient available RAM.'] }] }) });
-    fireEvent.click(screen.getByRole('button', { name: 'Scan and recommend' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
     await screen.findByText('Insufficient available RAM.');
-    expect(screen.getByRole('button', { name: 'Download this model…' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Download Example Chat' })).toHaveProperty('disabled', true);
 });
 
 it('keeps manual setup available when assessment fails', async () => {
     mount({ assess_model_hardware: vi.fn().mockRejectedValue(new Error('Probe unavailable')) });
-    fireEvent.click(screen.getByRole('button', { name: 'Scan and recommend' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Probe unavailable');
-    expect(screen.getByRole('button', { name: 'Scan and recommend' })).toHaveProperty('disabled', false);
+    expect(screen.getByRole('button', { name: 'Find a model for me' })).toHaveProperty('disabled', false);
+});
+
+it('uses readable model cards, separates technical details and preserves the recommendation on return', async () => {
+    mount({ assess_model_hardware: vi.fn().mockResolvedValue({ ...assessment, recommended_id: 'example', models: [assessment.models[0], { ...assessment.models[0], id: 'too-big', name: 'Oversized Chat', fits: false }] }) });
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
+    await screen.findByRole('region', { name: 'Suggested model' });
+    fireEvent.click(screen.getByText('Compare other models'));
+    expect(screen.getByRole('button', { name: /Oversized Chat/ })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: /Example Chat.*Recommended/ }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('Suggested LM Studio settings').closest('details')?.open).toBe(false);
 });

@@ -68,10 +68,13 @@ installer still needs clean Windows acceptance before release.
 
 ## Quick automated setup (issue #406)
 
-New desktop installs use the setup wizard's **Find models for this computer**
-panel (issue #5): choose the actual LM Studio model folder and context, scan,
-compare fit/speed estimates, then explicitly confirm a download. Existing
-models remain selectable without scanning. Memory validation is read-only;
+New desktop installs use four setup stages: Welcome, Model app, Choose a model,
+and Start chatting. **Find a model for me** (issue #5) scans with sensible defaults
+and presents one recommendation; comparing models and viewing suggested load
+settings are separate disclosures. Model folder/context overrides, detected
+hardware, manual corrections, and optional assets live under Advanced.
+Downloads require confirmation. Existing models can skip the scan and connect
+directly. Memory validation is read-only;
 benchmarking is a separate confirmation because it may change residency.
 The CLI below retains the legacy multi-model preset for advanced users; it is
 not the hardware-aware onboarding default and can exceed smaller machines.
