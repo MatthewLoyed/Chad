@@ -66,6 +66,12 @@ require downloading the specialist model catalog used by the developer script
 below. This flow is implemented in the setup wizard and setup service; a new
 installer still needs clean Windows acceptance before release.
 
+The [setup journey acceptance checklist](https://github.com/MatthewLoyed/Chad/issues/5#setup-journey-contract--proposed-acceptance-2026-10-23)
+tracks proposed task-based model guidance, installation from nothing, existing
+and remote setups, offline/recovery paths, accessibility and first-reply
+verification. It distinguishes current evidence from unimplemented stories;
+the hardware scan and mocked UI checks do not establish complete onboarding.
+
 ## Quick automated setup (issue #406)
 
 New desktop installs use four setup stages: Welcome, Model app, Choose a model,
