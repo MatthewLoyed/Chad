@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import logging
 from typing import Any, Dict, Optional, List
+from src.shared.model_selection import resolve_selector_model
 
 # Load .env file into environment variables on module import
 try:
@@ -237,7 +238,7 @@ class ConfigManager:
     @classmethod
     def get_llm_selector_model(cls) -> str:
         """The local model used for tool selection."""
-        return cls.get("tools.llm_selector_model", cls.DEFAULT_LLM_SELECTOR_MODEL)
+        return resolve_selector_model(cls.get, cls.DEFAULT_LLM_SELECTOR_MODEL)
 
     @classmethod
     def get_routine_builder_model(cls) -> str:
