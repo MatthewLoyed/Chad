@@ -38,3 +38,32 @@ def test_local_file_url_is_not_modified_for_webview2():
 
     url = 'file:///C:/Chad%20Alpha/index.html'
     assert _desktop_ui_url(url) == url
+
+
+@pytest.mark.parametrize("frozen", [False, True])
+def test_hands_launch_uses_explicit_frozen_dispatch(monkeypatch, frozen):
+    import sys
+    from src.clients.desktop.helper_process import hands_command
+    monkeypatch.setattr(sys, "frozen", frozen, raising=False)
+    command = hands_command()
+    assert command[0] == sys.executable
+    if frozen:
+        assert command[1:] == ["--hands-daemon"]
+    else:
+        assert command[1].endswith("hands.py")
+
+
+def test_frozen_hands_dispatch_never_imports_gui(monkeypatch):
+    import sys
+    from src.shared import frozen_bootstrap
+    calls = []
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "argv", ["Chad.exe", "--hands-daemon"])
+    monkeypatch.setattr(__import__('multiprocessing'), "freeze_support", lambda: None)
+    monkeypatch.setattr(frozen_bootstrap, "bootstrap_frozen", lambda: None)
+    monkeypatch.setattr(frozen_bootstrap, "redirect_stdio_for_frozen_windowed", lambda: None)
+    monkeypatch.setattr(runpy, "run_module", lambda name, **kw: calls.append((name, kw)))
+    with pytest.raises(SystemExit) as stopped:
+        runpy.run_path(str(ROOT / 'main_gui.py'), run_name='__main__')
+    assert stopped.value.code == 0
+    assert calls == [("src.daemons.hands", {"run_name": "__main__"})]

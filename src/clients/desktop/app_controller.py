@@ -79,22 +79,8 @@ class VoiceAssistantApp:
         try:
             # 1. AUTOMATICALLY START THE STANDALONE HANDS DAEMON (OS Controls)
             logger.warning("[ SYSTEM ] : Spinning up external Hands Daemon background pipeline...")
-            import subprocess
-            
-            hands_script = os.path.abspath(os.path.join(os.getcwd(), "src", "daemons", "hands.py"))
-            if not os.path.exists(hands_script):
-                hands_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "daemons", "hands.py"))
-            
-            # Run detached without spawning an intrusive console window on Windows
-            creationflags = 0
-            if sys.platform == "win32":
-                creationflags = subprocess.CREATE_NO_WINDOW
-            
-            subprocess.Popen(
-                [sys.executable, hands_script],
-                cwd=os.getcwd(),
-                creationflags=creationflags
-            )
+            from src.clients.desktop.helper_process import start_hands_daemon
+            start_hands_daemon()
             self.hands_process = None  # hands.py enforces its own singleton
             logger.info("[ SYSTEM ] : Detached Hands Daemon process invoked successfully.")
 

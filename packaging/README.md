@@ -155,3 +155,5 @@ a fully clean removal.
   doesn't exist until first launch — the first-run setup wizard (#428) /
   `bootstrap_config_if_needed()` instantiate them from the bundled `.example`
   templates and collect an LLM key.
+
+The frozen GUI starts its OS helper with `Chad.exe --hands-daemon`. The entrypoint dispatches that flag before GUI imports and the GUI singleton lock; passing a Python script path to the frozen executable would recursively launch another GUI and can crash WebView on reopen.
