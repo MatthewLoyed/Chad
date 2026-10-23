@@ -28,12 +28,15 @@
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\prod\stage_installer_payload.ps1
 #>
-param()
+param([string]$PayloadName = "installer_payload")
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $DistRoot = Join-Path $RepoRoot "dist"
-$PayloadDir = Join-Path $DistRoot "installer_payload"
+if ($PayloadName -notmatch '^installer_payload(?:_[A-Za-z0-9-]+)?$') {
+    throw "PayloadName must be installer_payload or installer_payload_<build-id>."
+}
+$PayloadDir = Join-Path $DistRoot $PayloadName
 
 Write-Host "=== Stage installer payload ===" -ForegroundColor Green
 
@@ -47,7 +50,7 @@ foreach ($appName in @("Chad", "Chad-Brain")) {
 if (Test-Path $PayloadDir) {
     $ResolvedPayload = (Resolve-Path -LiteralPath $PayloadDir).Path
     $ResolvedDist = (Resolve-Path -LiteralPath $DistRoot).Path
-    if ($ResolvedPayload -ne (Join-Path $ResolvedDist "installer_payload")) {
+    if ($ResolvedPayload -ne (Join-Path $ResolvedDist $PayloadName)) {
         throw "Refusing to replace an unexpected payload path: $ResolvedPayload"
     }
     Remove-Item -LiteralPath $ResolvedPayload -Recurse -Force
@@ -63,6 +66,19 @@ foreach ($appName in @("Chad", "Chad-Brain")) {
     # NSIS installer writes a fresh one pointing at the actual install dir.
     $staleHome = Join-Path $dest "chad_home.txt"
     if (Test-Path $staleHome) { Remove-Item $staleHome -Force }
+}
+
+# PyTorch also needs the C++ standard library at the bundle DLL search root.
+# The sklearn wheel already redistributes this exact runtime, but its private
+# .libs directory is not searched when torch loads c10.dll on a clean machine.
+$BrainInternal = Join-Path $PayloadDir "Chad-Brain\_internal"
+$CppRuntime = Join-Path $BrainInternal "msvcp140.dll"
+if ((Test-Path (Join-Path $BrainInternal "torch\lib\c10.dll")) -and -not (Test-Path $CppRuntime)) {
+    $BundledRuntime = Join-Path $BrainInternal "sklearn\.libs\msvcp140.dll"
+    if (-not (Test-Path $BundledRuntime)) {
+        throw "The Brain is missing its bundled MSVC C++ runtime. Rebuild with the sklearn wheel runtime included."
+    }
+    Copy-Item -LiteralPath $BundledRuntime -Destination $CppRuntime
 }
 
 Write-Host "[..] Copying config templates ..." -ForegroundColor Cyan

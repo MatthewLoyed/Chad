@@ -1,4 +1,5 @@
 from src.shared.config_manager import ConfigManager
+from .setup import SetupAPIMixin
 from src.shared.logger import setup_logger
 from src.application.commands import (
     SetVoiceCommand,
@@ -30,17 +31,12 @@ from src.application.commands import (
     StartSearxngSidecarCommand,
     GetSupabaseSettingsCommand,
     BootstrapSupabaseCommand,
-    GetSetupStatusCommand,
-    StartLMStudioSetupCommand,
-    GetLMStudioSetupProgressCommand,
-    ProbeLocalBackendCommand,
-    SaveProviderChoiceCommand,
 )
 
 logger = setup_logger("WebViewAPI")
 
 
-class ConfigAPIMixin:
+class ConfigAPIMixin(SetupAPIMixin):
     """Mixin for configuration-related WebView API methods (models, voice, preferences)."""
 
     def get_voice(self):
@@ -70,27 +66,8 @@ class ConfigAPIMixin:
 
     def get_available_models(self):
         """JavaScript can call this to get list of available models from config."""
-        # Priority: Config file allowed list -> fallback defaults
-        models = ConfigManager.get("available_cloud_models")
-        
-        logger.debug(f"[ BRIDGE ] fetching available_cloud_models: {models}")
-        
-        if models and isinstance(models, list):
-            return models
-            
-        # Decoupled Fallback: If config is empty, list what we CAN use by scanning keys
-        from src.core.intelligence.provider_failover import scan_available_providers
-        providers = scan_available_providers()
-        
-        fb = []
-        if 'gemini' in providers:
-            fb.append({'id': 'gemini-2.0-flash', 'name': 'Gemini 2.0 Flash'})
-        if 'anthropic' in providers:
-            fb.append({'id': 'claude-3-5-sonnet-latest', 'name': 'Claude 3.5 Sonnet'})
-        if 'openai' in providers:
-            fb.append({'id': 'gpt-4o', 'name': 'GPT-4o'})
-            
-        return fb if fb else [{'id': ConfigManager.get_active_model(), 'name': 'Default Cloud Model'}]
+        from src.clients.desktop.api.cloud_models import available_cloud_models
+        return available_cloud_models()
 
     def set_model(self, model_name):
         """Set the text mode model and persist to config."""
@@ -191,7 +168,7 @@ class ConfigAPIMixin:
                 thinking_enabled = bool(thinking_val) if thinking_val is not None else None
                 return {
                     "mode": "local",
-                    "name": model_id or "Unknown",
+                    "name": model_id or "Choose a model",
                     "provider": cfg.get("provider", "lmstudio"),
                     "supports_tools": cfg.get("supports_tools", True),
                     "thinking_enabled": thinking_enabled,
@@ -673,52 +650,5 @@ class ConfigAPIMixin:
                 db_url=str(db_url or ""),
             ),
             timeout=600.0,
-            default_fallback={"success": False, "error": "Command execution failed."},
-        )
-
-    def get_setup_status(self):
-        """Whether the first-run setup wizard should be shown (issue #428)."""
-        return self._execute_command(
-            GetSetupStatusCommand(),
-            timeout=10.0,
-            # Unknown while the Brain boots; do not falsely report setup complete.
-            default_fallback={},
-        )
-
-    def start_lmstudio_setup(self):
-        """Kick off the LM Studio model check/download in a background thread."""
-        return self._execute_command(
-            StartLMStudioSetupCommand(),
-            timeout=10.0,
-            default_fallback={"success": False, "error": "Command execution failed."},
-        )
-
-    def get_lmstudio_setup_progress(self):
-        """Poll the state of a background start_lmstudio_setup() job."""
-        return self._execute_command(
-            GetLMStudioSetupProgressCommand(),
-            timeout=10.0,
-            default_fallback={"running": False, "done": True, "log": [], "report": None},
-        )
-
-    def probe_local_backend(self, provider, base_url, api_key=""):
-        """Probe an Ollama / custom OpenAI-compatible endpoint for the setup wizard (issue #499)."""
-        return self._execute_command(
-            ProbeLocalBackendCommand(provider=str(provider or ""), base_url=str(base_url or ""), api_key=str(api_key or "")),
-            timeout=10.0,
-            default_fallback={"reachable": False, "models": [], "download_url": None},
-        )
-
-    def save_provider_choice(self, provider, base_url, api_key, model_id, supports_tools=True):
-        """Persist the wizard's chosen backend + model (issue #499)."""
-        return self._execute_command(
-            SaveProviderChoiceCommand(
-                provider=str(provider or ""),
-                base_url=str(base_url or ""),
-                api_key=str(api_key or ""),
-                model_id=str(model_id or ""),
-                supports_tools=bool(supports_tools),
-            ),
-            timeout=10.0,
             default_fallback={"success": False, "error": "Command execution failed."},
         )
