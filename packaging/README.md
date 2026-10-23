@@ -93,6 +93,12 @@ Add/Remove Programs key (and stops the Brain + autostart, as before).
 already exists on the machine — fine for the maintainer's own dev box, not
 for a stranger downloading one file. `build_installer.ps1` closes that gap:
 
+Installer staging also places the C++ runtime already redistributed by the
+sklearn wheel at the Brain's DLL search root. A clean Windows machine must
+load PyTorch's `c10.dll` without relying on a separately installed Visual C++
+runtime; otherwise local embeddings fall back to keyword search. Missing
+bundled runtime files fail staging instead of silently producing that installer.
+
 ```powershell
 # NSIS must be installed once: winget install NSIS.NSIS
 powershell -ExecutionPolicy Bypass -File scripts\prod\build_installer.ps1

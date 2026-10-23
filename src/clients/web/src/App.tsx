@@ -1120,7 +1120,7 @@ function App() {
                         placeholder={status === 'error' ? (statusText.toLowerCase().includes("lm studio") ? "LM Studio Offline — Please start LM Studio and enable the local server..." : "Offline — Please check if your server is up and running...") : (!apiReady || status === 'initializing') ? "Ask Chad... (connecting to server)" : "Ask Chad..."}
                       />
                       {uiMode === 'splash' && status !== 'initializing' && status !== 'error' && (
-                        <SuggestedActions onSelect={handleSendMessage} />
+                        <SuggestedActions onSelect={(text, category) => handleSendMessage(text, undefined, undefined, category)} />
                       )}
                     </div>
                   }
