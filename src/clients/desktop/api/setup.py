@@ -12,6 +12,27 @@ from src.application.commands import (
 class SetupAPIMixin:
     """Relay setup commands and refresh the desktop cache after a saved choice."""
 
+    def assess_model_hardware(self, storage_path="", context=8192, manual=None):
+        """Scan the local Limb host; deliberately never send hardware to the Brain."""
+        from src.infrastructure.services.hardware_setup import assess
+
+        return assess(storage_path, context, manual)
+
+    def start_model_setup_job(self, operation, options, confirmed=False):
+        from src.infrastructure.services.setup_assets import start
+
+        return start(operation, options, confirmed)
+
+    def get_model_setup_job(self):
+        from src.infrastructure.services.setup_assets import progress
+
+        return progress()
+
+    def cancel_model_setup_job(self):
+        from src.infrastructure.services.setup_assets import cancel
+
+        return cancel()
+
     def get_setup_status(self):
         """Whether the first-run setup wizard should be shown (issue #428)."""
         return self._execute_command(

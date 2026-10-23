@@ -267,7 +267,10 @@ def save_provider_choice(
         "api_key": api_key or "",
         "supports_tools": supports_tools,
     }
-    update = {"setup": {"model_selected": True}, "local_models": {
+    update = {"setup": {"model_selected": True, "share_main_model": True},
+              "tools": {"llm_selector_model": model_id, "llm_selector_context_length": 8192},
+              "intent_router": {"enabled": False},
+              "local_models": {
         "use_local": True, "active_model": active_model, "supervisor": active_model,
         "providers": {provider_key: {"base_url": base_url, "api_key": api_key or "", "enabled": True}},
     }}

@@ -69,6 +69,34 @@ _DEFAULT_SELECT_TIMEOUT = 90.0
 _LARGE_MODEL_SELECT_TIMEOUT = 120.0
 
 
+def shared_setup_selector(registry):
+    """Refresh a pre-existing registry after first-run setup without a restart."""
+    from src.shared.config_manager import ConfigManager
+
+    current = registry._llm_selector
+    if ConfigManager.get("setup.share_main_model", False):
+        selected = ConfigManager.get_local_model_config()
+        if (getattr(current, "_model_id", None) != ConfigManager.get_llm_selector_model()
+                or getattr(current, "_base_url", "").rstrip("/") != selected.get("base_url", "").rstrip("/")):
+            from src.infrastructure.tools.registry import _build_llm_selector
+
+            registry._llm_selector = current = _build_llm_selector()
+    return current
+
+
+def _selector_request_headers(base_url, capabilities):
+    from src.shared.config_manager import ConfigManager
+
+    selected = ConfigManager.get_local_model_config()
+    api_key = capabilities.default_api_key
+    if selected.get("base_url", "").rstrip("/") == base_url.rstrip("/"):
+        api_key = selected.get("api_key") or api_key
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    return headers
+
+
 class LLMToolSelector:
     """
     Calls a small local LLM to select the exact tools needed for a query.
@@ -495,13 +523,8 @@ class LLMToolSelector:
         return False
 
     def _request_headers(self) -> Dict[str, str]:
-        """Headers for OpenAI-compat calls, incl. a capability-supplied placeholder API key
-        for backends that reject requests with no Authorization header (None for LM Studio)."""
-        headers = {"Content-Type": "application/json"}
-        api_key = self._capabilities.default_api_key
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        return headers
+        """Use the selected endpoint's credential, otherwise its provider default."""
+        return _selector_request_headers(self._base_url, self._capabilities)
 
     def _is_server_reachable(self) -> bool:
         if self._server_reachable is True:

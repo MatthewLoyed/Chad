@@ -68,6 +68,14 @@ installer still needs clean Windows acceptance before release.
 
 ## Quick automated setup (issue #406)
 
+New desktop installs use the setup wizard's **Find models for this computer**
+panel (issue #5): choose the actual LM Studio model folder and context, scan,
+compare fit/speed estimates, then explicitly confirm a download. Existing
+models remain selectable without scanning. Memory validation is read-only;
+benchmarking is a separate confirmation because it may change residency.
+The CLI below retains the legacy multi-model preset for advanced users; it is
+not the hardware-aware onboarding default and can exceed smaller machines.
+
 ```powershell
 # Report-only: what's downloaded, is the server up
 python scripts/setup/setup_lmstudio.py --check
@@ -84,7 +92,9 @@ on PATH by the installer — nothing extra to install). It never touches
 anything beyond LM Studio's model catalog and local server: **embeddings
 (`nomic-ai/nomic-embed-text-v2-moe`) are not fetched through LM Studio at
 all** — they run locally via `sentence-transformers` (`requirements.txt`),
-auto-downloaded from Hugging Face on first use. If `lms` isn't found on
+downloaded only after explicit setup confirmation (or an intentional
+`embeddings.allow_download: true` override). Uncached embeddings leave semantic
+search/memory unavailable while basic Chat remains usable. If `lms` isn't found on
 PATH, the script explains how to get it and falls back to the manual steps
 below.
 
@@ -96,8 +106,10 @@ below.
 | `qwen/qwen3.5-9b` | Tool selector | ~6GB | `tools.llm_selector_model` |
 | `google/gemma-3-1b` | Intent router | ~1GB | `intent_router.model` |
 
-These three are the ones Chad needs to boot and hold a normal tool-using
-conversation with the default (16GB VRAM) configuration. Pass
+These three are the legacy CLI preset, not a prerequisite for basic Chat.
+Desktop setup selects one chat model, shares it with the tool selector and
+compatible specialists, and disables the separate intent router. Explicit
+specialist overrides remain respected. Pass
 `--include-optional` to also grab the specialist models below.
 
 ### Optional / advanced models
@@ -118,8 +130,20 @@ single resident `qwen/qwen3.5-9b`: set `local_models.active_model` to
 `qwen/qwen3.5-9b` and point `tools.llm_selector_model` at the same model
 instead of loading a second one. This gives up some main-chat quality
 compared to the 26B path but fits comfortably with room left for
-embeddings and KV cache. A first-class smaller-VRAM tier is tracked as
-follow-up work, not part of this initial pass.
+embeddings and KV cache. For new installs, use the desktop hardware assessment
+rather than downloading the legacy preset.
+
+### Optional embedding assets
+
+The hardware panel enumerates the optional Nomic CPU embedding assets (about
+1.8 GiB of weights/tokenizer files and a small cross-repository custom-code
+dependency). Download progress is pollable; completed Hugging Face cache files
+survive retry and offline use. Both the primary Nomic snapshot and its
+`nomic-ai/nomic-bert-2048` code are cached. Automatic runtime downloads default
+off via `embeddings.allow_download`; source and frozen clients use the same
+explicit job. A remote Brain needs its own cache: a local desktop download does
+not provision a different machine. Optional voice/image/specialist models are
+not required to finish this setup.
 
 ## Supported Backends
 

@@ -20,6 +20,8 @@ import { test, expect } from '@playwright/test';
 //   export PlanCard.AwaitingApproval → awaiting-approval
 
 const STORIES: Array<{ id: string; name: string; waitMs?: number }> = [
+    { id: 'setup-hardware-assessment--cpu-only', name: 'HardwareSetup/CPUOnly' },
+    { id: 'setup-hardware-assessment--insufficient-memory', name: 'HardwareSetup/InsufficientMemory' },
     // ── PlanCard ──────────────────────────────────────────────────────────────
     { id: 'data-display-plancard--awaiting-approval', name: 'PlanCard/AwaitingApproval' },
     { id: 'data-display-plancard--in-progress', name: 'PlanCard/InProgress' },
