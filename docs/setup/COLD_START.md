@@ -202,10 +202,13 @@ optional/advanced features; several now have local sqlite fallbacks via
    Canva graphic design uses the same Connectors wizard as Supabase (browser OAuth via `mcp-remote`).
    Supabase variables in `.env.example` can stay as placeholders — Chad boots
    without them (see above). Fill them in only for the optional Supabase upgrade.
-3. **LM Studio** — install and open it. During desktop setup choose LM Studio,
-   open **Find models for this computer**, choose the model folder/context and
-   scan. Compare the model recommendations and confirm a download, or choose
-   any existing model manually. Load it in LM Studio, start its Local Server,
+3. **LM Studio** — desktop setup shows four stages: Welcome, Model app,
+   Choose a model, and Start chatting. Install/open LM Studio, then select
+   **Find a model for me**. Review the suggested model and confirm a download, or choose
+   **I already have a model — continue**. Model comparisons and suggested load
+   settings are expandable; folder/context overrides and hardware corrections
+   are under **Advanced: scan settings and hardware details**.
+   Load the model in LM Studio, start its Local Server,
    then check Chad's connection and select the chat model. One model is enough;
    the selector/compatible specialists share it. Optional CPU embeddings have
    a separate confirmed download and are not needed for basic Chat. See

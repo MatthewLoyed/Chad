@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { setupRequest } from './setupRequest';
 import { styles } from './SetupWizard.styles';
+import { Cpu, ArrowRight, Loader2 } from 'lucide-react';
+import './SetupWizard.css';
 
 interface Candidate {
     id: string; name: string; quantization: string; weights_gb: number; kv_gb: number;
@@ -30,7 +32,7 @@ const isLocalServer = (value: string) => {
     catch { return false; }
 };
 
-export default function HardwareSetup({ baseUrl, apiKey, modelId }: { baseUrl: string; apiKey: string; modelId: string }) {
+export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: { baseUrl: string; apiKey: string; modelId: string; onContinue?: () => void }) {
     const api = window.pywebview?.api;
     const [context, setContext] = useState(8192);
     const [storage, setStorage] = useState('');
@@ -41,8 +43,15 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId }: { baseUrl: s
     const [error, setError] = useState('');
     const [pending, setPending] = useState<Pending | null>(null);
     const [job, setJob] = useState<Job>({});
+    const confirmation = useRef<HTMLDivElement>(null);
     const generation = useRef(0);
     const candidate = assessment?.models.find(model => model.id === selected);
+    useEffect(() => {
+        if (pending) {
+            confirmation.current?.scrollIntoView?.({ block: 'nearest' });
+            confirmation.current?.querySelector('button')?.focus();
+        }
+    }, [pending]);
     useEffect(() => {
         const timer = window.setInterval(() => {
             if (!api?.get_model_setup_job) return;
@@ -78,70 +87,97 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId }: { baseUrl: s
         } catch (e) { setError(e instanceof Error ? e.message : 'Setup operation failed.'); }
     };
     const queue = (operation: string, options: Record<string, unknown>, summary: string) => setPending({ operation, options, summary });
-    return <details style={styles.modelList}>
-        <summary>Find models for this computer</summary>
-        <p style={styles.hint}>Aim for the best quality around 40–50 generated tokens/sec or faster. Scans stay on this desktop; remote servers need their own assessment.</p>
-        <label style={styles.fieldLabel} htmlFor="hardware-storage">LM Studio model folder (blank uses ~/.lmstudio/models)</label>
-        <input id="hardware-storage" style={styles.textInput} value={storage} disabled={job.running} onChange={e => { setStorage(e.target.value); invalidate(); }} />
-        <p style={styles.hint}>Use the folder shown in LM Studio's model-directory settings. Chad checks that drive and downloads there only after confirmation.</p>
-        <label style={styles.fieldLabel} htmlFor="hardware-context">Context tokens</label>
-        <select id="hardware-context" style={styles.textInput} value={context} disabled={job.running} onChange={e => { setContext(Number(e.target.value)); invalidate(); }}>
-            {[4096, 8192, 16384, 32768].map(size => <option key={size}>{size}</option>)}
-        </select>
-        <details><summary>Correct detected hardware</summary>
-            <p style={styles.hint}>Replace capacity for a what-if estimate. Leave blank to detect. VRAM describes one dedicated GPU, never shared memory.</p>
-            {(['ram_gb', 'vram_gb', 'storage_free_gb'] as const).map((key, index) => <label key={key} style={styles.modelRow}>
-                {['Total RAM (GiB)', 'Dedicated VRAM (GiB)', 'Free model storage (GiB)'][index]}
-                <input type="number" min="0" step="0.5" value={manual[key] || ''} disabled={job.running} style={styles.textInput}
-                    onChange={e => { setManual(current => ({ ...current, [key]: e.target.value })); invalidate(); }} />
-            </label>)}
-        </details>
-        <button style={styles.secondaryBtn} disabled={busy || job.running} onClick={() => void scan()}>{busy ? 'Scanning…' : 'Scan and recommend'}</button>
-        {assessment && <>
-            <p style={styles.hint}>{assessment.hardware.cpu} · {assessment.hardware.physical_cores ?? 'unknown'} cores · RAM {gib(assessment.hardware.ram_gb)} ({gib(assessment.hardware.available_ram_gb)} available) · storage {gib(assessment.hardware.storage_free_gb)} free</p>
-            {assessment.hardware.gpus.map((gpu, index) => <p key={index} style={styles.hint}>{gpu.name}: {gib(gpu.vram_gb)} dedicated VRAM</p>)}
-            {assessment.hardware.warnings.map(warning => <p key={warning} style={styles.hint}>{warning}</p>)}
-            {!assessment.target_met && <p style={styles.hint}>The speed target is unverified on this computer. Compatible fallbacks are shown; benchmark before relying on a token rate.</p>}
-            <label htmlFor="hardware-model" style={styles.fieldLabel}>Compare suggested models</label>
-            <select id="hardware-model" style={styles.textInput} value={selected} disabled={job.running} onChange={e => { setSelected(e.target.value); setPending(null); }}>
-                {assessment.models.map(model => <option key={model.id} value={model.id}>{model.name}{model.id === assessment.recommended_id ? ' — Recommended' : ''}{!model.fits ? ' — Does not fit' : ''}</option>)}
-            </select>
-            {candidate && <>
-                <strong>{candidate.name} · {candidate.quantization}</strong>
-                <p style={styles.hint}>Download {gib(candidate.weights_gb)} · KV cache {gib(candidate.kv_gb)} · model/runtime {gib(candidate.required_gb)} · {candidate.mode === 'gpu' ? 'GPU placement' : 'CPU fallback'}</p>
-                <p style={styles.hint}>{candidate.speed.low == null ? 'Speed unknown' : `Estimated ${candidate.speed.low}–${candidate.speed.high} tokens/sec`}. {candidate.speed.note}</p>
-                {candidate.reasons.map(reason => <p key={reason} style={styles.errText}>{reason}</p>)}
-                <p style={styles.hint}>Suggested load: {context} context tokens, GPU offload {candidate.settings.gpu_offload}. Temperature {candidate.settings.temperature}, top-p {candidate.settings.top_p}. Thinking: {candidate.settings.thinking}.</p>
-                <p style={styles.hint}>{candidate.settings.advanced} These suggestions do not change LM Studio settings.</p>
-                <button style={styles.secondaryBtn} disabled={job.running || !candidate.fits} onClick={() => queue('download', { catalog_id: candidate.id, storage_path: storage }, `Download ${candidate.name} ${candidate.quantization} (${gib(candidate.weights_gb)}) into the model folder above. Retry reuses partial data.`)}>Download this model…</button>
-            </>}
-            <details><summary>Memory assumptions</summary><p style={styles.hint}>{assessment.assumptions}</p></details>
+    const continueButton = onContinue && <button style={styles.secondaryBtn} disabled={job.running || !!pending} onClick={onContinue}>{job.done && job.result?.success && job.operation === 'download' ? 'Continue to connection' : 'I already have a model — continue'} <ArrowRight size={16} /></button>;
+    return <div className="chad-setup setup-stack">
+        <h1 style={styles.title} tabIndex={-1}>Find your first AI model</h1>
+        {!assessment && <p style={styles.hint}>A model is the AI that answers your messages. We’ll check your computer and suggest one for smooth, everyday chat.</p>}
+        {!assessment && <>
+            <div className="setup-note setup-stack"><Cpu size={32} color="#c4b5fd" aria-hidden="true" />
+                <strong>No hardware knowledge needed</strong>
+                <p style={styles.hint}>Chad checks your memory, graphics card, and free space. The scan stays on this computer and downloads nothing.</p>
+            </div>
+            <button style={styles.primaryBtn} disabled={busy || job.running} onClick={() => void scan()}>
+                {busy ? <><Loader2 size={18} className="is-spinning" /> Checking your computer…</> : 'Find a model for me'}
+            </button>
+            {continueButton}
         </>}
-        <details><summary>Internal models and optional assets</summary>
-            <p style={styles.hint}>Basic Chat needs only your chosen model. Setup shares it with the tool selector and compatible subagents, preserves explicit specialist overrides, and disables the extra intent-router model. Optional specialist downloads are configured later in Settings.</p>
-            <p style={styles.hint}>Memory and semantic tool search use nomic-ai/nomic-embed-text-v2-moe on CPU (about 1.8 GiB download; 3 GiB RAM reserved). Without cached assets they remain unavailable; basic Chat still works. Downloads populate this desktop's cache. A remote Brain needs its own cached assets. Network failure keeps completed cache files for retry. No separate LM Studio embedding model is needed.</p>
-            <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('embedding', {}, 'Download optional Nomic embedding assets (about 1.8 GiB) from Hugging Face into its local cache. This enables memory and semantic search; it is not needed for basic Chat.')}>Download optional embeddings…</button>
-        </details>
-        {modelId && !isLocalServer(baseUrl) && <p style={styles.hint}>This model server is remote. Run its memory and speed checks on that host; this desktop's scan does not establish remote fit.</p>}
-        {modelId && isLocalServer(baseUrl) && <>
-            <p style={styles.hint}>Validate the selected downloaded Chat model: {modelId}. Native memory estimates require the local lms CLI. Benchmarking requires the local LM Studio native API.</p>
-            <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('estimate', { model_id: modelId, context, gpu_offload: candidate?.settings.gpu_offload || 'off' }, `Run an estimate-only memory check for ${modelId} at ${context} context tokens. This does not load a model or change defaults.`)}>Validate memory settings…</button>
-            <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('benchmark', { model_id: modelId, base_url: baseUrl, api_key: apiKey }, `Generate one short sample with ${modelId}. LM Studio may load it or evict another resident model. Saved settings will not change. This measures generation speed, not tool accuracy.`)}>Measure generation speed…</button>
+        {assessment && candidate && <>
+            <section className="setup-recommendation" aria-label="Suggested model">
+                <span className="setup-badge">{candidate.fits ? candidate.id === assessment.recommended_id ? 'Recommended for your computer' : 'Your selection' : 'Not enough memory right now'}</span>
+                <h2>{candidate.name}</h2>
+                <p style={styles.hint}>{candidate.fits ? 'A starting point for everyday chat on this computer.' : 'Try a smaller model or free some memory, then scan again.'}</p>
+                <div className="setup-metrics">
+                    <div><strong>{gib(candidate.weights_gb)}</strong><span>download size</span></div>
+                    <div><strong>{candidate.speed.low == null ? 'Needs a speed test' : `${candidate.speed.low}–${candidate.speed.high}`}</strong><span>{candidate.speed.low == null ? 'speed not yet known' : 'estimated tokens / second'}</span></div>
+                </div>
+                <p style={styles.hint}>{candidate.speed.low == null ? 'We can’t estimate speed reliably on this hardware.' : 'Estimated speed, not a benchmark. Actual speed varies.'}</p>
+                {candidate.reasons.map(reason => <p key={reason} role="note" style={styles.errText}>{reason}</p>)}
+                <button style={styles.primaryBtn} disabled={job.running || !candidate.fits || !!pending} onClick={() => queue('download', { catalog_id: candidate.id, storage_path: storage }, `Download ${candidate.name} (${gib(candidate.weights_gb)}) to ${storage || 'your default LM Studio model folder'}. You can pause and retry the download.`)}>Download {candidate.name}</button>
+            </section>
+            {continueButton}
+            <details><summary>Compare other models</summary><div className="setup-details setup-alternatives" role="group" aria-label="Model alternatives">
+                {assessment.models.map(model => <button className="setup-alternative" key={model.id} aria-pressed={model.id === selected} disabled={job.running || !!pending || !model.fits} onClick={() => { setSelected(model.id); setPending(null); }}>
+                    <strong>{model.name}</strong>{model.id === assessment.recommended_id && ' · Recommended'}
+                    <small>{gib(model.weights_gb)} download · {model.fits ? model.speed.low == null ? 'Speed needs testing' : `Estimated ${model.speed.low}–${model.speed.high} tokens/sec` : 'Does not fit available memory'}</small>
+                </button>)}
+            </div></details>
+            <details><summary>Suggested LM Studio settings</summary><div className="setup-details">
+                <p style={styles.hint}>Use these when loading this model in LM Studio. Chad does not apply them automatically.</p>
+                <p style={styles.hint}>Context: {context} tokens · GPU offload: {candidate.settings.gpu_offload}<br />Temperature: {candidate.settings.temperature} · Top-p: {candidate.settings.top_p}<br />Thinking: {candidate.settings.thinking}</p>
+                <p style={styles.hint}>{candidate.settings.advanced}</p>
+            </div></details>
         </>}
-        {pending && <div role="group" aria-label="Confirm setup operation" style={styles.modelList}>
+        {pending && <div ref={confirmation} role="group" aria-label="Confirm setup operation" className="setup-note setup-stack">
+            <strong>Ready to {pending.operation === 'download' ? 'download this model' : pending.operation}?</strong>
             <p style={styles.hint}>{pending.summary}</p>
             <button style={styles.primaryBtn} onClick={() => void run()}>Confirm {pending.operation}</button>
             <button style={styles.secondaryBtn} onClick={() => setPending(null)}>Cancel</button>
         </div>}
-        {job.running && <div role="status">
-            <p style={styles.hint}>Working: {job.operation}. {job.total ? `${gib((job.bytes || 0) / 1024 ** 3)} / ${gib(job.total / 1024 ** 3)}` : job.note || 'Waiting for the local operation…'}</p>
-            {!!job.total && <progress value={job.bytes || 0} max={job.total} aria-label="Model download progress" />}
+        {job.running && <div role="status" className="setup-status setup-stack">
+            <strong>{job.operation === 'download' ? 'Downloading your model' : 'Working on your request'}</strong>
+            <p style={styles.hint}>{job.total ? `${gib((job.bytes || 0) / 1024 ** 3)} of ${gib(job.total / 1024 ** 3)}` : job.note || 'This can take a few minutes. You can leave this window open.'}</p>
+            <progress value={job.total ? job.bytes || 0 : undefined} max={job.total || undefined} aria-label="Model download progress" />
             {(job.operation === 'download' || job.operation === 'embedding') && <button style={styles.secondaryBtn} onClick={() => void api?.cancel_model_setup_job?.()}>Pause download</button>}
         </div>}
-        {job.done && job.result && <div role={job.result.success ? 'status' : 'alert'}>
-            <p style={{ ...styles.hint, whiteSpace: 'pre-wrap' }}>{job.result.detail || job.result.note}</p>
-            {job.result.stats && <p style={styles.hint}>Measured {job.result.stats.tokens_per_second.toFixed(1)} tokens/sec · first token {job.result.stats.time_to_first_token_seconds.toFixed(2)}s · load {job.result.stats.model_load_time_seconds?.toFixed(2) ?? 'already loaded'}s · reasoning {job.result.reasoning}.</p>}
+        {job.done && job.result && <div role={job.result.success ? 'status' : 'alert'} className="setup-status setup-stack">
+            {job.result.success && <strong>{job.operation === 'download' ? 'Download complete. Load your model in LM Studio next.' : 'Check complete'}</strong>}
+            <p style={{ ...styles.hint, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{job.result.detail || job.result.note}</p>
+            {job.result.stats && <p style={styles.hint}>Measured {job.result.stats.tokens_per_second.toFixed(1)} tokens/sec · first response {job.result.stats.time_to_first_token_seconds.toFixed(2)}s.</p>}
         </div>}
         {error && <p role="alert" style={styles.errText}>{error}</p>}
-    </details>;
+        <details><summary>Advanced: scan settings and hardware details</summary><div className="setup-details">
+            <label style={styles.fieldLabel} htmlFor="hardware-storage">LM Studio model folder</label>
+            <input id="hardware-storage" style={styles.textInput} value={storage} placeholder="Default LM Studio folder" disabled={job.running} onChange={e => { setStorage(e.target.value); invalidate(); }} />
+            <p style={styles.hint}>Leave blank for ~/.lmstudio/models. If you moved your models, use the folder shown in LM Studio’s settings. Downloads use this folder after you confirm.</p>
+            <label style={styles.fieldLabel} htmlFor="hardware-context">Context tokens</label>
+            <select id="hardware-context" style={styles.textInput} value={context} disabled={job.running} onChange={e => { setContext(Number(e.target.value)); invalidate(); }}>
+                {[4096, 8192, 16384, 32768].map(size => <option key={size}>{size}</option>)}
+            </select>
+            <p style={styles.hint}>More context allows longer conversations, but needs more memory. Recommendations aim for 40–50 generated tokens per second or faster, subject to a local speed test.</p>
+            {assessment && <>
+                <p style={styles.hint}>{assessment.hardware.cpu} · {assessment.hardware.physical_cores ?? 'unknown'} cores<br />RAM {gib(assessment.hardware.ram_gb)} ({gib(assessment.hardware.available_ram_gb)} available)<br />Storage {gib(assessment.hardware.storage_free_gb)} free</p>
+                {assessment.hardware.gpus.map((gpu, index) => <p key={index} style={styles.hint}>{gpu.name}: {gib(gpu.vram_gb)} dedicated graphics memory</p>)}
+                {assessment.hardware.warnings.map(warning => <p key={warning} style={styles.hint}>{warning}</p>)}
+                <p style={styles.hint}>{assessment.assumptions}</p>
+                {candidate && <p style={styles.hint}>{candidate.quantization} · KV cache {gib(candidate.kv_gb)} · runtime {gib(candidate.required_gb)} · {candidate.mode === 'gpu' ? 'GPU' : 'CPU'}<br />{candidate.speed.note}</p>}
+            </>}
+            <details><summary>Correct detected hardware</summary><div className="setup-details">
+                <p style={styles.hint}>Leave blank to detect. Graphics memory means one dedicated GPU, not shared memory.</p>
+                {(['ram_gb', 'vram_gb', 'storage_free_gb'] as const).map((key, index) => <label key={key} className="setup-stack" style={{ gap: 6 }}>
+                    {['Total RAM (GiB)', 'Dedicated VRAM (GiB)', 'Free model storage (GiB)'][index]}
+                    <input type="number" min="0" step="0.5" value={manual[key] || ''} disabled={job.running} style={styles.textInput} onChange={e => { setManual(current => ({ ...current, [key]: e.target.value })); invalidate(); }} />
+                </label>)}
+            </div></details>
+            {assessment && <button style={styles.secondaryBtn} disabled={busy || job.running} onClick={() => void scan()}>Scan again</button>}
+            <details><summary>Optional memory and search features</summary><div className="setup-details">
+                <p style={styles.hint}>Basic chat only needs your chosen model. Optional memory and search use Nomic embeddings on CPU (about 1.8 GiB download and 3 GiB RAM). They use this computer’s cache; a remote Brain needs its own assets.</p>
+                <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('embedding', {}, 'Download optional Nomic embedding assets (about 1.8 GiB) from Hugging Face into this computer’s cache. Basic chat does not need this download.')}>Download optional embeddings…</button>
+            </div></details>
+            {modelId && !isLocalServer(baseUrl) && <p style={styles.hint}>This server is remote. Scan and measure speed on that computer instead.</p>}
+            {modelId && isLocalServer(baseUrl) && <>
+                <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('estimate', { model_id: modelId, context, gpu_offload: candidate?.settings.gpu_offload || 'off' }, `Check memory for ${modelId} at ${context} context tokens without loading the model or changing defaults.`)}>Validate memory settings…</button>
+                <button style={styles.secondaryBtn} disabled={job.running} onClick={() => queue('benchmark', { model_id: modelId, base_url: baseUrl, api_key: apiKey }, `Generate a short sample with ${modelId}. LM Studio may load it or evict another loaded model. Saved settings will not change.`)}>Measure generation speed…</button>
+            </>}
+        </div></details>
+    </div>;
 }

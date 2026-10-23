@@ -2,11 +2,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import SetupWizard from './SetupWizard';
-
 afterEach(() => { cleanup(); delete window.pywebview; });
 function enterLmStudio() {
     fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     fireEvent.click(screen.getByRole('button', { name: /LM Studio Recommended/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'LM Studio is open — continue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'I already have a model — continue' }));
 }
 it('explains an installed app with no server and lets the user go back or finish later', async () => {
     window.pywebview = { api: {
@@ -15,10 +16,10 @@ it('explains an installed app with no server and lets the user go back or finish
     } };
     render(<SetupWizard onComplete={vi.fn()} />);
     enterLmStudio();
-    fireEvent.click(screen.getByRole('button', { name: /check connection/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Check connection/ }));
     expect(await screen.findByText(/LM Studio was found/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByRole('heading', { name: 'Choose your model app' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Find your first AI model' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Finish later' }));
     expect(screen.getByText(/Chat is not ready yet/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue setup' }));
@@ -35,7 +36,7 @@ it('connects without CLI detection, saves a single chosen Chat model and opens C
     } };
     render(<SetupWizard onComplete={complete} />);
     enterLmStudio();
-    fireEvent.click(screen.getByRole('button', { name: /check connection/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Check connection/ }));
     await screen.findByRole('option', { name: 'Fictional Chat' });
     expect(getStatus).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /Use this model/ }));
@@ -48,9 +49,9 @@ it('shows request failures and permits a successful retry', async () => {
     window.pywebview = { api: { probe_local_backend: probe } };
     render(<SetupWizard onComplete={vi.fn()} />);
     enterLmStudio();
-    fireEvent.click(screen.getByRole('button', { name: /check connection/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Check connection/ }));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Connection check failed');
-    fireEvent.click(screen.getByRole('button', { name: /check connection/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Check connection/ }));
     await screen.findByRole('option', { name: 'Test model' });
     expect(screen.queryByRole('alert')).toBeNull();
 });
@@ -59,9 +60,33 @@ it('discards a late reply after leaving the model page', async () => {
     window.pywebview = { api: { probe_local_backend: vi.fn().mockReturnValue(new Promise(r => { resolve = r; })) } };
     render(<SetupWizard onComplete={vi.fn()} />);
     enterLmStudio();
-    fireEvent.click(screen.getByRole('button', { name: /check connection/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Check connection/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     resolve({ reachable: true, models: [{ id: 'late', display_name: 'Late model' }] });
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Choose your model app' })).toBeTruthy());
-    expect(screen.queryByRole('option')).toBeNull();
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Find your first AI model' })).toBeTruthy());
+    expect(screen.queryByText('Late model')).toBeNull();
+});
+it('shows a finite path and keeps connection fields out of the beginner model step', () => {
+    render(<SetupWizard onComplete={vi.fn()} />);
+    expect(screen.getByRole('navigation', { name: 'Setup progress' }).querySelector('[aria-current="step"]')?.textContent).toContain('Welcome');
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
+    fireEvent.click(screen.getByRole('button', { name: /LM Studio Recommended/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'LM Studio is open — continue' }));
+    expect(screen.getByText('Step 3 of 4')).toBeTruthy();
+    expect(screen.queryByLabelText('Server address')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Find a model for me' })).toBeTruthy();
+    expect(screen.getByLabelText('Context tokens').closest('details')?.open).toBe(false);
+});
+
+it('lets users retry when the server is reachable but no model is available', async () => {
+    const probe = vi.fn().mockResolvedValueOnce({ reachable: true, models: [] })
+        .mockResolvedValue({ reachable: true, models: [{ id: 'ready', display_name: 'Ready Chat' }] });
+    window.pywebview = { api: { probe_local_backend: probe,
+        get_setup_status: vi.fn().mockResolvedValue({ server_running: true }) } };
+    render(<SetupWizard onComplete={vi.fn()} />);
+    enterLmStudio();
+    fireEvent.click(screen.getByRole('button', { name: 'Check connection' }));
+    await screen.findByText(/default LM Studio server is running/);
+    fireEvent.click(screen.getByRole('button', { name: 'Check connection' }));
+    await screen.findByRole('option', { name: 'Ready Chat' });
 });
