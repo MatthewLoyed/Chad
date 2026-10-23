@@ -38,3 +38,19 @@ it('does not query setup in a browser or after unmount', async () => {
     await vi.advanceTimersByTimeAsync(6000);
     expect(getStatus).toHaveBeenCalledTimes(1);
 });
+
+
+it('keeps readiness unknown until setup is resolved and bounds a hung startup', async () => {
+    vi.useFakeTimers();
+    window.pywebview = { api: { get_setup_status: vi.fn().mockReturnValue(new Promise(() => {})) } };
+    const { result } = renderHook(() => useFirstRunSetup(true, false));
+    expect(result.current[0]).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(90000); });
+    expect(result.current[0]).toBeNull();
+    expect(result.current[2]).toBe(true);
+    window.pywebview = { api: { get_setup_status: vi.fn().mockResolvedValue({ needs_setup: true }) } };
+    await act(async () => { result.current[3](); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(result.current[0]).toBe(true);
+    expect(result.current[2]).toBe(false);
+});

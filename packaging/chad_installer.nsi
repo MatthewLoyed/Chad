@@ -39,11 +39,11 @@ SetCompressor /SOLID lzma
 !define MUI_UNICON "${APP_ICON}"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Welcome to the Chad Setup Wizard"
-!define MUI_WELCOMEPAGE_TEXT "This installs Chad — a personal AI assistant with local-first memory and tools — to your user account. No admin rights needed.$\r$\n$\r$\nClick Next to continue."
+!define MUI_WELCOMEPAGE_TEXT "This installs Chad - a personal AI assistant with local-first memory and tools - to your user account. No admin rights needed.$\r$\n$\r$\nClick Next to continue."
 !define MUI_FINISHPAGE_RUN "$INSTDIR\Chad\Chad.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch Chad now"
 !define MUI_FINISHPAGE_LINK "Chad on GitHub"
-!define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/MatthewLoyed/AIAssistant"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/MatthewLoyed/Chad"
 
 ; --- Pages --------------------------------------------------------------
 !insertmacro MUI_PAGE_WELCOME
@@ -66,7 +66,7 @@ Section "Chad (required)" SecCore
   File /r "${PAYLOAD_DIR}\Chad"
   File /r "${PAYLOAD_DIR}\Chad-Brain"
 
-  ; Config surface CHAD_HOME needs (config/, root .example files) — no
+  ; Config surface CHAD_HOME needs (config/, root .example files) - no
   ; secrets.yaml / preferences.yaml here, those are gitignored and instantiated
   ; on first launch by bootstrap_config_if_needed() / the setup wizard (#428).
   File /r "${PAYLOAD_DIR}\config"
@@ -107,20 +107,20 @@ Section "Chad (required)" SecCore
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section /o "Start Brain automatically at login" SecAutostart
+Section /o "Start Chad when I sign in to Windows" SecAutostart
   CreateDirectory "$SMSTARTUP"
   CreateShortCut "$SMSTARTUP\Chad-Brain.lnk" "$INSTDIR\Chad-Brain\Chad-Brain.exe" "" "$INSTDIR\Chad-Brain\Chad-Brain.exe" "" SW_SHOWMINIMIZED
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "The Chad app and Brain server (required)."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} "Keep the Brain running in the background so Chad is ready as soon as you sign in. Off by default lets it start on demand instead."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "Install Chad on this computer."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} "Keep Chad ready in the background when you sign in to Windows. No window will open. Leave unchecked to start Chad only when you open it."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; --- Uninstall ------------------------------------------------------------
 ; Deliberately leaves $INSTDIR\config (may hold a user-filled secrets.yaml
 ; with real API keys) and $INSTDIR\data (local chat history / memory sqlite)
-; in place — only the app binaries, shortcuts, and registry entries are
+; in place - only the app binaries, shortcuts, and registry entries are
 ; removed, so a re-install doesn't silently regenerate lost credentials/memory.
 Section "Uninstall"
   Delete "$SMSTARTUP\Chad-Brain.lnk"
@@ -134,5 +134,5 @@ Section "Uninstall"
   DeleteRegKey HKCU "${UNINSTALL_KEY}"
   DeleteRegKey HKCU "Software\${APP_NAME}"
 
-  MessageBox MB_OK|MB_ICONINFORMATION "Chad has been uninstalled. Your config (including API keys) and local chat/memory data were kept at $INSTDIR — delete that folder manually if you want a completely clean removal."
+  MessageBox MB_OK|MB_ICONINFORMATION "Chad has been uninstalled. Your config (including API keys) and local chat/memory data were kept at $INSTDIR - delete that folder manually if you want a completely clean removal."
 SectionEnd

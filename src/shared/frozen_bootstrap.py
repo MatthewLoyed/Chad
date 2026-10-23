@@ -108,3 +108,11 @@ def bundled_web_dist() -> Optional[Path]:
         return None
     candidate = Path(base) / "web" / "dist" / "index.html"
     return candidate if candidate.exists() else None
+
+
+def dispatch_frozen_helper() -> None:
+    """Run a packaged helper before GUI imports and its singleton guard."""
+    if is_frozen() and sys.argv[1:] == ["--hands-daemon"]:
+        import runpy
+        runpy.run_module("src.daemons.hands", run_name="__main__")
+        raise SystemExit(0)

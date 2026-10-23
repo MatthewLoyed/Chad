@@ -8,6 +8,7 @@ import { hasCredentials, setToken } from './transport/transportConfig';
 import { brainSocket } from './transport/brainSocket';
 const LoginScreen = lazy(() => import('./components/auth/LoginScreen'));
 const SetupWizard = lazy(() => import('./components/setup/SetupWizard'));
+import StartupScreen from './components/setup/StartupScreen';
 import {
   installStreamHandlers,
   extractTextFromContent,
@@ -204,7 +205,7 @@ function App() {
 
   // First-run setup wizard (desktop only, issue #428): a fresh CHAD_HOME with
   // no usable LLM key shows this instead of the normal chat shell.
-  const [needsSetup, setNeedsSetup] = useFirstRunSetup(apiReady, isBrowserTransport());
+  const [needsSetup, setNeedsSetup, startupError, retryStartup] = useFirstRunSetup(apiReady, isBrowserTransport());
 
   // UI State Transition Logic
   useEffect(() => {
@@ -1048,10 +1049,14 @@ function App() {
     );
   }
 
-  // First-run setup wizard (desktop only) — a fresh install with no LLM key yet.
+  if (!isBrowserTransport() && needsSetup === null) {
+    return <StartupScreen failed={startupError} onRetry={retryStartup} />;
+  }
+
+  // First-run setup wizard: select a model before showing Chat.
   if (needsSetup) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<StartupScreen />}>
         <SetupWizard onComplete={() => setNeedsSetup(false)} />
       </Suspense>
     );
@@ -1115,7 +1120,7 @@ function App() {
                         placeholder={status === 'error' ? (statusText.toLowerCase().includes("lm studio") ? "LM Studio Offline — Please start LM Studio and enable the local server..." : "Offline — Please check if your server is up and running...") : (!apiReady || status === 'initializing') ? "Ask Chad... (connecting to server)" : "Ask Chad..."}
                       />
                       {uiMode === 'splash' && status !== 'initializing' && status !== 'error' && (
-                        <SuggestedActions onSelect={handleSendMessage} />
+                        <SuggestedActions onSelect={(text, category) => handleSendMessage(text, undefined, undefined, category)} />
                       )}
                     </div>
                   }

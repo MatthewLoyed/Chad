@@ -288,35 +288,9 @@ class ConfigManager:
 
     @classmethod
     def get_active_model(cls) -> str:
-        """
-        Returns the project-wide active model identifier.
-        Priority:
-        1. User preference (preferences.yaml -> models.active_model)
-        2. Config default (config.yaml -> active_model)
-        3. Terminal: Raise Configuration Error
-        """
-        # 1. Try centralized supervisor / active_model in config (which merges preferences)
-        active = (
-            cls.get("local_models.supervisor")
-            or cls.get("supervisor")
-            or cls.get("local_models.active_model")
-            or cls.get("active_model")
-        )
-        if active:
-            if isinstance(active, dict):
-                return active.get("name", "")
-            return active
-            
-        # 2. Legacy fallback path (check text mode model)
-        text_model = cls.get("models.text.model")
-        if text_model:
-            return text_model
-            
-        # 3. Terminal Error: Force Configuration
-        raise RuntimeError(
-            "CRITICAL ERROR: No active AI model configured. "
-            "Please set 'supervisor' or 'active_model' in config/config.yaml or preferences.yaml."
-        )
+        """Return the selected model, or an empty ID during local onboarding."""
+        from src.shared.model_selection import resolve_active_model
+        return resolve_active_model(cls.get, use_local=cls.is_local_model_active())
 
     @classmethod
     def is_local_model_active(cls) -> bool:
