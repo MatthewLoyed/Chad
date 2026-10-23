@@ -67,3 +67,23 @@ def test_frozen_hands_dispatch_never_imports_gui(monkeypatch):
         runpy.run_path(str(ROOT / 'main_gui.py'), run_name='__main__')
     assert stopped.value.code == 0
     assert calls == [("src.daemons.hands", {"run_name": "__main__"})]
+
+
+@pytest.mark.parametrize("state", ["ready", "initializing", "reconnecting"])
+def test_desktop_status_poll_recovers_missed_startup_push(state):
+    from src.clients.desktop.api.status import StatusAPIMixin
+    window = SimpleNamespace(current_status_text="Connected", _current_state_enum=state)
+    bridge = StatusAPIMixin()
+    bridge.main_window_ref = lambda: window
+    assert bridge.get_raw_state() == state
+    assert bridge.get_status() == "Connected"
+
+
+def test_hands_reads_newly_generated_profile_token(monkeypatch):
+    from src.daemons.hands import _profile_auth_token
+    from src.shared.config_manager import ConfigManager
+    calls = []
+    monkeypatch.setattr(ConfigManager, "load_config", lambda: calls.append("reload"))
+    monkeypatch.setattr(ConfigManager, "get_secret", lambda key: "fictional-profile-token" if key == "CHAD_SERVER_TOKEN" else None)
+    assert _profile_auth_token() == "fictional-profile-token"
+    assert calls == ["reload"]
