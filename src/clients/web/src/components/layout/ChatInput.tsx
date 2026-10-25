@@ -8,7 +8,6 @@ import { useSlashCommands } from './useSlashCommands';
 import { brainSocket } from '../../transport/brainSocket';
 import { DriveBrowserModal } from '../modals';
 import ModelSelector from './ModelSelector';
-import TokenUsageTicker from '../data-display/TokenUsageTicker';
 import './ChatInput.css';
 import { turnModeCategory } from '../../utils/turn-mode';
 
@@ -181,6 +180,17 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
         };
         window.addEventListener('chad:compose-skill', insertSkill);
         return () => window.removeEventListener('chad:compose-skill', insertSkill);
+    }, []);
+
+    useEffect(() => {
+        const insertFeed = (event: Event) => {
+            const text = (event as CustomEvent<string>).detail;
+            if (typeof text !== 'string') return;
+            setValue(current => current ? `${current}\n\n${text}` : text);
+            requestAnimationFrame(() => textareaRef.current?.focus());
+        };
+        window.addEventListener('chad:compose-feed', insertFeed);
+        return () => window.removeEventListener('chad:compose-feed', insertFeed);
     }, []);
 
     // --- FILE PROCESSING HELPERS ---
@@ -538,7 +548,6 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
 
     return (
         <>
-            <TokenUsageTicker />
             <form className="chat-input" onSubmit={handleSubmit}>
                 <div
                     ref={containerRef}

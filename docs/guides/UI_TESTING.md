@@ -76,6 +76,30 @@ If **any link** in that chain is broken, the component never receives data. Stor
 
 ## Tier 1 — Storybook Component Gallery
 
+### Chat cleanup verification
+
+Assistant messages omit per-message avatar headers; the workspace rail retains
+Chad's identity. Chat messages do not display token counts or tokens/second.
+Telemetry remains in the store and backend for diagnostics. The stored speed
+uses full turn time, including orchestration and tools, not LM Studio decode
+throughput. Normal completion adds no stop-reason pill; errors, interruptions,
+and limits remain visible.
+
+Tool details start collapsed even while running and retain the user's expansion
+choice when execution finishes. Expand by click, Enter, or Space; JSON strings
+are indented under **Result**, with long output available through Show more.
+This keeps results inspectable, consistent with
+[Cursor's inline terminal output](https://cursor.com/docs/agent/tools/terminal)
+and [Cline's expandable execution summaries](https://github.com/cline/cline/blob/main/apps/examples/desktop-app/CHANGELOG.md).
+Verify pending → completed transitions with details both open and closed.
+In the sidebar, the Projects action sits beside its right-hand chevron at
+expanded and minimum widths. Artifacts opens a modal and has no dropdown arrow.
+Categories is no longer exposed in navigation: ordinary new chats use general
+memory. Existing domain-scoped conversations and stored memory retain their
+original boundaries; removing navigation does not migrate or merge their data.
+
+Feed and automation navigation are described in [Routines](../features/ROUTINES.md#navigation-and-activity).
+
 ### Starting Storybook
 
 ```

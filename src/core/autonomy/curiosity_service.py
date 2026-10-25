@@ -316,8 +316,7 @@ class CuriosityService:
             max_total_items=needed,
             verify=True,
             push_to_stash=True,
-            push_to_dashboard=False,
+            push_to_dashboard=True,
         )
         logger.info(f"[ CURIOSITY ] Discovery pipeline run completed. Added {len(discovered)} items.")
         return len(discovered)
-

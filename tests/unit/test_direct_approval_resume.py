@@ -127,6 +127,7 @@ async def test_pipeline_bypasses_all_preexecution_model_work_on_approval():
     pipeline._c = SimpleNamespace(_langgraph_engine=engine)
     pipeline.session_id = "same-session"
     pipeline.context = SimpleNamespace(category="planning")
+    pipeline.category = "planning"
     pipeline.scratch = TurnScratch()
     pipeline.prompt = "approved"
     pipeline.content_blocks = None

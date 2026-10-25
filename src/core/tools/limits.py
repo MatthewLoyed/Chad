@@ -187,6 +187,12 @@ LIMITS: Dict[str, Limit] = {
             "search_budget_per_task", "subagents.search_budget_per_task", 50, CEILING,
             "Shared web_search results one deep-research task may draw.",
         ),
+        Limit(
+            "feed_preview_words", "discovery.feed_preview_words", 90, CEILING,
+            "Maximum words quoted from a source in an automatic Feed preview.",
+        ),
+        Limit("feed_memory_topics", "discovery.feed_memory_topics", 16, CEILING,
+              "Maximum interest topics supplied to a Feed authoring turn."),
         # --- generation-level nudges ------------------------------------------
         Limit(
             "reasoning_token_cap", "planner.reasoning_token_cap", 10000, HINT,

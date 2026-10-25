@@ -41,7 +41,7 @@ import NotificationOverlay from './components/NotificationOverlay'
 import VoiceOverlay from './components/voice/VoiceOverlay'
 import PushBanner from './components/common/PushBanner'
 import SettingsView from './components/settings/SettingsView'
-import RoutinesWorkspace from './components/workspaces/RoutinesWorkspace'
+import FeedWorkspace from './components/workspaces/FeedWorkspace'
 import BoardWorkspace from './components/workspaces/BoardWorkspace'
 import DashboardWorkspace from './components/workspaces/DashboardWorkspace'
 import AutomationsWorkspace from './components/workspaces/AutomationsWorkspace'
@@ -1141,10 +1141,10 @@ function App() {
           </div>
 
           <div
-            className={`chad-stage-panel ${activeWorkspace === 'routines' ? 'is-active' : 'is-hidden'}`}
-            style={{ display: activeWorkspace === 'routines' ? 'flex' : 'none', width: '100%', height: '100%' }}
+            className={`chad-stage-panel ${activeWorkspace === 'feed' ? 'is-active' : 'is-hidden'}`}
+            style={{ display: activeWorkspace === 'feed' ? 'flex' : 'none', width: '100%', height: '100%' }}
           >
-            <RoutinesWorkspace />
+            <FeedWorkspace />
           </div>
 
           <div
@@ -1162,8 +1162,8 @@ function App() {
           </div>
 
           <div
-            className={`chad-stage-panel ${activeWorkspace === 'automations' ? 'is-active' : 'is-hidden'}`}
-            style={{ display: activeWorkspace === 'automations' ? 'flex' : 'none', width: '100%', height: '100%' }}
+            className={`chad-stage-panel ${(activeWorkspace === 'automations' || activeWorkspace === 'routines') ? 'is-active' : 'is-hidden'}`}
+            style={{ display: (activeWorkspace === 'automations' || activeWorkspace === 'routines') ? 'flex' : 'none', width: '100%', height: '100%' }}
           >
             <AutomationsWorkspace />
           </div>

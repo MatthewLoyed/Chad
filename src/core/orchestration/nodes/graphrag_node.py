@@ -265,7 +265,7 @@ def make_graphrag_node(
         messages = state.get("messages", [])
         current_instruction = state.get("system_instruction", "")
 
-        if state.get("category") == "voice":
+        if state.get("category") in ("voice", "feed"):
             return {"system_instruction": current_instruction}
 
         # Tool selection may have already fetched this boost — reuse it so we don't

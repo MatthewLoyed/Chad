@@ -22,6 +22,16 @@ plans, debugging help):
 - Reusable code longer than ~20 lines.
 - User explicitly asks to save, download, or "put this in a file."
 
+## Feed posts
+A Feed discovery is a quick post: title, 2–3 source-grounded summary sentences,
+an optional source image, and a short reason it matches an actual interest.
+Publish with `update_dashboard`, `kind=discovery`, and metadata containing
+`content_type=source_summary`, `url`, `selection_reason`, and optional `image_url`.
+The UI shows the original link, image, and reason separately. Do not add a long
+article, tutorial, limitations section, or proposed experiment. Do not invent
+claims or source image URLs. A curiosity-stash save is not publication; check
+the publisher receipt before saying the post is saved.
+
 ## Markdown in chat
 Code fences for code; occasional bold for key terms — not full document layout.
 

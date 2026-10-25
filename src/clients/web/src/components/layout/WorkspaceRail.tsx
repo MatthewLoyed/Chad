@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import {
     MessageSquare,
-    ListOrdered,
+    Rss,
     Kanban,
     LayoutDashboard,
     Zap,
@@ -31,7 +31,7 @@ interface RailItem {
 
 const WORKSPACE_ITEMS: RailItem[] = [
     { id: 'chat', label: 'Chat', icon: MessageSquare },
-    { id: 'routines', label: 'Routines', icon: ListOrdered },
+    { id: 'feed', label: 'Feed', icon: Rss },
     { id: 'automations', label: 'Automations', icon: Zap },
     { id: 'board', label: 'Board', icon: Kanban },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -66,7 +66,7 @@ export default function WorkspaceRail({
             <div className="ws-rail__group">
                 {WORKSPACE_ITEMS.map((item) => {
                     const Icon = item.icon;
-                    const isActive = !settingsActive && activeWorkspace === item.id;
+                    const isActive = !settingsActive && (activeWorkspace === item.id || (item.id === 'automations' && activeWorkspace === 'routines'));
                     return (
                         <button
                             key={item.id}
