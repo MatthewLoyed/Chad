@@ -17,8 +17,8 @@ async def _test_selector(endpoint, key, model):
     from src.core.intelligence.adapters.litellm_adapter import LiteLLMAdapter
     adapter = LiteLLMAdapter(model_name=model, base_url=endpoint, api_key=key or None)
     response = await asyncio.wait_for(adapter.generate([
-        {"role": "system", "content": "Select a tool name from the supplied fictional catalog. Return only a JSON array of names. Never call or execute a tool."},
-        {"role": "user", "content": 'Request: count the letters in a fictional word. Catalog: demo_count_letters (counts letters), demo_get_weather (weather).'}],
+        {"role": "system", "content": "You are a tool-name classifier. Given a request and catalog, return only a JSON array containing the exact names of tools explicitly requested. Example: Request: use demo_get_weather. Answer: [\"demo_get_weather\"]. This is classification only."},
+        {"role": "user", "content": 'Request: Use demo_count_letters to count the letters in the fictional word zorb. Catalog: demo_count_letters (counts letters), demo_get_weather (weather).'}],
         tools=None, temperature=0, max_tokens=int(limit("setup_test_tokens")), thinking_enabled=False,
     ), timeout=limit("setup_test_timeout"))
     try:
