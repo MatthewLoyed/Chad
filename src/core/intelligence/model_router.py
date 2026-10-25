@@ -168,45 +168,21 @@ class ModelRouter:
         # name still surfaces the same clear error, it just no longer false-positives on
         # ordinary VRAM churn from other lanes.
         if active_model.get('provider') == 'lmstudio':
-            import urllib.request as _req
-            import json as _json
             from src.core.intelligence.model_lifecycle import ensure_resident_sync, current_priority, OWNER_MAIN_MODEL
-
-            def _list_loaded() -> List[str]:
-                with _req.urlopen(f"{base_url}/models", timeout=3.0) as resp:
-                    data = _json.loads(resp.read().decode())
-                    return [m.get('id') for m in data.get('data', [])]
-
-            try:
-                loaded = _list_loaded()
-            except Exception as e:
+            # /v1/models includes downloaded models, so it cannot establish residency.
+            # Always use the coordinator's native inventory, lock and budget before
+            # constructing an inference client; otherwise inference can JIT-load outside
+            # those safeguards even when the coordinator would refuse the load.
+            if not ensure_resident_sync(
+                base_url, model_name, owner=OWNER_MAIN_MODEL,
+                priority=current_priority(), context_length=active_model.get('context_length'),
+            ):
                 raise ModelError(
-                    f"[ ROUTER ] Cannot reach LM Studio at {base_url}. "
-                    f"Is LM Studio running with the local server enabled? Error: {e}"
+                    f"[ ROUTER ] LM Studio model '{model_name}' could not be loaded. "
+                    f"Load the correct model in LM Studio first, or update "
+                    f"local_models.active_model in preferences.yaml."
                 )
-
-            if model_name not in loaded:
-                logger.warning(
-                    f"[ ROUTER ] LM Studio model '{model_name}' not resident (loaded: {loaded}) — "
-                    f"attempting to load it before failing the turn."
-                )
-                # Without an explicit context_length, LM Studio JIT-loads with whatever was
-                # last saved in its own UI for this model -- which is how a real turn hit a
-                # hard "Context size has been exceeded" LiteLLM error while loaded at ~25k
-                # tokens (2026-07-10). Let active_model.context_length (preferences.yaml
-                # local_models.active_model.context_length) override that, same pattern as
-                # config.yaml's llm_selector_context_length for the tool-selector model.
-                context_length = active_model.get('context_length')
-                if not ensure_resident_sync(base_url, model_name, owner=OWNER_MAIN_MODEL,
-                                            priority=current_priority(), context_length=context_length):
-                    raise ModelError(
-                        f"[ ROUTER ] LM Studio model '{model_name}' could not be loaded. "
-                        f"Load the correct model in LM Studio first, or update "
-                        f"local_models.active_model in preferences.yaml."
-                    )
-                logger.info(f"[ ROUTER ] LM Studio '{model_name}' loaded successfully after recovery.")
-            else:
-                logger.info(f"[ ROUTER ] LM Studio verified: '{model_name}' is loaded and ready.")
+            logger.info(f"[ ROUTER ] LM Studio verified: '{model_name}' is loaded and ready.")
         # ─────────────────────────────────────────────────────────────────────
 
         model = LiteLLMModel({

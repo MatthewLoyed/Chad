@@ -35,12 +35,18 @@ def test_validate_plan_tools_against_menu_passes_allowed():
     assert validate_plan_tools_against_menu(steps, menu) is None
 
 
-def test_planning_turn_tool_selection_non_empty():
+def test_planning_turn_tool_selection_non_empty(monkeypatch):
     """Planning turns must still run the selector (tools carry forward post-approval)."""
     from src.infrastructure.tools.registry import ToolRegistry
+    from unittest.mock import MagicMock
 
     registry = ToolRegistry()
     registry.discover_all()
+    # Exercise planning dispatch without letting the developer's running model
+    # server turn this test into real model loading/inference.
+    select = MagicMock(return_value=["search_for_tool", "get_datetime", "web_search"])
+    monkeypatch.setattr(registry._llm_selector, "is_available", lambda: True)
+    monkeypatch.setattr(registry._llm_selector, "select", select)
     result = registry.get_schemas_for_turn(
         "make a plan to summarize my unread work emails",
         category="planning",
@@ -48,3 +54,4 @@ def test_planning_turn_tool_selection_non_empty():
     names = result.get("selection", {}).get("final_tool_names") or []
     assert len(names) >= 3, f"Expected non-trivial tool menu for planning turn, got: {names}"
     assert "search_for_tool" in names
+    select.assert_called_once()
