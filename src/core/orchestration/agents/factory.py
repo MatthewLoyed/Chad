@@ -114,6 +114,8 @@ def get_agent_model_override(agent_name: str) -> Optional[Dict[str, Any]]:
         return None
     from src.shared.config_manager import ConfigManager
     overrides = ConfigManager.get("subagent_model_overrides") or {}
+    if ConfigManager.get("setup.share_main_model", False):
+        return overrides.get(agent_name) or None
     return overrides.get(agent_name) or AGENT_CONFIGS.get(agent_name, {}).get("model_override")
 
 

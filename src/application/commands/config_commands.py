@@ -768,6 +768,20 @@ class ProbeLocalBackendCommand(Command):
 
 
 @dataclass
+class TestSetupModelCommand(Command):
+    """User-authorized chat test; no tools, saved settings or arbitrary prompts."""
+
+    base_url: str
+    api_key: str
+    model_id: str
+    confirmed: bool = False
+
+    async def execute(self, facade):
+        from src.infrastructure.services.setup_validation import test_model
+        return await test_model(self.base_url, self.api_key, self.model_id, self.confirmed)
+
+
+@dataclass
 class SaveProviderChoiceCommand(Command):
     """Persist the wizard's chosen backend + model (issue #499)."""
 

@@ -48,11 +48,13 @@ def _configured_context_length(model_id: str) -> Optional[int]:
     default) and on any config error (best-effort — never block a load)."""
     try:
         from src.shared.config_manager import ConfigManager
-        main = ConfigManager.get_local_model_config() or {}
-        name = main.get("name")
-        cl = main.get("context_length")
-        if name and cl and clean_model_id(name) == clean_model_id(model_id):
-            return int(cl)
+        roles = [ConfigManager.get_local_model_config() or {},
+                 ConfigManager.get("local_models.secondary_model") or {},
+                 ConfigManager.get("tools.selector_model") or {}]
+        for role in roles:
+            name, cl = role.get("name"), role.get("context_length")
+            if name and cl and clean_model_id(name) == clean_model_id(model_id):
+                return int(cl)
     except Exception:  # noqa: BLE001
         return None
     return None
