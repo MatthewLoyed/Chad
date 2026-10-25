@@ -9,6 +9,9 @@ from pathlib import Path
 # Exact reviewed public examples, not whole-file or detector exclusions.
 # The GitHub candidate is Electron's public node-gyp commit SHA in its lockfile.
 REVIEWED = {
+    # Reserved .test URL with fictional user/secret in the URL-rejection test.
+    # Exact historic candidate only: other values/files and verified results fail.
+    ("URI", "tests/unit/test_setup_validation.py", "07968c00c423fd77a0ee19bd8a05e59e9365a48342e66818eee4b34b1c3ee087"),
     ("Github", "chad-hud/package-lock.json", "b5a15e6db74e90c6ee5294ee33ac2bd0fbc3c63990d7edb3d151d76f5a0f3fec"),
     ("Postgres", ".env.example", "fddeff9b48fdb29cef461a75ec1f64cbfe1649d9ef1d19c39ec24698012e51c1"),
     ("Postgres", "tests/unit/test_supabase_bootstrap_403.py", "b74f5dc4acda7726aa7b3d1fdc8b500f9d722b938f3ca58c0667789d4277000e"),

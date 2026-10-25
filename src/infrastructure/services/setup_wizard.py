@@ -221,26 +221,33 @@ async def probe_local_backend(provider: str, base_url: str, api_key: str = "") -
             "download_url": _OLLAMA_DOWNLOAD_URL,
         }
 
-    from src.core.intelligence.adapters.openai_adapter import OpenAIAdapter
+    import httpx
+    from src.core.tools.failure import failure, AUTH, UNAVAILABLE
+    from src.core.tools.limits import get as limit
+    from src.core.intelligence.local_model_discovery import NON_CHAT_MODEL_TERMS
 
-    probe = OpenAIAdapter(base_url=base_url, api_key=api_key or "not-needed", model_name="probe")
-    model_ids = await probe.discover_models(timeout=3.0)
-    return {
-        "reachable": bool(model_ids),
-        "models": [
-            {"id": mid, "display_name": mid.split("/")[-1], "supports_tools": True}
-            for mid in model_ids
-            if not any(
-                term in mid.lower()
-                for term in ("embed", "rerank", "clip", "tts", "kokoro", "whisper", "stt")
-            )
-        ],
-        "download_url": None,
-    }
+    try:
+        async with httpx.AsyncClient(timeout=limit("hardware_probe_timeout")) as client:
+            response = await client.get(f"{base_url}/models", headers={"Authorization": f"Bearer {api_key or 'not-needed'}"})
+        if response.status_code in {401, 403}:
+            return {"reachable": True, "models": [], **failure("The provider rejected access. Check your API key and model permissions.", failure_class=AUTH)}
+        if response.status_code in {404, 405}:
+            return {"reachable": True, "models": [], "detail": "This endpoint does not offer model discovery. Enter the model ID from your provider and test it below."}
+        response.raise_for_status()
+        entries = response.json().get("data", [])
+        return {"reachable": True, "models": [
+            {"id": entry["id"], "display_name": entry["id"], "supports_tools": False,
+             "tools_verified": False}
+            for entry in entries if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+            and not any(term in entry["id"].lower() for term in NON_CHAT_MODEL_TERMS)
+        ], "download_url": None}
+    except Exception:
+        return {"reachable": False, "models": [], **failure("Model discovery could not finish. Check the address, server and account, or enter a model ID to test directly.", failure_class=UNAVAILABLE)}
+
 
 
 def save_provider_choice(
-    provider: str, base_url: str, api_key: str, model_id: str, supports_tools: bool = True
+    provider: str, base_url: str, api_key: str, model_id: str, supports_tools: bool = True, *, extra_updates=None
 ) -> Dict[str, Any]:
     """Persist the wizard's backend + model pick to preferences.yaml.
 
@@ -262,15 +269,22 @@ def save_provider_choice(
     config_repo = ConfigRepository()
     active_model = {
         "name": model_id,
+        "hosting": "cloud" if provider == "cloud" else "unknown",
         "provider": provider_key,
         "base_url": base_url,
         "api_key": api_key or "",
         "supports_tools": supports_tools,
+        "tools_verified": False,
     }
-    update = {"setup": {"model_selected": True}, "local_models": {
+    update = {"setup": {"model_selected": True, "share_main_model": True},
+              "tools": {"llm_selector_model": model_id, "llm_selector_context_length": 8192},
+              "intent_router": {"enabled": False},
+              "local_models": {
         "use_local": True, "active_model": active_model, "supervisor": active_model,
         "providers": {provider_key: {"base_url": base_url, "api_key": api_key or "", "enabled": True}},
     }}
+    if extra_updates:
+        ConfigManager._recursive_update(update, extra_updates)
     preferences = config_repo.load("preferences", use_cache=False)
     ConfigManager._recursive_update(preferences, update)
     if not config_repo.save("preferences", preferences, update_cache=True):

@@ -136,7 +136,7 @@ class ModelRouter:
         
         # Build config from preferences (per-category when configured)
         active_model = ConfigManager.get_local_model_config(category)
-        logger.info(f"[ ROUTER ] Initializing local model for '{category}'. Config: {active_model}")
+        logger.info(f"[ ROUTER ] Initializing selected model for '{category}' (credentials omitted)")
         
         if not active_model:
             # Fallback to defaults
@@ -146,7 +146,7 @@ class ModelRouter:
                 'base_url': ConfigManager.get("local_models.providers.lmstudio.base_url"),
                 'api_key': ConfigManager.get("local_models.providers.lmstudio.api_key")
             }
-            logger.info(f"[ ROUTER ] Falling back to default local config: {active_model}")
+            logger.info("[ ROUTER ] Falling back to default endpoint configuration (credentials omitted)")
             
         # Use model name from config. LiteLLMAdapter will handle provider prefixing.
         model_name = active_model.get('name')

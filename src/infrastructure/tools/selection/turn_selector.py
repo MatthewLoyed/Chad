@@ -13,6 +13,7 @@ import os
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from src.shared.logger import setup_logger
+from .llm_selector import shared_setup_selector
 
 try:
     from langsmith import traceable
@@ -94,7 +95,7 @@ class TurnToolSelector:
 
     @property
     def _llm_selector(self) -> Any:
-        return self._registry._llm_selector
+        return shared_setup_selector(self._registry)
 
     @property
     def _bundle_groups(self) -> Dict[str, Set[str]]:

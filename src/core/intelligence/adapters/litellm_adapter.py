@@ -90,23 +90,8 @@ class LiteLLMAdapter(AIAdapter):
     # ── Model name normalisation ────────────────────────────────────────────────
 
     def _normalise_model_name(self, model_name: str, base_url: Optional[str]) -> str:
-        """Add the minimal provider prefix LiteLLM needs to route correctly."""
-        if not model_name:
-            return model_name
-
-        # Cloud Gemini — use the google genai prefix
-        if "gemini" in model_name.lower() and "/" not in model_name:
-            return f"gemini/{model_name}"
-
-        # Local OpenAI-compatible endpoint (LM Studio / Ollama / vLLM)
-        if base_url:
-            known_prefixes = ("ollama/", "openai/", "lm_studio/", "huggingface/", "vllm/", "gemini/")
-            if not any(model_name.startswith(p) for p in known_prefixes):
-                prefix = "ollama/" if "ollama" in base_url.lower() else "openai/"
-                model_name = f"{prefix}{model_name}"
-                logger.info(f"[ LITELLM ] Auto-prefixed local model: {model_name}")
-
-        return model_name
+        from src.core.intelligence.endpoint_contract import normalize_model_name
+        return normalize_model_name(model_name, base_url)
 
     # ── Readiness ────────────────────────────────────────────────────────────────
 
@@ -120,6 +105,11 @@ class LiteLLMAdapter(AIAdapter):
             return True
         except Exception:
             return False
+
+    @property
+    def _uses_engine_options(self):
+        from src.core.intelligence.endpoint_contract import uses_engine_options
+        return uses_engine_options(self.base_url)
 
     # ── Thinking helpers ─────────────────────────────────────────────────────────
 
@@ -263,6 +253,29 @@ class LiteLLMAdapter(AIAdapter):
         headers["X-Chad-Priority"] = self._gate_priority()
         req["extra_headers"] = headers
 
+    def _configure_endpoint_thinking(self, req, kwargs):
+        # 3b. Thinking / reasoning injection for local models.
+        # Profile-registered models use ModelProfile.thinking_param_style.
+        # Models not in the registry fall back to config-based Qwen3 detection.
+        if self._uses_engine_options:
+            if kwargs.get("thinking_level") == "off" or kwargs.get("thinking_enabled") is False:
+                req["reasoning_effort"] = "none"
+                extra = req.get("extra_body") or {}
+                extra["reasoning_effort"] = "none"
+                extra["chat_template_kwargs"] = {"enable_thinking": False}
+                extra["thinking_budget"] = 0
+                req["extra_body"] = extra
+                logger.debug(f"[ LITELLM ] Thinking disabled for {self.model_name}: reasoning_effort=none")
+            elif self.profile is not None:
+                self._apply_profile_thinking(req, kwargs)
+            elif "qwen3" in self.model_name.lower():
+                self._apply_legacy_qwen3_thinking(req, kwargs)
+
+        from src.core.intelligence.endpoint_contract import deepseek_thinking_options
+        extra = deepseek_thinking_options(self.base_url, kwargs.get("thinking_enabled"))
+        if extra:
+            req.setdefault("extra_body", {}).update(extra)
+
     async def generate(
         self,
         messages: List[Dict[str, Any]],
@@ -336,7 +349,7 @@ class LiteLLMAdapter(AIAdapter):
             "base_url": self.base_url,
             "stream_options": {"include_usage": True}
         }
-        if self.base_url:
+        if self._uses_engine_options:
             # Keep local model (LM Studio / Ollama) loaded indefinitely
             req["extra_body"] = {"keep_alive": -1}
             # Route local inference through lmstudio-gate (cross-process priority queue,
@@ -356,22 +369,7 @@ class LiteLLMAdapter(AIAdapter):
             if _parallel is not None:
                 req["parallel_tool_calls"] = _parallel
 
-        # 3b. Thinking / reasoning injection for local models.
-        # Profile-registered models use ModelProfile.thinking_param_style.
-        # Models not in the registry fall back to config-based Qwen3 detection.
-        if self.base_url:
-            if kwargs.get("thinking_level") == "off" or kwargs.get("thinking_enabled") is False:
-                req["reasoning_effort"] = "none"
-                extra = req.get("extra_body") or {}
-                extra["reasoning_effort"] = "none"
-                extra["chat_template_kwargs"] = {"enable_thinking": False}
-                extra["thinking_budget"] = 0
-                req["extra_body"] = extra
-                logger.debug(f"[ LITELLM ] Thinking disabled for {self.model_name}: reasoning_effort=none")
-            elif self.profile is not None:
-                self._apply_profile_thinking(req, kwargs)
-            elif "qwen3" in self.model_name.lower():
-                self._apply_legacy_qwen3_thinking(req, kwargs)
+        self._configure_endpoint_thinking(req, kwargs)
 
         _extra_litellm = kwargs.get("extra_litellm_body")
         if _extra_litellm:

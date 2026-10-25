@@ -40,3 +40,18 @@ def test_scanner_error_cannot_pass_as_an_empty_report(tmp_path):
     report.write_text(json.dumps({"level": "error", "msg": "scan failed"}))
     with pytest.raises(RuntimeError):
         main(str(report))
+
+
+def test_fictional_uri_review_is_exact_and_only_applies_to_negative_test_fixture():
+    import ast
+    path = "tests/unit/test_setup_validation.py"
+    tree = ast.parse(Path(path).read_text(encoding="utf-8"))
+    raw = next(node.value for node in ast.walk(tree)
+               if isinstance(node, ast.Constant) and isinstance(node.value, str)
+               and node.value.startswith("https://") and "@" in node.value)
+    row = {"DetectorName": "URI", "Raw": raw, "Verified": False,
+           "SourceMetadata": {"Data": {"Git": {"file": path}}}}
+    assert reviewed(row)
+    assert not reviewed({**row, "Raw": raw + "/changed"})
+    assert not reviewed({**row, "Verified": True})
+    assert not reviewed({**row, "SourceMetadata": {"Data": {"Git": {"file": "config/secrets.yaml"}}}})
