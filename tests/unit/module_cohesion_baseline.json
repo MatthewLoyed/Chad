@@ -46,7 +46,6 @@
   "func:src/core/orchestration/supervisor.py:create_chad_supervisor": 427,
   "func:src/core/intelligence/adapters/litellm_adapter.py:_generate_impl": 422,
   "class:src/core/orchestration/langgraph_engine.py:LangGraphEngine": 419,
-  "class:src/core/intelligence/model_router.py:ModelRouter": 411,
   "class:src/daemons/hands.py:HandsDaemon": 411,
   "class:src/tools/canvas/manager.py:CanvasManager": 411,
   "class:src/infrastructure/database/local_postgrest.py:LocalPostgrestShim": 408,

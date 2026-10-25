@@ -21,6 +21,10 @@ public; it does **not** update the previously published Windows installer.
    persisted state, Feed layout, and upgrade retention. Record actual evidence
    and limitations in the draft release notes. Packaging smoke alone is not UI
    or model acceptance. Never run these checks against the production Brain.
+   Use a dedicated model server for acceptance, rather than the maintainer's
+   active LM Studio server. Record resident instances before and after each
+   model test; unexpected model choices, duplicate instances or memory exhaustion
+   block publication and further model tests until investigated.
 4. Publish only the accepted draft. The **Update installer download after
    publication** workflow verifies that the installer asset exists, then opens a
    README download-link PR into `dev`. Promote that link change through `master`

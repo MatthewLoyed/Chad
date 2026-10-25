@@ -201,7 +201,7 @@ async def test_lmstudio_list_loaded_ignores_downloaded_but_unloaded(monkeypatch)
             {"models": [
                 {"key": "qwen/qwen3.5-9b", "loaded_instances": [{"id": "inst-1"}]},
                 {"key": "google/gemma-4-26b-a4b-qat", "loaded_instances": []},
-                {"key": "qwen/qwen3-coder-30b"},          # downloaded, never loaded
+                {"key": "qwen/qwen3-coder-30b", "loaded_instances": []},
             ]},
         ),
     }
@@ -270,6 +270,38 @@ async def test_lmstudio_unload_resolves_instance_id(monkeypatch):
     unload = [(u, body) for m, u, body in calls if m == "POST"][0]
     assert unload[0] == "http://localhost:1234/api/v1/models/unload"
     assert unload[1] == {"instance_id": "inst-42"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("body", [
+    {}, {"data": []}, {"models": None}, {"models": {}},
+    {"models": [None]}, {"models": [{"key": "main"}]},
+    {"models": [{"key": "main", "loaded_instances": "unknown"}]},
+    {"models": [{"key": "main", "loaded_instances": [{}]}]},
+])
+async def test_lmstudio_load_refuses_ambiguous_inventory(monkeypatch, body):
+    from src.core.intelligence.providers import lmstudio as mod
+
+    calls = _patch_httpx(monkeypatch, mod, {
+        ("GET", "http://localhost:1234/api/v1/models"): _FakeResponse(200, body),
+        ("POST", "http://localhost:1234/api/v1/models/load"): _FakeResponse(200, {}),
+    })
+    assert await LMStudioLifecycle("http://localhost:1234/v1").load("main") is False
+    assert not any(method == "POST" for method, _url, _body in calls)
+
+
+@pytest.mark.asyncio
+async def test_lmstudio_load_recognizes_custom_instance_name(monkeypatch):
+    from src.core.intelligence.providers import lmstudio as mod
+
+    calls = _patch_httpx(monkeypatch, mod, {
+        ("GET", "http://localhost:1234/api/v1/models"): _FakeResponse(200, {
+            "models": [{"key": "example/main", "loaded_instances": [{"id": "chosen-name"}]}],
+        }),
+        ("POST", "http://localhost:1234/api/v1/models/load"): _FakeResponse(200, {}),
+    })
+    assert await LMStudioLifecycle("http://localhost:1234/v1").load("chosen-name") is True
+    assert not any(method == "POST" for method, _url, _body in calls)
 
 
 @pytest.mark.asyncio

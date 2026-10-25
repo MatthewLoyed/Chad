@@ -86,7 +86,22 @@ class LMStudioLifecycle(ProviderLifecycle):
         except Exception as e:  # noqa: BLE001 — liveness probe, never fatal
             logger.debug(f"[ LMSTUDIO ] Could not list native model instances: {e}")
             return None
-        return [e for e in body.get("models", []) if isinstance(e, dict)]
+        # A successful HTTP response is not necessarily a residency inventory (a proxy
+        # can return an OpenAI listing, or an error object, with HTTP 200). Never turn
+        # missing/invalid residency fields into "nothing loaded" and issue a blind load.
+        entries = body.get("models") if isinstance(body, dict) else None
+        if not isinstance(entries, list):
+            return None
+        for entry in entries:
+            if not isinstance(entry, dict) or not isinstance(entry.get("key"), str) or not entry["key"]:
+                return None
+            instances = entry.get("loaded_instances")
+            if not isinstance(instances, list):
+                return None
+            if any(not isinstance(instance, dict) or not isinstance(instance.get("id"), str)
+                   or not instance["id"] for instance in instances):
+                return None
+        return entries
 
     async def list_loaded(self, timeout: float = 5.0) -> List[str]:
         """Resident model ids — models with at least one ``loaded_instances`` entry.
@@ -116,6 +131,18 @@ class LMStudioLifecycle(ProviderLifecycle):
                 if instance_id:
                     return instance_id
         return None
+
+    @staticmethod
+    def _is_resident(entries: List[Dict[str, Any]], model_id: str) -> bool:
+        # A configured inference model can be a custom instance name rather than the
+        # downloaded model key. Recognize both before requesting another instance.
+        return any(
+            entry["loaded_instances"] and (
+                same_model(entry["key"], model_id)
+                or any(same_model(instance["id"], model_id) for instance in entry["loaded_instances"])
+            )
+            for entry in entries
+        )
 
     async def unload(self, model_id: str) -> bool:
         instance_id = await self._resolve_instance_id(model_id)
@@ -176,7 +203,7 @@ class LMStudioLifecycle(ProviderLifecycle):
                 f"duplicate instance."
             )
             return False
-        if any(same_model(m, model_id) for m in self._resident_keys(entries)):
+        if self._is_resident(entries, model_id):
             logger.debug(f"[ LMSTUDIO ] '{model_id}' already loaded; skipping redundant load.")
             return True
 
@@ -200,6 +227,7 @@ class LMStudioLifecycle(ProviderLifecycle):
             payload["context_length"] = context_length
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
+                logger.info(f"[ LMSTUDIO ] Requesting load '{model_id}' (pid={os.getpid()}).")
                 resp = await client.post(f"{root}/api/v1/models/load", json=payload)
                 if resp.status_code == 200:
                     logger.info(f"[ LMSTUDIO ] Reloaded '{model_id}'.")
