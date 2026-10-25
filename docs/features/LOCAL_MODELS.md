@@ -87,10 +87,19 @@ is scoped to its official API host; its multi-turn thinking/tool reasoning repla
 is still unverified. Do not certify a provider from a successful greeting.
 
 The [setup journey acceptance checklist](https://github.com/MatthewLoyed/Chad/issues/5#setup-journey-contract--proposed-acceptance-2026-10-23)
-tracks proposed task-based model guidance, installation from nothing, existing
+tracks proposed model-role defaults, installation from nothing, existing
 and remote setups, offline/recovery paths, accessibility and first-reply
 verification. It distinguishes current evidence from unimplemented stories;
 the hardware scan and mocked UI checks do not establish complete onboarding.
+
+The revised proposal uses two main-model defaults without a task questionnaire:
+Bonsai Q1_0 primary plus Qwen3.5-9B secondary for qualifying 16 GB+ dedicated
+VRAM systems, or Qwen9B primary where it fits, with a smaller fallback when
+needed. It separately recommends Qwen2.5-3B-Instruct for tool selection and
+inherits main/secondary roles for subagents. This is not the current bundled
+catalog/routing policy: runtime verification, aggregate residency budgets and
+separating selector selection from specialist inheritance remain acceptance work
+in the linked issue.
 
 ## Quick automated setup (issue #406)
 
