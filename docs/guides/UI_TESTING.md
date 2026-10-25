@@ -92,8 +92,11 @@ This keeps results inspectable, consistent with
 [Cursor's inline terminal output](https://cursor.com/docs/agent/tools/terminal)
 and [Cline's expandable execution summaries](https://github.com/cline/cline/blob/main/apps/examples/desktop-app/CHANGELOG.md).
 Verify pending → completed transitions with details both open and closed.
-In the sidebar, Projects and Categories actions belong together beside the
-right-hand chevron at expanded and minimum widths.
+In the sidebar, the Projects action sits beside its right-hand chevron at
+expanded and minimum widths. Artifacts opens a modal and has no dropdown arrow.
+Categories is no longer exposed in navigation: ordinary new chats use general
+memory. Existing domain-scoped conversations and stored memory retain their
+original boundaries; removing navigation does not migrate or merge their data.
 
 Feed and automation navigation are described in [Routines](../features/ROUTINES.md#navigation-and-activity).
 

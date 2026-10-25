@@ -13,12 +13,11 @@ import {
     Trash2,
     PanelLeft,
     Loader2,
-    Boxes,
     X
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { Conversation } from '../../store';
-import { DeleteChatModal, MoveToProjectModal, NewCategoryModal } from '../modals';
+import { DeleteChatModal, MoveToProjectModal } from '../modals';
 import type { WorkspaceProject } from '../modals/chat/MoveToProjectModal';
 import './NavSidebar.css';
 
@@ -49,7 +48,7 @@ function readStoredNavWidth(): number {
 }
 
 interface NavSidebarProps {
-    /** `domainId` starts the new chat inside a domain agent (Categories section). */
+    /** Ordinary new chats use general memory; legacy domain routing stays compatible. */
     onNewChat?: (domainId?: string | null) => void;
     onChatSelect?: (id: string) => void;
     onLoadMore?: () => void;
@@ -99,8 +98,6 @@ export default function NavSidebar({
     });
     const [actionMenu, setActionMenu] = useState<ActionMenuState>(null);
     const [moveProjectModal, setMoveProjectModal] = useState<MoveProjectState>(null);
-    const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-    const [isCreatingCategory, setIsCreatingCategory] = useState(false);
     const [renamingId, setRenamingId] = useState<string | null>(null);
     const [renameValue, setRenameValue] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
@@ -182,55 +179,10 @@ export default function NavSidebar({
     const apiReady = useAppStore(state => state.apiReady);
     const appStatus = useAppStore(state => state.status);
     const isOffline = !apiReady || appStatus === 'initializing' || appStatus === 'error';
-    const domains = useAppStore(state => state.domains);
-    const selectedDomainId = useAppStore(state => state.selectedDomainId);
-    const setSelectedDomain = useAppStore(state => state.setSelectedDomain);
-    const setDomains = useAppStore(state => state.setDomains);
-    const upsertDomain = useAppStore(state => state.upsertDomain);
-
-    // Project and category filters compose: picking a category narrows Recents to that
-    // domain's threads. Untagged chats carry domain === null/undefined, so they only ever
-    // appear in the unfiltered view.
-    const visibleConversations = conversations.filter((c) => {
-        if (selectedProjectPath && c.project_path !== selectedProjectPath) return false;
-        if (selectedDomainId && (c.domain ?? null) !== selectedDomainId) return false;
-        return true;
-    });
-
-    useEffect(() => {
-        if (!apiReady) return;
-        const loadDomains = async () => {
-            try {
-                const api = window.pywebview?.api;
-                if (api && typeof api.list_domains === 'function') {
-                    const res = await api.list_domains();
-                    setDomains(Array.isArray(res) ? res : []);
-                }
-            } catch (err) {
-                console.error('Failed to load categories:', err);
-            }
-        };
-        loadDomains();
-    }, [apiReady, setDomains]);
-
-    const handleCreateCategory = useCallback(async (payload: {
-        name: string; description: string; icon: string; color: string; persona: string;
-    }) => {
-        const api = window.pywebview?.api;
-        if (!api || typeof api.create_domain !== 'function') {
-            throw new Error('Categories are unavailable.');
-        }
-        const created = await api.create_domain(
-            payload.name, payload.description, payload.icon, payload.color, payload.persona,
-        );
-        if (created && typeof created === 'object') {
-            upsertDomain(created as never);
-        }
-    }, [upsertDomain]);
-
-    const handleSelectDomain = (domainId: string) => {
-        setSelectedDomain(selectedDomainId === domainId ? null : domainId);
-    };
+    // All conversations stay discoverable; existing domain metadata remains intact.
+    const visibleConversations = conversations.filter((c) =>
+        !selectedProjectPath || c.project_path === selectedProjectPath
+    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -682,73 +634,12 @@ export default function NavSidebar({
                         )}
                     </div>
 
-                    {/* Categories = domain agents. Unlike Projects (a display grouping), a
-                        category actually scopes what Chad can remember inside its threads. */}
-                    <div className="nav-section">
-                        <div
-                            className="nav-section__header"
-                            title="Categories"
-                            onClick={() => setCategoriesExpanded((v) => !v)}
-                        >
-                            <Boxes size={16} />
-                            {!isCollapsed && (
-                                <>
-                                    <span>Categories</span>
-                                    <Plus
-                                        size={13}
-                                        className="nav-section__add"
-                                        onClick={(e) => { e.stopPropagation(); setIsCreatingCategory(true); }}
-                                        aria-label="New category"
-                                    />
-                                    <ChevronDown
-                                        size={14}
-                                        className={`nav-section__chevron ${categoriesExpanded ? 'is-expanded' : ''}`}
-                                    />
-                                </>
-                            )}
-                        </div>
-
-                        {!isCollapsed && categoriesExpanded && (
-                            <div className="projects-list">
-                                {domains.length === 0 ? (
-                                    <div className="recents-empty">No categories yet</div>
-                                ) : (
-                                    domains.map((domain) => (
-                                        <button
-                                            key={domain.id}
-                                            className={`recent-item ${selectedDomainId === domain.id ? 'is-active' : ''}`}
-                                            onClick={() => handleSelectDomain(domain.id)}
-                                            title={domain.description || domain.name}
-                                        >
-                                            <span
-                                                className="category-item__icon"
-                                                style={domain.color ? { color: domain.color } : undefined}
-                                            >
-                                                {domain.icon || '📁'}
-                                            </span>
-                                            <span className="recent-item__text">{domain.name}</span>
-                                            <div className="recent-item__actions">
-                                                <Plus
-                                                    size={13}
-                                                    className="recent-item__more"
-                                                    aria-label={`New chat in ${domain.name}`}
-                                                    onClick={(e) => { e.stopPropagation(); onNewChat?.(domain.id); }}
-                                                />
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        )}
-                    </div>
-
                     <div className="nav-section">
                         <div className="nav-section__header" title="Artifacts" onClick={onArtifactsClick}>
                             <Shapes size={16} />
                             {!isCollapsed && (
                                 <>
                                     <span>Artifacts</span>
-                                    <ChevronDown size={14} className="nav-section__chevron" />
                                 </>
                             )}
                         </div>
@@ -760,17 +651,15 @@ export default function NavSidebar({
                     <div className="nav-sidebar__recents">
                         <div className="recents-label">
                             <span className="recents-label__text">
-                                {selectedDomainId
-                                    ? domains.find((d) => d.id === selectedDomainId)?.name ?? 'Category'
-                                    : selectedProjectPath
-                                        ? projects.find((p) => p.path === selectedProjectPath)?.name ?? 'Project'
-                                        : 'Recent'}
+                                {selectedProjectPath
+                                    ? projects.find((p) => p.path === selectedProjectPath)?.name ?? 'Project'
+                                    : 'Recent'}
                             </span>
-                            {(selectedProjectPath || selectedDomainId) && (
+                            {selectedProjectPath && (
                                 <X
                                     size={12}
                                     className="recents-label__clear"
-                                    onClick={() => { setSelectedProjectPath(null); setSelectedDomain(null); }}
+                                    onClick={() => setSelectedProjectPath(null)}
                                     aria-label="Clear filters"
                                 />
                             )}
@@ -865,11 +754,6 @@ export default function NavSidebar({
                 onSelect={handleMoveToProjectSelect}
             />
 
-            <NewCategoryModal
-                isOpen={isCreatingCategory}
-                onClose={() => setIsCreatingCategory(false)}
-                onCreate={handleCreateCategory}
-            />
 
             {!isCollapsed && (
                 <div
