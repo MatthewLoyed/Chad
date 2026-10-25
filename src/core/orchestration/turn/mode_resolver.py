@@ -10,7 +10,7 @@ logger = setup_logger("TurnModeResolver")
 
 # Categories that name a whole delivery lane the caller chose on purpose, rather
 # than something inferred from the prompt. These survive intent resolution.
-EXPLICIT_LANE_CATEGORIES = frozenset({"voice", "contact", "telegram_agent"})
+EXPLICIT_LANE_CATEGORIES = frozenset({"voice", "contact", "telegram_agent", "feed"})
 
 
 class TurnModeResolver:
@@ -93,6 +93,8 @@ class TurnModeResolver:
             "plan": "plan",
         }
 
+        if category == "feed":
+            return "agent", "feed_fixed", None
         if category == "voice":
             return "agent", "user_manual", None
         if category == "contact":

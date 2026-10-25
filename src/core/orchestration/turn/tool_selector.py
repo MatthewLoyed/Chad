@@ -77,6 +77,9 @@ class TurnToolSelector:
         if not self.tool_registry:
             return ToolSelection(schemas=[], is_simple=True)
 
+        if category == "feed":
+            return self.feed_schemas()
+
         if category in ("chat", "conversation"):
             return self.chat_schemas()
 
@@ -187,6 +190,16 @@ class TurnToolSelector:
             is_simple=True,
             selection={"path": "voice_fixed", "llm_available": False, "final_tool_names": names},
         )
+
+    def feed_schemas(self) -> ToolSelection:
+        """Feed authoring has a fixed menu, without selector or skill discovery."""
+        from src.core.discovery.feed_context import FEED_TOOL_NAMES
+        schemas = [schema for name in FEED_TOOL_NAMES
+                   if (schema := self._get_schema_for_tool(name))]
+        return ToolSelection(schemas=schemas, is_simple=True, selection={
+            "path": "feed_fixed", "llm_available": False,
+            "final_tool_names": [schema.get("name") for schema in schemas],
+        })
 
     def contact_schemas(self) -> ToolSelection:
         """Fixed Telegram contact-desk tools — escalate only."""

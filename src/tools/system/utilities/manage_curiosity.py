@@ -31,7 +31,7 @@ class ManageCuriosity(BaseTool):
         "3. tune: Adjust affinity weights for a category or topic (0.1 to 3.0).\n"
         "4. get_interests: Inspect current interest profile, category weights, and topic affinities.\n"
         "5. feedback: Record user feedback (e.g. 'fire', 'sick', 'mid', 'less of this') to automatically tune weights.\n"
-        "6. add: Manually add a newly discovered verified link to the stash.\n"
+        "6. add: Add a verified link to the curiosity stash only; this does not publish a Feed card.\n"
         "7. status: Check how many un-sent verified items are available in the stash."
     )
     category = "custom"
@@ -45,7 +45,11 @@ class ManageCuriosity(BaseTool):
     def get_schema(self) -> Dict[str, Any]:
         return {
             "name": self.name,
-            "description": "Fetch verified discoveries to share with the user, discover new content, or tune interests.",
+            "description": (
+                "Inspect discovery interests, find content, or manage the curiosity stash. "
+                "add saves only to the stash, not Feed. Publish authored Feed articles with "
+                "update_dashboard; if unavailable, discover that tool with search_for_tool."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -189,6 +193,13 @@ class ManageCuriosity(BaseTool):
                 return {
                     "success": added,
                     "message": "Item added to curiosity stash." if added else "Item rejected (invalid URL or duplicate).",
+                    "feed_published": False,
+                    "next_action": (
+                        "This is a stash receipt, not a Feed publication receipt. "
+                        "For an authored Feed article, call update_dashboard with the article body "
+                        "and source metadata. If it is not bound, use search_for_tool to find it. "
+                        "Only report a published entry after update_dashboard returns an entry_id."
+                    ),
                 }
 
             elif action == "status":

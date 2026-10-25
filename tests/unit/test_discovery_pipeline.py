@@ -333,3 +333,33 @@ async def test_manage_curiosity_tool_actions():
     res_status = await tool.execute(action="status")
     assert res_status["success"] is True
     assert "pipeline_status" in res_status
+
+@pytest.mark.asyncio
+async def test_article_preview_reads_source_and_rejects_unavailable_page():
+    provider = TechArticlesProvider()
+    response = MagicMock()
+    response.status = 200
+    response.text = AsyncMock(return_value='<article><p>' + ('Useful source evidence about local note search. ' * 35) + '</p></article>')
+    context = MagicMock()
+    context.__aenter__ = AsyncMock(return_value=response)
+    context.__aexit__ = AsyncMock(return_value=None)
+    session = MagicMock()
+    session.get.return_value = context
+    preview = await provider._article_preview(session, 'https://example.com/article')
+    assert 'Useful source evidence' in preview
+    assert len(preview.split()) <= 91
+    response.status = 403
+    assert await provider._article_preview(session, 'https://example.com/blocked') == ''
+
+
+def test_rss_preview_strips_markup_and_preserves_provenance():
+    provider = TechArticlesProvider()
+    text = '<rss><channel><item><title>Note search</title><link>https://example.com/notes</link><description>&lt;p&gt;Local &amp;amp; private note search with SQLite full text indexing.&lt;/p&gt;</description></item></channel></rss>'
+    item = provider._parse_feed_xml(text, {'name': 'Example feed'})[0]
+    assert item.summary == 'Local & private note search with SQLite full text indexing.'
+    assert item.metadata['content_type'] == 'source_excerpt'
+
+
+def test_feed_preview_rejects_comments_placeholder():
+    assert TechArticlesProvider._feed_preview('Comments') == ''
+    assert TechArticlesProvider._feed_preview('<p>Loading Loading Loading</p>') == ''
