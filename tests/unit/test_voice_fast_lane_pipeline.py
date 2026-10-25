@@ -21,6 +21,14 @@ from src.core.orchestration.turn_coordinator import TurnCoordinator
 from src.shared.context import RequestContext
 
 
+@pytest.fixture(autouse=True)
+def _mock_quick_tool_model(monkeypatch):
+    monkeypatch.setattr(
+        "src.core.orchestration.nodes.voice_quick_tool.try_quick_tool_call",
+        AsyncMock(return_value=None),
+    )
+
+
 def _registry_with(tool_name: str):
     tool = MagicMock()
     tool.name = tool_name
