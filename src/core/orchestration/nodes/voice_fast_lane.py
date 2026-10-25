@@ -304,7 +304,13 @@ def match_fast_lane(
         return None
 
     router = embedding_router or _get_default_embedding_router()
-    hit = router.match(text, threshold=similarity_threshold)
+    try:
+        hit = router.match(text, threshold=similarity_threshold)
+    except (OSError, ImportError, RuntimeError):
+        # Optional embedding assets may be uncached on a fresh/offline install.
+        # Preserve regex quick commands and fall through to the normal voice
+        # path instead of aborting the turn or initiating a download.
+        return None
     if hit is not None:
         hit.latency_s = time.perf_counter() - t0
     return hit

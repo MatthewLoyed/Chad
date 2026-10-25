@@ -9,6 +9,7 @@ Commands encapsulate GUI actions for better:
 """
 
 from .base_command import Command, CommandHandler
+from .setup_bundle_commands import CheckSetupBundleCommand, SaveSetupBundleCommand
 from .chat_history_commands import (
     GetConversationsCommand,
     GetMessagesCommand,
@@ -96,6 +97,7 @@ from .config_commands import (
     StartLMStudioSetupCommand,
     GetLMStudioSetupProgressCommand,
     ProbeLocalBackendCommand,
+    TestSetupModelCommand,
     SaveProviderChoiceCommand,
 )
 from .dashboard_commands import (
@@ -157,6 +159,8 @@ from .automation_commands import (
 )
 
 __all__ = [
+    'CheckSetupBundleCommand',
+    'SaveSetupBundleCommand',
     'Command',
     'CommandHandler',
     'SetAudioDeviceCommand',
@@ -224,6 +228,7 @@ __all__ = [
     'StartLMStudioSetupCommand',
     'GetLMStudioSetupProgressCommand',
     'ProbeLocalBackendCommand',
+    'TestSetupModelCommand',
     'SaveProviderChoiceCommand',
     'SearchChatsCommand',
     'PinConversationCommand',

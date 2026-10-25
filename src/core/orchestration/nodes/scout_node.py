@@ -456,9 +456,8 @@ async def _maybe_unload_main_model() -> None:
     if not main_model or not base_url:
         return
 
-    scout_model = ConfigManager.get("planner.scout_model") or ConfigManager.get(
-        "tools.llm_selector_model", ""
-    )
+    from src.shared.model_selection import secondary_config
+    scout_model = secondary_config().get("name")
     if not scout_model or main_model.split(":")[0] == scout_model.split(":")[0]:
         return  # same weights — nothing to free
 

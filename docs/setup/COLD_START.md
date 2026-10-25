@@ -44,7 +44,7 @@ a precondition for Chad to work at all.
 | Cloud LLM key | No | Optional cloud provider configuration in `config/secrets.yaml` | Not needed for local chat |
 | Persona/prompts | Yes | **Built in, zero config** — local files, `prompts/persona/*.md` (#403, #589) | ✅ Verified |
 | **Supabase project** (richer memory/RAG, chat history sync) | **No — optional upgrade** | user provisions own project + runs one bootstrap script | Low — SQL cross-checked, live run pending a free project slot |
-| LM Studio (local tool-selector 9B + embeddings) | Recommended | user installs, loads models | ⚠️ Medium |
+| LM Studio (a compatible model setup) | Recommended | [Hardware-guided bundles and manual Chat setup](../features/LOCAL_MODELS.md#first-launch-chat-setup), with confirmed downloads and role checks | Exact Bonsai runtime and clean Windows acceptance remain pending; optional CPU embeddings are separate |
 | Docker services (SearXNG, Presenton, Kroki…) | Optional (tiered) | `docker/chad-services.yml` | Low — audited #405, every sidecar has a working fallback (live compose-up dry run still pending) |
 | Voice / STT / wake word | Optional | `requirements-voice.txt`, models | Low (off by default) |
 
@@ -202,18 +202,24 @@ optional/advanced features; several now have local sqlite fallbacks via
    Canva graphic design uses the same Connectors wizard as Supabase (browser OAuth via `mcp-remote`).
    Supabase variables in `.env.example` can stay as placeholders — Chad boots
    without them (see above). Fill them in only for the optional Supabase upgrade.
-3. **LM Studio** — install LM Studio (adds its `lms` CLI to PATH), then run:
-   ```powershell
-   python scripts/setup/setup_lmstudio.py
-   ```
-   This checks for `lms`, downloads the three required models
-   (`google/gemma-4-26b-a4b-qat` main/judge, `qwen/qwen3.5-9b` tool selector,
-   `google/gemma-3-1b` intent router — confirmed downloadable LM Studio catalog
-   names) with a confirmation prompt, and starts the local server. See
-   `docs/features/LOCAL_MODELS.md` for the full required/optional table, 12GB-VRAM
-   guidance, and the manual fallback if `lms` isn't available. Embeddings
-   (`nomic-embed-text-v2-moe`) are **not** an LM Studio model — they run locally via
-   `sentence-transformers`, no action needed here.
+3. **Model connection** — desktop setup shows four stages: Welcome, Connection,
+   Choose a model, and Start chatting. **Use a cloud API** connects a hosted
+   compatible endpoint with an API key and an explicit, possibly billable chat
+   test; it skips local model installation and scanning. For local chat, choose
+   LM Studio and follow the guided path:
+   install/open LM Studio, then select
+   **Find a model for me**. Review the suggested model and confirm a download, or choose
+   **I already have a model — continue**. Model comparisons and suggested load
+   settings are expandable; folder/context overrides and hardware corrections
+   are under **Advanced: scan settings and hardware details**.
+   Load the model in LM Studio, start its Local Server,
+   then check Chad's connection, select the chat model and explicitly send the
+   short test message before saving. One model is enough;
+   the selector/compatible specialists share it. Optional CPU embeddings have
+   a separate confirmed download and are not needed for basic Chat. See
+   [local model setup](../features/LOCAL_MODELS.md#quick-automated-setup-issue-406)
+   for fit assumptions, native memory/speed validation, backend alternatives
+   and the legacy multi-model CLI preset.
 4. **Docker services (optional)** — see [Optional services (Docker)](#optional-services-docker) below.
    ```powershell
    docker compose -f docker/chad-services.yml up -d

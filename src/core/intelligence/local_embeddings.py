@@ -146,7 +146,8 @@ class LocalEmbeddingModel:
                         from sentence_transformers import SentenceTransformer
 
                         self._local_transformer = SentenceTransformer(
-                            self.model_name, trust_remote_code=True
+                            self.model_name, trust_remote_code=True,
+                            local_files_only=not ConfigManager.get("embeddings.allow_download", False),
                         )
                         logger.warning(
                             f"[ SUCCESS ] Loaded local SentenceTransformer. "

@@ -275,12 +275,8 @@ class ModelsFacadeMixin:
             from src.shared.config_manager import ConfigManager
             if ConfigManager.is_local_model_active():
                 cfg = ConfigManager.get_local_model_config()
-                return {
-                    "mode": "local",
-                    "name": cfg.get("name", "Unknown"),
-                    "provider": cfg.get("provider", "lmstudio"),
-                    "supports_tools": cfg.get("supports_tools", True),
-                }
+                from src.shared.model_selection import describe_endpoint_model
+                return describe_endpoint_model(cfg)
         except Exception:
             pass
 

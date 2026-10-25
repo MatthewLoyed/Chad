@@ -24,7 +24,12 @@ class SupabaseToolSyncBridge:
                 logger.info(f"Loading local SentenceTransformer model in sync bridge: {self._model_name}...")
                 from sentence_transformers import SentenceTransformer
                 # We use trust_remote_code=True for Nomic models
-                self._model = SentenceTransformer(self._model_name, trust_remote_code=True)
+                from src.shared.config_manager import ConfigManager
+
+                self._model = SentenceTransformer(
+                    self._model_name, trust_remote_code=True,
+                    local_files_only=not ConfigManager.get("embeddings.allow_download", False),
+                )
                 logger.info("[ SUCCESS ] Loaded local SentenceTransformer model in sync bridge.")
             except Exception as local_err:
                 logger.error(f"[ ERROR ] Failed to load local SentenceTransformer in sync bridge: {local_err}", exc_info=True)
