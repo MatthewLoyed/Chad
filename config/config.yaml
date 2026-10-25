@@ -1029,3 +1029,8 @@ buddy:
     event_cooldown_s: 1800
     max_tokens: 64
     temperature: 0.7
+
+# Compact Feed interest memory and automatic source preview budget.
+discovery:
+  feed_memory_topics: 16
+  feed_preview_words: 90

@@ -32,11 +32,25 @@ Neither implies that Chad's literal-step runner can execute an adaptive plan.
 
 ## Navigation and activity
 
-**Feed** presents the existing autonomous run log, newest first. It refreshes
-when opened and on Refresh, showing the latest batch supplied by
-`get_automations_summary` (currently 30 runs). Quiet all-clear checks are hidden
-unless **Show quiet checks** is selected. Failed refreshes show an error while
-retaining cached activity. Feed does not create suggestions, goals, or schedules.
+**Feed** combines existing dashboard entries with autonomous run history. **For you**
+shows discoveries; **Activity** shows the run log; **All** puts finds and connections
+above activity. Automatic cards show labeled source excerpts; Chad can also
+publish short summaries with source metadata, an optional source image, and a saved selection reason. **Read original** opens an HTTP(S)
+source; **Discuss** appends an editable chat draft with the item's context;
+**Dismiss** persists through the existing dashboard command and removes the card
+only after success. Suggested actions are discussed in chat before execution.
+
+The existing curiosity scavenger now also uses the discovery pipeline's dashboard
+publication route (top three finds per pass). Interest tuning, verification, stash
+and URL deduplication stay with that pipeline. Feed refresh never launches a search,
+changes a schedule, or consumes the Telegram curiosity stash. Custom-topic stash
+adds are not automatically published by this route. Existing dashboard thoughts,
+life widgets, status entries and proposed actions are also visible in All.
+
+Feed refreshes on opening and on Refresh, retaining cached items on failure.
+Run history comes from `get_automations_summary` (currently 30 runs); quiet all-clear
+checks remain hidden unless **Show quiet checks** is selected.
+
 **Automations** owns recurring schedules, one-time tasks/reminders, event triggers,
 and background checks; **Saved actions** retains the existing on-demand builder.
 The internal `routines` route and API names remain compatible.
@@ -44,8 +58,7 @@ The internal `routines` route and API names remain compatible.
 ### Decisions and tradeoffs
 
 The GUI separates updates (Feed) from configuration (Automations), inspired by
-[Muse's background-task model](https://ai.meta.com/muse/). This is an initial
-activity feed, not Muse feature parity or a new autonomy engine. Fixed tool
+[Muse's background-task model](https://introducing.muse.ai/). Discovery and activity reuse existing producers and persistence. Fixed tool
 sequences remain available as saved actions rather than a primary destination.
 
 ## Assignment-setup acceptance case
@@ -82,3 +95,58 @@ and Project desktop as interchangeable.
 
 Personal course links, usernames, and filesystem paths belong in private runtime
 configuration or user-saved routines, never in tracked documentation or tests.
+
+## Interest Feed
+
+Feed presents a scrolling stream of short posts: a title, a 2–3 sentence summary,
+an original-source link, an image when available, and an info button explaining
+why Chad selected it. **Discuss** opens an editable chat draft and preserves any
+existing draft text. **Dismiss** persists only after the server confirms success.
+Failed refreshes retain cached posts; broken images are omitted.
+
+The format draws on [Muse's interest feed](https://introducing.muse.ai/). Chad
+uses its existing interest profile, curiosity/discovery pipeline, dashboard rows,
+and automation run history. It does not create another scheduler or memory store.
+The pipeline saves the actual matched topic/category as the selection reason.
+Default interests must not be described as learned personal history.
+
+Tech discoveries read the original page or a substantive RSS description, skip
+unavailable/placeholder extracts, and preserve up to three source sentences within
+`discovery.feed_preview_words`. These automatic posts are labeled source excerpts.
+Source images come from Open Graph/Twitter metadata or RSS embedded images;
+existing anime/video providers retain their cover/thumbnail metadata. Images
+are optional and never generated or invented. The authoring tool also supports
+short source-grounded summaries with separate source/image/reason metadata.
+
+### Focused authoring turns
+
+Call the existing turn coordinator with `category="feed"`. The lane keeps the
+configured supervisor model and supplies only the current task, compact writing
+instructions, and interest memory (bounded by `discovery.feed_memory_topics`).
+It skips chat history, general graph/activity/Drive/session retrieval, history
+compaction, intent/tool-selection model calls, specialist handoffs, and skill or
+connector catalogs. Every job gets its own graph checkpoint. Its fixed tools are
+`web_search`, `manage_curiosity`, and `update_dashboard`; only within-job tool
+results accumulate. Ordinary chats mentioning Feed keep normal chat behavior.
+
+A Feed task publishes through `update_dashboard` with `kind=discovery` and
+metadata `content_type=source_summary`, `url`, `selection_reason`, and optional
+`image_url`. A curiosity-stash add is not publication. Automatic scavenge still
+uses the existing non-LLM discovery pipeline; opening or refreshing Feed never
+starts a generation or alters automation schedules.
+
+### Acceptance and boundaries
+
+The v1 checks cover safe original links, source images and their failure state,
+selection-reason disclosure, draft-preserving Discuss, persistent Dismiss, reload,
+cached failure recovery and mobile layout through the actual development Brain.
+Unit checks capture the final model request and verify the small tool/context
+boundary. A live Bonsai 27B turn published a grounded two-sentence supplied-source
+summary, with the saved interest reason separate from the body. That test is
+not evidence that arbitrary independent research is always factually reliable.
+
+Long-form articles, tutorials, multi-source synthesis and experiment suggestions
+are outside this release. No extra editorial judge model or article-writing
+pipeline is part of Feed. More/less-like-this controls, saved reads and project
+recommendations remain future work. `evals/datasets/feed_quality.jsonl` holds
+fictional short-post cases; live traces and personal preferences stay local.

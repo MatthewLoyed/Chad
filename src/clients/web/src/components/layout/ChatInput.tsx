@@ -182,6 +182,17 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
         return () => window.removeEventListener('chad:compose-skill', insertSkill);
     }, []);
 
+    useEffect(() => {
+        const insertFeed = (event: Event) => {
+            const text = (event as CustomEvent<string>).detail;
+            if (typeof text !== 'string') return;
+            setValue(current => current ? `${current}\n\n${text}` : text);
+            requestAnimationFrame(() => textareaRef.current?.focus());
+        };
+        window.addEventListener('chad:compose-feed', insertFeed);
+        return () => window.removeEventListener('chad:compose-feed', insertFeed);
+    }, []);
+
     // --- FILE PROCESSING HELPERS ---
 
     const fileToBase64 = (file: File): Promise<string> => {

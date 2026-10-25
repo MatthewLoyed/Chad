@@ -29,7 +29,13 @@ class UpdateDashboardTool(BaseTool):
         "'status' for automation/system health, 'discovery' for something "
         "interesting worth resurfacing, or 'action' for a proposed next step "
         "with a one-click runnable `action`. Don't overuse this — only call it "
-        "when something is genuinely worth keeping on the dashboard."
+        "when something is genuinely worth keeping on the dashboard. "
+        "The Feed displays discoveries as short posts: a title and 2–3 source-grounded "
+        "summary sentences. Set metadata.url to the original source, selection_reason "
+        "to the actual interest match, and image_url to a source-provided image if available. "
+        "Use content_type=source_summary. The UI displays the source link, image and reason "
+        "separately. Do not write a long article, tutorial or suggested experiment. Read the "
+        "source and omit unsupported claims; a headline or popularity stats are not evidence."
     )
     category = "system"
     is_side_effecting = True
@@ -53,6 +59,17 @@ class UpdateDashboardTool(BaseTool):
                     "body": {
                         "type": "string",
                         "description": "The entry content (markdown supported)."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Source and provenance for a Feed read. Use only sources actually read.",
+                        "properties": {
+                            "url": {"type": "string", "description": "Original HTTP(S) source URL."},
+                            "category": {"type": "string", "description": "Relevant interest category."},
+                            "selection_reason": {"type": "string", "description": "Brief, factual reason this matches an interest; no invented personal history."},
+                            "image_url": {"type": "string", "description": "Optional HTTP(S) image from the source page, never a fabricated URL."},
+                            "content_type": {"type": "string", "enum": ["source_summary", "source_excerpt"]},
+                        },
                     },
                     "action": {
                         "type": "object",
@@ -89,12 +106,14 @@ class UpdateDashboardTool(BaseTool):
         action: Optional[Dict[str, Any]] = None,
         pinned: bool = False,
         expires_in_hours: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         from src.core.intelligence.dashboard_feed import append_entry
 
         entry = await append_entry(
             kind=kind, title=title, body=body,
+            metadata=metadata,
             action=action, pinned=bool(pinned), expires_in_hours=expires_in_hours)
 
         if not entry:

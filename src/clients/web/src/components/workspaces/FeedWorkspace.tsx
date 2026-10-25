@@ -7,11 +7,12 @@ import type { AutonomousRun } from '../modals/settings/AutomationsTab';
 import { useAppStore } from '../../store';
 import '../modals/settings/AutomationsTab.css';
 import './FeedWorkspace.css';
+import FeedItem, { type FeedEntry } from './FeedItem';
 
 const CACHE_KEY = 'automations_summary';
 type Summary = { recent_runs?: AutonomousRun[] };
 
-/** A readable view of the existing autonomous run log; never schedules work. */
+/** Finds and background results from existing producers; never schedules work. */
 export default function FeedWorkspace() {
     const active = useAppStore((s) => s.activeWorkspace === 'feed');
     const apiReady = useAppStore((s) => s.apiReady);
@@ -19,8 +20,34 @@ export default function FeedWorkspace() {
     const [loading, setLoading] = useState(!summary);
     const [error, setError] = useState<unknown>(null);
     const [showQuiet, setShowQuiet] = useState(false);
+    const [entries, setEntries] = useState(() => readCache<FeedEntry[]>('dashboard_feed') ?? []);
+    const [view, setView] = useState<'all' | 'reads' | 'activity'>('all');
+    const [feedError, setFeedError] = useState<unknown>(null);
+    const refreshEntries = useCallback(async () => {
+        const getter = window.pywebview?.api?.get_dashboard_feed;
+        if (!getter) return;
+        try {
+            const result = await getter(50);
+            if (!Array.isArray(result)) throw new Error('Feed items are unavailable.');
+            setEntries(result as FeedEntry[]);
+            writeCache('dashboard_feed', result);
+            setFeedError(null);
+        } catch (err) { setFeedError(err); }
+    }, []);
+    const dismissEntry = async (id: string) => {
+        const api = window.pywebview?.api;
+        if (!api?.dismiss_dashboard_entry) throw new Error('Dismiss is unavailable.');
+        const result = await api.dismiss_dashboard_entry(id) as { success?: boolean } | null;
+        if (!result || result.success === false) throw new Error('Dismiss failed.');
+        setEntries(current => {
+            const next = current.filter(entry => String(entry.id) !== id);
+            writeCache('dashboard_feed', next);
+            return next;
+        });
+    };
     const refresh = useCallback(async () => {
         setLoading(true);
+        await refreshEntries();
         try {
             const getter = window.pywebview?.api?.get_automations_summary;
             if (!getter) throw new Error('Autonomous activity is unavailable on this client.');
@@ -31,7 +58,7 @@ export default function FeedWorkspace() {
             setError(null);
         } catch (err) { setError(err); }
         finally { setLoading(false); }
-    }, []);
+    }, [refreshEntries]);
 
     useEffect(() => { if (active && apiReady) void refresh(); }, [active, apiReady, refresh]);
     const runs = [...(summary?.recent_runs ?? [])]
@@ -40,9 +67,15 @@ export default function FeedWorkspace() {
     const quietCount = (summary?.recent_runs ?? []).filter((run) => run.silent).length;
 
     return (
-        <WorkspacePane icon={Rss} title="Feed" subtitle="Updates from Chad's background work. Check Automations to manage what runs."
+        <WorkspacePane icon={Rss} title="Feed" subtitle="Quick finds for your interests. Scroll, read, or discuss with Chad."
             actions={<button type="button" className="ws-btn" disabled={loading} onClick={() => void refresh()}><RefreshCw size={14} /> Refresh</button>}>
             <div className="activity-feed">
+                <nav className="feed-tabs" aria-label="Feed views">{([['all', 'All'], ['reads', 'For you'], ['activity', 'Activity']] as const).map(([key, label]) => <button type="button" className="ws-btn" aria-pressed={view === key} key={key} onClick={() => setView(key)}>{label}</button>)}</nav>
+                {feedError != null && <ErrorState title="Couldn't refresh finds" error={feedError} onRetry={refreshEntries} />}
+                {view !== 'activity' && entries.filter(entry => entry.status === 'active' && (view !== 'reads' || entry.kind === 'discovery')).map(entry => <FeedItem key={entry.id} entry={entry} onDismiss={dismissEntry} />)}
+                {view === 'reads' && !entries.some(entry => entry.status === 'active' && entry.kind === 'discovery') && <EmptyState icon={Rss} title="Your next good read is on its way" hint="Chad's discovery checks bring in articles and finds based on your interest profile. Manage background checks in Automations." />}
+                {view !== 'reads' && <>
+                <h2 className="feed-section-title">Background activity</h2>
                 <label className="activity-feed__filter"><input type="checkbox" checked={showQuiet} onChange={(e) => setShowQuiet(e.target.checked)} /> Show quiet checks{quietCount > 0 ? ` (${quietCount})` : ''}</label>
                 {error != null && <ErrorState title="Couldn't refresh activity" error={error} onRetry={refresh} />}
                 {loading && !summary ? <SkeletonState count={3} lines={2} /> : summary && (
@@ -61,6 +94,7 @@ export default function FeedWorkspace() {
                         </div>
                     )
                 )}
+                </>}
             </div>
         </WorkspacePane>
     );
