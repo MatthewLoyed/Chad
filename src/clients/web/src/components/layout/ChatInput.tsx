@@ -8,7 +8,6 @@ import { useSlashCommands } from './useSlashCommands';
 import { brainSocket } from '../../transport/brainSocket';
 import { DriveBrowserModal } from '../modals';
 import ModelSelector from './ModelSelector';
-import TokenUsageTicker from '../data-display/TokenUsageTicker';
 import './ChatInput.css';
 import { turnModeCategory } from '../../utils/turn-mode';
 
@@ -538,7 +537,6 @@ export default function ChatInput({ onSend, disabled = false, placeholder = 'Ask
 
     return (
         <>
-            <TokenUsageTicker />
             <form className="chat-input" onSubmit={handleSubmit}>
                 <div
                     ref={containerRef}

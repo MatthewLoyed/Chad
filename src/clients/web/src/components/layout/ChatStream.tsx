@@ -18,7 +18,7 @@ import PlacesMapCard from '../data-display/PlacesMapCard';
 import { resolveMapDisplay } from '../../utils/mapDisplay';
 import { useWaitTheaterStatus } from '../../hooks/useWaitTheaterStatus';
 import { useWaitNarratorLine } from '../../hooks/useWaitNarratorLine';
-import { Check, X, Copy, Pencil, FileText, Image as ImageIcon, ThumbsUp, ThumbsDown, Zap, Layers, ChevronDown, Loader2, RotateCw } from 'lucide-react';
+import { Check, X, Copy, Pencil, FileText, Image as ImageIcon, ThumbsUp, ThumbsDown, ChevronDown, Loader2, RotateCw } from 'lucide-react';
 import type { ChatMessage } from '../../store';
 import './ChatStream.css';
 
@@ -83,34 +83,13 @@ function mapStopReason(reason?: string): string {
     }
 }
 
-interface TelemetryRowProps {
-    speed?: number;
-    tokens?: number;
-    stopReason?: string;
-}
-
-function TelemetryRow({ speed, tokens, stopReason }: TelemetryRowProps) {
-    if (!tokens && !speed && !stopReason) return null;
-
+function StopReasonNotice({ reason }: { reason?: string }) {
+    if (!reason || reason === 'task_completed') return null;
     return (
         <div className="chat-message__telemetry">
-            {speed !== undefined && speed > 0 && (
-                <span className="telemetry-pill" title="Completion tokens divided by total turn time, including prompt processing, orchestration, and tools. Not model generation speed.">
-                    <Zap size={12} className="telemetry-icon" />
-                    {speed.toFixed(2)} tok/s · turn avg
-                </span>
-            )}
-            {tokens !== undefined && tokens > 0 && (
-                <span className="telemetry-pill" title="Completion tokens">
-                    <Layers size={12} className="telemetry-icon" />
-                    {tokens} tokens
-                </span>
-            )}
-            {stopReason && stopReason !== 'task_completed' && (
-                <span className="telemetry-pill" title={`Stop reason: ${mapStopReason(stopReason)}`}>
-                    Stop reason: {mapStopReason(stopReason)}
-                </span>
-            )}
+            <span className="telemetry-pill" title={`Stop reason: ${mapStopReason(reason)}`}>
+                Stop reason: {mapStopReason(reason)}
+            </span>
         </div>
     );
 }
@@ -161,7 +140,6 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
     const activeChatStatus = useActiveChatStatus();
     const isBusy = status === 'thinking' || streamTurn?.lifecycle === 'running';
     const apiReady = useAppStore(state => state.apiReady);
-    const tokenUsage = useAppStore(state => state.tokenUsage);
     const turnStartTime = useAppStore(state => state.turnStartTime);
     const liveStatus = useAppStore(state => state.liveStatus);
     const liveStatusUpdatedAt = useAppStore(state => state.liveStatusUpdatedAt);
@@ -212,18 +190,6 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
             setThinkingEndTime(firstSpeech?.timestamp || Date.now());
         }
     }, [hasAnswerStarted, thinkingStartTime, thinkingEndTime, renderEvents, setThinkingEndTime]);
-
-    const [liveSpeed, setLiveSpeed] = useState(0);
-    useEffect(() => {
-        if (!turnStartTime || (!hasContentStarted && !hasReasoningStarted)) {
-            Promise.resolve().then(() => setLiveSpeed(0));
-            return;
-        }
-        const elapsed = (Date.now() - turnStartTime) / 1000;
-        const compTokens = tokenUsage?.completion_tokens || 0;
-        Promise.resolve().then(() => setLiveSpeed(elapsed > 0 ? compTokens / elapsed : 0));
-    }, [turnStartTime, hasContentStarted, hasReasoningStarted, tokenUsage?.completion_tokens]);
-
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -592,11 +558,7 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
                         </div>
 
                         {msg.role === 'ai' && (
-                            <TelemetryRow 
-                                speed={msg.speed}
-                                tokens={msg.completion_tokens || msg.total_tokens}
-                                stopReason={msg.stop_reason}
-                            />
+                            <StopReasonNotice reason={msg.stop_reason} />
                         )}
 
                         {/* Render Attachments */}
@@ -831,13 +793,6 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
                             )}
                         </div>
 
-                        {/* Live Telemetry Row */}
-                        {(showStreamingContent || showActiveThinking) && (
-                            <TelemetryRow 
-                                speed={liveSpeed}
-                                tokens={tokenUsage?.completion_tokens}
-                            />
-                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

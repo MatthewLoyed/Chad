@@ -79,11 +79,11 @@ If **any link** in that chain is broken, the component never receives data. Stor
 ### Chat cleanup verification
 
 Assistant messages omit per-message avatar headers; the workspace rail retains
-Chad's identity. Telemetry speed is explicitly **turn avg**, since
-`TurnResponsePostProcessor.process` divides completion tokens by the full turn
-duration, including orchestration and tool time. It is not LM Studio decode
-throughput. Normal task completion is not evidence that an EOS token was observed
-and no longer adds a stop-reason pill. Exceptional stop reasons remain visible.
+Chad's identity. Chat messages do not display token counts or tokens/second.
+Telemetry remains in the store and backend for diagnostics. The stored speed
+uses full turn time, including orchestration and tools, not LM Studio decode
+throughput. Normal completion adds no stop-reason pill; errors, interruptions,
+and limits remain visible.
 
 Tool details start collapsed even while running and retain the user's expansion
 choice when execution finishes. Expand by click, Enter, or Space; JSON strings
