@@ -48,4 +48,7 @@ jobs:
           git add README.md
           git commit -m "Point Windows downloads to ${RELEASE_TAG}"
           git push origin "$branch"
-          gh pr create --base dev --head "$branch" --title "Point Windows downloads to ${RELEASE_TAG}" --body "The accepted installer ${RELEASE_TAG} is published. Update the public download block through dev, then promote to master. This changes links only; it does not rebuild the accepted artifact."
+          if ! gh pr create --base dev --head "$branch" --title "Point Windows downloads to ${RELEASE_TAG}" --body "The accepted installer ${RELEASE_TAG} is published. Update the public download block through dev, then promote to master. This changes links only; it does not rebuild the accepted artifact."; then
+            echo "Download branch is pushed. Repository policy prevented automatic PR creation; open https://github.com/${GITHUB_REPOSITORY}/compare/dev...${branch}?expand=1" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
