@@ -248,6 +248,18 @@ def format_active_skill_stub(skill_name: str, subagent: Optional[str], requires_
     )
 
 
+async def _load_skill_catalog():
+    try:
+        from src.core.skill_system.skill_loader import get_skill_loader
+        loader = get_skill_loader()
+        if loader.is_empty:
+            await loader.initialize()
+        return loader, _collect_skill_catalog_names(loader)
+    except Exception as exc:
+        logger.debug(f"[ SUPERVISOR ] Skill catalog unavailable: {exc}")
+        return None, set()
+
+
 def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, handoff_tools: list) -> Callable:
     """Factory creating the supervisor node function."""
     
@@ -267,7 +279,10 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
             elif "name" in s:
                 rag_tool_names.append(s["name"])
 
-        is_telegram_agent = state.get("category") == "telegram_agent"
+        is_fixed_lane = state.get("category") in ("telegram_agent", "feed")
+        if state.get("category") == "feed":
+            from src.core.discovery.feed_context import FEED_TOOL_NAMES
+            rag_tool_names = [name for name in rag_tool_names if name in FEED_TOOL_NAMES]
         
         # Resolve names to actual BaseTool instances for binding
         direct_tools = []
@@ -277,7 +292,7 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
         
         for name in rag_tool_names:
             if (
-                not is_telegram_agent
+                not is_fixed_lane
                 and is_supervisor_delegate_only(name, tool_registry._categories, tool_registry._tool_sources)
             ):
                 logger.debug(f"[ SUPERVISOR ] Skipping delegate-only tool '{name}' from state bindings.")
@@ -290,7 +305,7 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
                 offline_tools.append(name)
 
         # Always bind tools explicitly assigned to the active plan step
-        if plan and not is_telegram_agent:
+        if plan and not is_fixed_lane:
             active_step_obj = next(
                 (s for s in plan if s.get("status") in ["pending", "failed", "running"]), None
             )
@@ -304,7 +319,7 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
         
         # Always inject step-management tools when a plan is active (not on Telegram pocket remote)
         step_mgmt_tools = []
-        if state.get("active_plan") and not is_telegram_agent:
+        if state.get("active_plan") and not is_fixed_lane:
             for tool_name in _STEP_MGMT_TOOLS:
                 t = tool_registry.get_langchain_tool_by_name(tool_name)
                 if t:
@@ -312,25 +327,19 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
                 else:
                     logger.warning(f"[ SUPERVISOR ] Step tool '{tool_name}' not found in registry.")
 
-        effective_handoffs = [] if is_telegram_agent else handoff_tools
+        effective_handoffs = [] if is_fixed_lane else handoff_tools
         bound_tool_names = {t.name for t in effective_handoffs + step_mgmt_tools + direct_tools}
 
         # Keep discovery usable even when the selector omitted the relevant tools.
-        if not is_telegram_agent:
+        if not is_fixed_lane:
             for meta_tool in ("search_for_tool", "list_skills", "load_skill"):
                 _append_tool_if_missing(tool_registry, direct_tools, bound_tool_names, meta_tool)
 
         # Skill catalog — skills are usable via load_skill even when RAG skipped them.
         skill_loader = None
         skill_catalog_names: set = set()
-        try:
-            from src.core.skill_system.skill_loader import get_skill_loader
-            skill_loader = get_skill_loader()
-            if skill_loader.is_empty:
-                await skill_loader.initialize()
-            skill_catalog_names = _collect_skill_catalog_names(skill_loader)
-        except Exception as _skill_err:
-            logger.debug(f"[ SUPERVISOR ] Skill catalog unavailable: {_skill_err}")
+        if not is_fixed_lane:
+            skill_loader, skill_catalog_names = await _load_skill_catalog()
 
         plan = state.get("active_plan") or []
         plan_step_tools: list = []
@@ -382,7 +391,7 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
 
         # Inject active specialist roster — only when agents are actually compiled in.
         # When no subagents are active, omit the block entirely (no noise).
-        if sub_agents_dict and not is_telegram_agent:
+        if sub_agents_dict and not is_fixed_lane:
             _AGENT_DESCRIPTIONS = {
                 "ui_automation_agent": "Clicks/types in local Windows apps and executes UI automation flows.",
                 "browser_agent": BROWSER_AGENT_SUPERVISOR_ROSTER,
@@ -417,7 +426,7 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
         # supervisor_skill instructions are already in cloud_persona — only inject the catalog listing.
         # Uses on-demand disclosure based on user query to save ~1,400 tokens per turn when no skills match.
         # Telegram pocket remote skips the desktop skill catalog / MCP roster noise.
-        if skill_loader and skill_catalog_names and not is_telegram_agent:
+        if skill_loader and skill_catalog_names and not is_fixed_lane:
             try:
                 # Extract user query from messages to find relevant skills
                 user_query = ""
@@ -432,12 +441,12 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
             except Exception as _skill_err:
                 logger.debug(f"[ SUPERVISOR ] Skill catalog prompt unavailable: {_skill_err}")
 
-        if not is_telegram_agent:
+        if not is_fixed_lane:
             orchestration_logic += build_capability_directory(tool_registry, bound_tool_names)
 
         # 3b. Live MCP connectors — always inject so the model knows what call_mcp_tool
         # can reach (persona docs alone never list runtime connection state).
-        if not is_telegram_agent:
+        if not is_fixed_lane:
             try:
                 orchestration_logic += build_active_mcp_roster(tool_registry=tool_registry)
             except Exception as _mcp_roster_err:

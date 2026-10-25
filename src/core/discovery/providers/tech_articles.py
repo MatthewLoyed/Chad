@@ -9,6 +9,8 @@ Discovers high-signal tech articles, papers, and blog posts from:
 from __future__ import annotations
 
 import asyncio
+import html
+import re
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional
 import aiohttp
@@ -107,18 +109,25 @@ class TechArticlesProvider(BaseDiscoveryProvider):
                         hn_url = f"https://news.ycombinator.com/item?id={item_id}"
                         comments = d.get("descendants", 0)
 
+                        media = {}
+                        preview = await self._article_preview(session, d["url"], media)
+                        if not preview:
+                            continue
+
                         item = DiscoveryItem(
                             url=d["url"],
                             title=title,
                             source=ContentSource.HACKERNEWS.value,
                             category=ContentCategory.ARTICLES.value,
-                            summary=f"Score: {score} points, {comments} comments on Hacker News. By {d.get('by', 'anonymous')}.",
+                            summary=preview,
                             metadata={
+                                **media,
                                 "hn_id": item_id,
                                 "hn_discussion_url": hn_url,
                                 "points": score,
                                 "comments_count": comments,
                                 "author": d.get("by"),
+                                "content_type": "source_excerpt",
                             },
                             quality_score=min(1.0, 0.5 + (score / 400.0)),
                         )
@@ -130,6 +139,38 @@ class TechArticlesProvider(BaseDiscoveryProvider):
             self.logger.warning(f"Hacker News fetch failed: {e}")
 
         return items
+
+    async def _article_preview(self, session: aiohttp.ClientSession, url: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+        """Read the source; popularity is discovery evidence, not article content."""
+        from src.core.discovery.feed_preview import compact_preview, source_image
+        from src.tools.web.content_extraction import extract_from_html
+
+        if not url.startswith(("https://", "http://")):
+            return ""
+        try:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    return ""
+                markup = await response.text()
+                extracted = extract_from_html(markup)
+            if not extracted.ok:
+                return ""
+            if metadata is not None:
+                metadata["image_url"] = source_image(markup, url)
+            return compact_preview(extracted.content)
+        except Exception as exc:
+            self.logger.debug("Article preview unavailable for %s: %s", url, exc)
+            return ""
+
+    @staticmethod
+    def _feed_preview(text: str) -> str:
+        from src.core.discovery.feed_preview import compact_preview
+
+        plain = html.unescape(re.sub(r"<[^>]+>", " ", text)).strip()
+        from src.tools.web.content_extraction import passes_quality_gate
+        if not passes_quality_gate(plain)[0]:
+            return ""
+        return compact_preview(plain)
 
     async def _fetch_hn_item(self, session: aiohttp.ClientSession, item_id: int) -> Optional[Dict[str, Any]]:
         """Fetch single HN story payload."""
@@ -158,7 +199,11 @@ class TechArticlesProvider(BaseDiscoveryProvider):
                         content = await resp.text()
 
                     feed_items = self._parse_feed_xml(content, feed)
-                    items.extend(feed_items)
+                    for item in feed_items:
+                        if not item.summary:
+                            item.summary = await self._article_preview(session, item.url, item.metadata)
+                        if item.summary:
+                            items.append(item)
                 except Exception as e:
                     self.logger.debug(f"Feed {feed['name']} fetch failed: {e}")
 
@@ -166,6 +211,7 @@ class TechArticlesProvider(BaseDiscoveryProvider):
 
     def _parse_feed_xml(self, xml_text: str, feed_meta: Dict[str, Any]) -> List[DiscoveryItem]:
         """Parse RSS or Atom XML content safely."""
+        from src.core.discovery.feed_preview import source_image
         parsed_items: List[DiscoveryItem] = []
         try:
             root = ET.fromstring(xml_text)
@@ -182,8 +228,8 @@ class TechArticlesProvider(BaseDiscoveryProvider):
                             title=title.strip(),
                             source=ContentSource.RSS.value,
                             category=feed_meta.get("category", ContentCategory.ARTICLES.value),
-                            summary=desc[:240].strip(),
-                            metadata={"feed_name": feed_meta.get("name")},
+                            summary=self._feed_preview(desc),
+                            metadata={"feed_name": feed_meta.get("name"), "content_type": "source_excerpt", "image_url": source_image(desc, link, embedded=True)},
                             quality_score=0.85,
                         )
                     )
@@ -203,8 +249,8 @@ class TechArticlesProvider(BaseDiscoveryProvider):
                             title=title.strip(),
                             source=ContentSource.RSS.value,
                             category=feed_meta.get("category", ContentCategory.ARTICLES.value),
-                            summary=summary[:240].strip(),
-                            metadata={"feed_name": feed_meta.get("name")},
+                            summary=self._feed_preview(summary),
+                            metadata={"feed_name": feed_meta.get("name"), "content_type": "source_excerpt", "image_url": source_image(summary, link, embedded=True)},
                             quality_score=0.85,
                         )
                     )

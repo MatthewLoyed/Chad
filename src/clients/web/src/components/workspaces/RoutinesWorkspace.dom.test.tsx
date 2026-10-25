@@ -25,10 +25,10 @@ it('updates in place and preserves the draft when saving fails', async () => {
 
     render(<RoutinesWorkspace />);
     fireEvent.click(await screen.findByTitle('Edit'));
-    fireEvent.change(screen.getByPlaceholderText('Routine name'), { target: { value: 'Revised' } });
+    fireEvent.change(screen.getByPlaceholderText('Saved action name'), { target: { value: 'Revised' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await screen.findByText(/Could not save changes/);
-    expect((screen.getByPlaceholderText('Routine name') as HTMLInputElement).value).toBe('Revised');
+    expect((screen.getByPlaceholderText('Saved action name') as HTMLInputElement).value).toBe('Revised');
     expect(remove).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
 

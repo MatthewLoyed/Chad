@@ -10,7 +10,9 @@ import './ToolBubble.css';
 const OUTPUT_PREVIEW_CHARS = 400;
 
 function formatDetailText(value: unknown): string {
-    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    if (typeof value !== 'string') return JSON.stringify(value, null, 2);
+    try { return JSON.stringify(JSON.parse(value), null, 2); }
+    catch { return value; }
 }
 
 function isInternalApprovalResult(result: unknown): boolean {
@@ -72,19 +74,9 @@ function ToolBubble({ event, status, children }: ToolBubbleProps) {
     const hasDetails = !!paramsToDisplay || !!event.result;
     const isExpandable = hasChildren || hasDetails;
 
-    const [prevStatus, setPrevStatus] = useState(status);
-    const [prevExpandable, setPrevExpandable] = useState(isExpandable);
-    const [isExpanded, setIsExpanded] = useState(status === 'pending');
-
-    if (status !== prevStatus || isExpandable !== prevExpandable) {
-        setPrevStatus(status);
-        setPrevExpandable(isExpandable);
-        if (status === 'pending' && isExpandable) {
-            setIsExpanded(true);
-        } else if (status !== 'pending' && status !== prevStatus) {
-            setIsExpanded(false);
-        }
-    }
+    // Details are opt-in, including while a tool is running. Preserve the user's
+    // choice when status changes instead of opening/closing logs automatically.
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const ui = useMemo(() => resolveToolUI(event), [event]);
 
@@ -109,6 +101,16 @@ function ToolBubble({ event, status, children }: ToolBubbleProps) {
         >
             <div 
                 className={`tool-bubble__content ${isExpandable ? 'tool-bubble__header-clickable' : ''}`}
+                role={isExpandable ? 'button' : undefined}
+                tabIndex={isExpandable ? 0 : undefined}
+                aria-expanded={isExpandable ? isExpanded : undefined}
+                aria-label={isExpandable ? `${label}: tool details` : undefined}
+                onKeyDown={isExpandable ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsExpanded((expanded) => !expanded);
+                    }
+                } : undefined}
                 onClick={isExpandable ? () => setIsExpanded(!isExpanded) : undefined}
             >
                 {/* Recursive Chevron */}
@@ -212,7 +214,7 @@ function ToolBubble({ event, status, children }: ToolBubbleProps) {
                             {/* Arguments Section */}
                             {paramsToDisplay && (
                                 <div className="tool-bubble__details-section">
-                                    <div className="tool-bubble__details-label">Arguments:</div>
+                                    <div className="tool-bubble__details-label">Inputs</div>
                                     <TruncatedDetailBlock
                                         text={JSON.stringify(paramsToDisplay, null, 2)}
                                         className="tool-bubble__details-code"
@@ -224,7 +226,7 @@ function ToolBubble({ event, status, children }: ToolBubbleProps) {
                             {event.result && !isInternalApprovalResult(event.result) && (
                                 <div className="tool-bubble__details-section">
                                     <div className="tool-bubble__details-label">
-                                        {status === 'error' ? 'Error Detail:' : 'Console Output:'}
+                                        {status === 'error' ? 'Error details' : 'Result'}
                                     </div>
                                     <TruncatedDetailBlock
                                         text={formatDetailText(event.result)}

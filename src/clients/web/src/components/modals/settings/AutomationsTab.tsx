@@ -34,7 +34,7 @@ interface DaemonInfo {
     metadata?: Record<string, unknown>;
 }
 
-interface AutonomousRun {
+export interface AutonomousRun {
     id: string;
     source: string;
     outcome: string;

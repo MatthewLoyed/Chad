@@ -69,6 +69,15 @@ export default function ToolStackBubble({ category, items }: ToolStackBubbleProp
         <div className={`tool-stack-wrapper tool-stack--${aggStatus}`}>
             <div
                 className="tool-stack__header"
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsExpanded((expanded) => !expanded);
+                    }
+                }}
                 onClick={() => setIsExpanded(!isExpanded)}
             >
                 <div className="tool-stack__header-icon" style={{ color: ui?.color || '#6366F1' }}>

@@ -71,7 +71,7 @@ const emptyDraft = (): DraftState => ({
 
 function RoutinesSkeleton() {
     return (
-        <div className="wf-grid routines-skeleton-grid" aria-busy="true" aria-label="Loading routines">
+        <div className="wf-grid routines-skeleton-grid" aria-busy="true" aria-label="Loading saved actions">
             {[1, 2, 3, 4].map((idx) => (
                 <div key={idx} className="wf-card routines-skeleton-card">
                     <div className="wf-card__head">
@@ -456,12 +456,12 @@ export default function RoutinesWorkspace() {
     return (
         <WorkspacePane
             icon={ListOrdered}
-            title="Routines"
+            title="Saved actions"
             subtitle="Reusable sequences you run on demand — or ask Chad to run one by name in chat."
             actions={
                 !draft && (
                     <button type="button" className="ws-btn" onClick={openCreate}>
-                        <Plus size={15} /> New routine
+                        <Plus size={15} /> New saved action
                     </button>
                 )
             }
@@ -481,7 +481,7 @@ export default function RoutinesWorkspace() {
                                 className="wf-input wf-input--title"
                                 value={draft.name}
                                 onChange={(e) => patchDraft({ name: e.target.value })}
-                                placeholder="Routine name"
+                                placeholder="Saved action name"
                                 autoFocus
                             />
                             <input
@@ -495,7 +495,7 @@ export default function RoutinesWorkspace() {
                         <div className="wf-nl-draft">
                             <label className="wf-section-label">Describe it</label>
                             <p className="wf-nl-hint">
-                                The supervisor drafts fixed tool steps. For routines that read assignments and choose files, use a skill in chat.
+                                Chad drafts fixed tool steps. For tasks that need to interpret information and choose actions, ask in chat.
                             </p>
                             <textarea
                                 className="wf-input wf-nl-textarea"
@@ -695,7 +695,7 @@ export default function RoutinesWorkspace() {
 
                         <div className="wf-editor__footer">
                             <button type="button" className="ws-btn" onClick={handleSave}>
-                                {draft.editingId ? 'Save changes' : 'Create routine'}
+                                {draft.editingId ? 'Save changes' : 'Create saved action'}
                             </button>
                             <button type="button" className="ws-btn ws-btn--ghost" onClick={closeEditor}>
                                 Cancel
@@ -709,7 +709,7 @@ export default function RoutinesWorkspace() {
                 ) : loadError ? (
                     <motion.div key="load-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <ErrorState
-                            title="Couldn't load routines"
+                            title="Couldn't load saved actions"
                             error={loadError}
                             onRetry={() => { setLoading(true); fetchRoutines(); }}
                         />
@@ -718,11 +718,11 @@ export default function RoutinesWorkspace() {
                     <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <EmptyState
                             icon={ListOrdered}
-                            title="No routines yet"
+                            title="No saved actions yet"
                             hint="Describe what you want once — morning briefing, inbox triage, standup prep — then run it anytime or ask Chad in chat."
                             action={
                                 <button type="button" className="ws-btn" onClick={openCreate} style={{ marginTop: 8 }}>
-                                    <Plus size={15} /> New routine
+                                    <Plus size={15} /> New saved action
                                 </button>
                             }
                         />

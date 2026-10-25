@@ -76,6 +76,9 @@ def test_ceilings_are_the_exception():
         # Context-data bounds, not execution stops. Snapshot already existed;
         # resume context bounds the complete additional wake-message block.
         "browser_snapshot_max_chars", "resume_context_max_chars",
+        # Feed limits bound quoted text and supplied interest memory; they never
+        # refuse a tool call, cancel a turn, or cap the model's execution rounds.
+        "feed_preview_words", "feed_memory_topics",
     }
     assert {c.name for c in ceilings} <= allowed, (
         "New CEILING added — justify it against limits.py's policy, or make it a HINT."

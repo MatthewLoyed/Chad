@@ -4,6 +4,7 @@ import {
     MessageSquarePlus,
     MessageSquare,
     ListOrdered,
+    Rss,
     BookOpen,
     Kanban,
     LayoutDashboard,
@@ -34,7 +35,7 @@ interface Command {
     label: string;
     hint?: string;
     icon: LucideIcon;
-    group: 'Navigate' | 'Actions' | 'Run routine';
+    group: 'Navigate' | 'Actions' | 'Run saved action';
     keywords?: string;
     run: () => void;
 }
@@ -96,8 +97,9 @@ export default function CommandPalette({
 
     const commands = useMemo<Command[]>(() => {
         const base: Command[] = [
+            { id: 'nav-feed', label: 'Go to Feed', icon: Rss, group: 'Navigate', keywords: 'activity updates', run: () => goWorkspace('feed') },
             { id: 'nav-chat', label: 'Go to Chat', icon: MessageSquare, group: 'Navigate', run: () => goWorkspace('chat') },
-            { id: 'nav-routines', label: 'Go to Routines', icon: ListOrdered, group: 'Navigate', keywords: 'workflow macro', run: () => goWorkspace('routines') },
+            { id: 'nav-routines', label: 'Go to Saved actions', icon: ListOrdered, group: 'Navigate', keywords: 'routine workflow macro', run: () => goWorkspace('routines') },
             { id: 'nav-board', label: 'Go to Board', icon: Kanban, group: 'Navigate', keywords: 'kanban tasks', run: () => goWorkspace('board') },
             { id: 'nav-dashboard', label: 'Go to Dashboard', icon: LayoutDashboard, group: 'Navigate', keywords: 'automation status feed', run: () => goWorkspace('dashboard') },
             { id: 'nav-automations', label: 'Go to Automations', icon: Zap, group: 'Navigate', keywords: 'autonomous heartbeat cron webhooks scheduled', run: () => goWorkspace('automations') },
@@ -110,9 +112,9 @@ export default function CommandPalette({
         const routineCommands: Command[] = routines.map((w) => ({
             id: `run-${w.id}`,
             label: w.name,
-            hint: 'Run routine',
+            hint: 'Run saved action',
             icon: Play,
-            group: 'Run routine' as const,
+            group: 'Run saved action' as const,
             keywords: 'run routine automation',
             run: () => {
                 window.pywebview?.api?.run_workflow?.(w.id);
@@ -158,7 +160,7 @@ export default function CommandPalette({
 
     // Render groups in order, tracking a flat index for keyboard nav.
     let flatIdx = -1;
-    const groups: Command['group'][] = ['Navigate', 'Actions', 'Run routine'];
+    const groups: Command['group'][] = ['Navigate', 'Actions', 'Run saved action'];
 
     return (
         <motion.div
@@ -185,7 +187,7 @@ export default function CommandPalette({
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Search workspaces, actions, routines…"
+                        placeholder="Search workspaces and actions…"
                         autoFocus
                     />
                     <kbd className="cmdk__esc">esc</kbd>

@@ -223,11 +223,13 @@ class InterestTuningEngine:
         # Topic matching multiplier
         topic_multiplier = 1.0
         matches = 0
+        matched_topics = []
         for topic_name, topic_weight in profile.topics.items():
             clean_name = topic_name.replace("_", " ")
             pattern = rf"\b{re.escape(clean_name)}\b"
             if re.search(pattern, search_blob, re.IGNORECASE):
                 topic_multiplier *= topic_weight
+                matched_topics.append(clean_name)
                 matches += 1
                 if matches >= 3:
                     break
@@ -235,6 +237,11 @@ class InterestTuningEngine:
         # Blend category and topic scores, capped reasonably
         final_affinity = max(0.1, min(5.0, round(cat_weight * topic_multiplier, 3)))
         item.affinity_score = final_affinity
+        item.metadata["selection_reason"] = (
+            "Matches topics in your interest profile: " + ", ".join(matched_topics) + "."
+            if matched_topics else
+            f"Selected for the {item.category.replace('_', ' ')} category in your interest profile."
+        )
         return final_affinity
 
     def apply_time_decay(self, elapsed_days: float = 7.0) -> None:

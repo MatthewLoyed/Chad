@@ -209,7 +209,7 @@
 }
 
 .nav-section__chevron {
-    margin-left: auto;
+    margin-left: 0;
     opacity: 0.4;
 }
 
@@ -655,3 +655,8 @@
         min-height: 44px;
     }
 }
+
+/* The label owns the flexible space; trailing actions stay together. */
+.nav-section__header > span { flex: 1; min-width: 0; }
+.nav-section__header > svg { flex-shrink: 0; }
+.nav-section__header:focus-within .nav-section__add { opacity: 1; }
