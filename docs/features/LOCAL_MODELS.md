@@ -87,23 +87,47 @@ is scoped to its official API host; its multi-turn thinking/tool reasoning repla
 is still unverified. Do not certify a provider from a successful greeting.
 
 The [setup journey acceptance checklist](https://github.com/MatthewLoyed/Chad/issues/5#setup-journey-contract--proposed-acceptance-2026-10-23)
-tracks proposed model-role defaults, installation from nothing, existing
-and remote setups, offline/recovery paths, accessibility and first-reply
-verification. It distinguishes current evidence from unimplemented stories;
-the hardware scan and mocked UI checks do not establish complete onboarding.
+tracks installation from nothing, existing and remote setups, offline/recovery
+paths, accessibility and first-reply verification. Automated fixtures do not
+establish complete onboarding on a clean Windows installation.
 
-The revised proposal uses two main-model defaults without a task questionnaire:
-Bonsai Q1_0 primary plus Qwen3.5-9B secondary for qualifying 16 GB+ dedicated
-VRAM systems, or Qwen9B primary where it fits, with a smaller fallback when
-needed. It separately recommends Qwen2.5-3B-Instruct for tool selection and
-inherits main/secondary roles for subagents. This is not the current bundled
-catalog/routing policy: runtime verification, aggregate residency budgets and
-separating selector selection from specialist inheritance remain acceptance work
-in the linked issue.
+The hardware-guided desktop route offers two main choices without a task
+questionnaire. A single nominal 16 GB+ dedicated GPU qualifies for Bonsai-27B
+Q1_0 primary with Qwen3.5-9B secondary, subject to available GPU/RAM/storage
+budgets. Other compatible systems receive Qwen9B primary and reuse it as
+secondary; smaller systems can receive Qwen4B with a shorter context or a
+Chat-only plan. Unknown capacity does not qualify as a fit. Dedicated VRAM is
+not pooled across cards or added to shared RAM.
+
+Qwen2.5-3B-Instruct is the dedicated tool selector when the combined plan fits.
+Subagents inherit main/secondary roles; existing specialist overrides are
+preserved. The selector retains its own model, endpoint and credentials when
+the main model changes. Secondary consumers use the secondary role rather
+than borrowing the selector. Cloud-only setup downloads no local bundle.
+
+`model_bundles.py` budgets unique artifacts together, includes host/embedding
+headroom and selects co-resident main/selector only when both fit; otherwise
+roles switch sequentially. Exact installed files reduce new download bytes,
+not memory requirements. Preparation confirms aggregate downloads and checks
+pinned checksums before reuse. The Bonsai custom Q1 runtime and speed remain
+unverified until tested; fitting is not a 40–50 tokens/sec guarantee. Its optional
+vision projector/speculative draft are separate assets. Catalog entries retain
+their upstream licenses, including Qwen2.5's research license.
+
+Before saving a bundle, an explicit test checks main/secondary greetings and a
+fictional selector catalog without executing tools. The loaded LM Studio
+configuration must match the plan's context, one parallel prediction and an
+evaluation batch of at most 512. Chad inspects these settings; users must correct
+incompatible settings in LM Studio. Saved LM Studio defaults are not rewritten.
+Successful checks are bound to the endpoint, credentials and main model for
+30 minutes. Helper failure allows retry or explicit Chat-only completion.
+These checks do not certify main-model tool calling, images, later configuration
+changes or long-running workloads. The complete Bonsai bundle still needs live
+acceptance with the exact pinned artifact and supported runtime.
 
 ## Quick automated setup (issue #406)
 
-New desktop installs use four setup stages: Welcome, Model app, Choose a model,
+New desktop installs use four setup stages: Welcome, Connection, Choose a model,
 and Start chatting. **Find a model for me** (issue #5) scans with sensible defaults
 and presents one recommendation; comparing models and viewing suggested load
 settings are separate disclosures. Model folder/context overrides, detected
@@ -145,14 +169,14 @@ below.
 | `google/gemma-3-1b` | Intent router | ~1GB | `intent_router.model` |
 
 These three are the legacy CLI preset, not a prerequisite for basic Chat.
-Desktop setup selects one chat model, shares it with the tool selector and
-compatible specialists, and disables the separate intent router. Explicit
-specialist overrides remain respected. Pass
+Manual desktop Chat setup shares its chosen model with the selector and
+compatible specialists. Hardware-guided setup uses the role bundle described
+above. Both disable the separate intent router and preserve specialist overrides. Pass
 `--include-optional` to also grab the specialist models below.
 
-`setup.share_main_model` keeps the selector aligned with later main-model
-picker changes and refreshes an already-created selector without a Brain
-restart. Set it false before deliberately configuring a separate selector.
+`tools.selector_model` defines a dedicated selector. When absent,
+`setup.share_main_model` keeps the selector aligned with main-model picker
+changes and refreshes it without a Brain restart.
 
 ### Optional / advanced models
 

@@ -1,7 +1,9 @@
 """Compose local assessment and offline ranking for the desktop setup bridge."""
 from src.core.tools.failure import failure, BAD_INPUT
 from src.infrastructure.services.hardware_assessment import assess_hardware
-from src.infrastructure.services.model_recommendations import number, recommend
+from src.infrastructure.services.model_recommendations import number
+from src.infrastructure.services.model_bundles import bundles
+from src.infrastructure.services.setup_inventory import installed_assets
 
 
 def assess(storage_path="", context=8192, manual=None):
@@ -26,6 +28,6 @@ def assess(storage_path="", context=8192, manual=None):
         hardware["manual"] = bool(manual)
         if manual:
             hardware["warnings"].append("Manual values replace detected capacity; they do not add memory. Rescan without overrides to restore detection.")
-        return recommend(hardware, context)
+        return bundles(hardware, context, installed_assets(storage_path))
     except (TypeError, ValueError):
         return failure("Check manual RAM/VRAM/storage values and choose a supported context length.", failure_class=BAD_INPUT)

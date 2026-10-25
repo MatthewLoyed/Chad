@@ -22,8 +22,8 @@ def _build_llm_selector():
     """Resolve the selector's model and endpoint together for one-model setup."""
     from src.shared.config_manager import ConfigManager
 
-    shared = ConfigManager.get("setup.share_main_model", False)
-    provider = ConfigManager.get_local_model_config() if shared else ConfigManager.get_local_provider_config("lmstudio")
+    from src.shared.model_selection import selector_config
+    provider = selector_config()
     return LLMToolSelector(
         model_id=ConfigManager.get_llm_selector_model(),
         base_url=provider.get("base_url", "http://localhost:1234/v1"),

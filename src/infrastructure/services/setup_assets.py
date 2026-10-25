@@ -46,7 +46,7 @@ def cancel() -> dict:
 def start(operation: str, options: dict, confirmed: bool = False) -> dict:
     if confirmed is not True:
         return failure("Explicit confirmation is required before downloads or benchmark generation.", failure_class=BAD_INPUT)
-    if operation not in {"download", "embedding", "estimate", "benchmark"} or not isinstance(options, dict):
+    if operation not in {"bundle", "download", "embedding", "estimate", "benchmark"} or not isinstance(options, dict):
         return failure("Unknown setup operation.", failure_class=BAD_INPUT)
     with _lock:
         if _state["running"]:
@@ -60,7 +60,9 @@ def start(operation: str, options: dict, confirmed: bool = False) -> dict:
 
 def _execute(operation: str, options: dict) -> None:
     try:
-        if operation == "download":
+        if operation == "bundle":
+            result = _bundle(options)
+        elif operation == "download":
             result = _download(options)
         elif operation == "embedding":
             result = _embedding()
@@ -76,6 +78,21 @@ def _execute(operation: str, options: dict) -> None:
         # bodies in generic job failures. Retry is always an explicit action.
         result = failure("Setup operation could not complete. Check network, free space and model app, then retry. Partial chat downloads can resume.", failure_class=UNAVAILABLE)
     _update(running=False, done=True, result=result)
+
+
+def _bundle(options):
+    ids = options.get("catalog_ids")
+    known = {m["id"] for m in catalog()}
+    if not isinstance(ids, list) or not ids or len(ids) > 3 or any(not isinstance(key, str) or key not in known for key in ids):
+        return failure("Choose a supported model bundle before downloading.", failure_class=BAD_INPUT)
+    for key in dict.fromkeys(ids):
+        if _cancel.is_set():
+            return failure("Bundle paused. Retry to reuse verified files and resume partial downloads.", failure_class=BLOCKED)
+        _update(note=f"Preparing {key}. Verified files are reused.", current_asset=key)
+        result = _download({"catalog_id": key, "storage_path": options.get("storage_path", "")})
+        if not result.get("success"):
+            return result
+    return {"success": True, "note": "Model files verified. Refresh LM Studio, then test the main, secondary and tool-selector roles before saving."}
 
 
 def _download(options: dict) -> dict:

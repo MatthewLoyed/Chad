@@ -121,6 +121,60 @@
       "hybrid_attention": true,
       "license": "apache-2.0",
       "sha256": "ac0e2c1189e055faa36eff361580e79c5bd6f8e76bffb4ce547f167d53e31a61"
+    },
+    {
+      "id": "bonsai-27b-q1",
+      "name": "Bonsai-27B",
+      "repo": "prism-ml/Bonsai-27B-gguf",
+      "revision": "f10afb355f104535e3e3e98cf7ab7795c72bd292",
+      "filename": "Bonsai-27B-Q1_0.gguf",
+      "size_bytes": 3803452480,
+      "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "quantization": "Q1_0",
+      "parameters_b": 27,
+      "layers": 16,
+      "kv_heads": 4,
+      "head_dim": 256,
+      "capability_rank": 5,
+      "max_context": 32768,
+      "source": "https://huggingface.co/prism-ml/Bonsai-27B-gguf",
+      "verified": "2026-10-24",
+      "hybrid_attention": true,
+      "license": "apache-2.0",
+      "runtime_gb": 1.75,
+      "speed_unverified": true,
+      "runtime_note": "Requires a runtime with Bonsai Q1_0_g128 hybrid-attention support. Confirm by loading and testing this exact artifact; an installed model or engine name alone is not proof.",
+      "memory_note": "FP16 full-attention KV for 16 of 64 layers plus conservative recurrent-state/runtime reserve; validate against installed engine.",
+      "settings": {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 20
+      }
+    },
+    {
+      "id": "qwen2.5-3b-instruct",
+      "name": "Qwen2.5-3B-Instruct",
+      "repo": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "revision": "7dabda4d13d513e3e842b20f0d435c732f172cbe",
+      "filename": "qwen2.5-3b-instruct-q4_k_m.gguf",
+      "size_bytes": 2104932768,
+      "sha256": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d",
+      "quantization": "Q4_K_M",
+      "parameters_b": 3,
+      "layers": 36,
+      "kv_heads": 2,
+      "head_dim": 128,
+      "capability_rank": 0,
+      "max_context": 32768,
+      "source": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "verified": "2026-10-24",
+      "hybrid_attention": false,
+      "license": "qwen-research",
+      "role": "selector",
+      "settings": {
+        "temperature": 0.0,
+        "top_p": 1.0
+      }
     }
   ]
 }
