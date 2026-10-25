@@ -392,6 +392,14 @@ The **ModelSelector** in the Chad GUI provides a unified view of all available m
 
 ## Technical Details
 
+The chat router establishes LM Studio residency through the shared model
+coordinator before constructing an inference client. The OpenAI-compatible model catalogue
+includes downloaded models and cannot establish residency. The lifecycle provider
+refuses explicit loads when the native inventory is malformed or incomplete, and
+recognizes loaded instance names as well as downloaded model keys. These checks
+are covered offline in `test_provider_lifecycle.py` and `test_model_router.py`;
+they do not establish safety across separate machines sharing one model server.
+
 - **Adapters**: `src/core/intelligence/adapters/openai_adapter.py` (streaming + dirty-parser fallback), `src/core/intelligence/adapters/litellm_adapter.py` (hybrid streaming, thinking injection, profile-driven models).
 - **Provider capability flags**: `src/core/intelligence/provider_capabilities.py` — see [above](#provider-capability-flags-issue-498).
 - **Provider lifecycle** (load/unload/VRAM budget): `src/core/intelligence/providers/` — `LMStudioLifecycle`, `OllamaLifecycle`, `StaticEndpointLifecycle` (llama.cpp/vLLM), resolved by `resolve_provider_name()`.
