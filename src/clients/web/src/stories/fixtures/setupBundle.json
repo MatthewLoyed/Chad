@@ -1,0 +1,219 @@
+{
+  "success": true,
+  "hardware": {
+    "cpu": "Example CPU",
+    "physical_cores": 8,
+    "ram_gb": 32,
+    "available_ram_gb": 24,
+    "storage_free_gb": 100,
+    "gpus": [
+      {
+        "name": "Example GPU",
+        "vram_gb": 16,
+        "shared_memory": false
+      }
+    ],
+    "warnings": []
+  },
+  "context": 8192,
+  "target": "40\u201350 generated tokens/sec or faster",
+  "models": [
+    {
+      "id": "bonsai-27b-q1",
+      "name": "Bonsai-27B",
+      "repo": "lmstudio-community/Bonsai-27B-GGUF",
+      "revision": "f4e1b84fac8d99a340cc87d06cd572dbe8a974d5",
+      "filename": "Bonsai-27B-Q1_0.gguf",
+      "size_bytes": 3803452576,
+      "sha256": "71d6871836886267f39f1ac69b1b1dd8a783970708d7a189960112ed02978901",
+      "quantization": "Q1_0",
+      "parameters_b": 27,
+      "layers": 16,
+      "kv_heads": 4,
+      "head_dim": 256,
+      "capability_rank": 5,
+      "max_context": 32768,
+      "source": "https://huggingface.co/lmstudio-community/Bonsai-27B-GGUF",
+      "verified": "2026-10-24",
+      "hybrid_attention": true,
+      "license": "apache-2.0",
+      "runtime_gb": 1.75,
+      "speed_unverified": true,
+      "runtime_note": "Requires a runtime with Bonsai Q1_0_g128 hybrid-attention support. Confirm by loading and testing this exact artifact; an installed model or engine name alone is not proof.",
+      "memory_note": "FP16 full-attention KV for 16 of 64 layers plus conservative recurrent-state/runtime reserve; validate against installed engine.",
+      "settings": {
+        "context_length": 8192,
+        "gpu_offload": "max",
+        "quantization": "Q1_0",
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 20,
+        "thinking": "off for interactive speed; enable deliberately for reasoning",
+        "advanced": "Keep engine defaults for Flash Attention and KV precision until supported settings are verified."
+      },
+      "installed_aliases": [
+        "prism-ml/bonsai-27b"
+      ],
+      "context": 8192,
+      "weights_gb": 3.54,
+      "kv_gb": 0.5,
+      "required_gb": 5.79,
+      "ram_needed_gb": 7.29,
+      "mode": "gpu",
+      "gpu_name": "Example GPU",
+      "fits": true,
+      "reasons": [],
+      "speed": {
+        "kind": "unknown",
+        "low": null,
+        "high": null,
+        "note": "Custom low-bit runtime: measure locally; weight bandwidth alone is not a validated speed estimate."
+      },
+      "target_likely": false
+    },
+    {
+      "id": "qwen3.5-9b",
+      "name": "Qwen3.5-9B",
+      "repo": "lmstudio-community/Qwen3.5-9B-GGUF",
+      "revision": "1379f25c6b505a3fc737bd7818cb09389cf807c1",
+      "filename": "Qwen3.5-9B-Q4_K_M.gguf",
+      "size_bytes": 5627044256,
+      "quantization": "Q4_K_M",
+      "parameters_b": 9,
+      "layers": 32,
+      "kv_heads": 4,
+      "head_dim": 256,
+      "capability_rank": 5,
+      "max_context": 32768,
+      "source": "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF",
+      "verified": "2026-10-23",
+      "hybrid_attention": true,
+      "license": "apache-2.0",
+      "sha256": "cd76ec205963b3b33350093e6904d9de16c4e666fd104e1f632d25c7f15f2a13",
+      "installed_aliases": [
+        "qwen/qwen3.5-9b"
+      ],
+      "context": 8192,
+      "weights_gb": 5.24,
+      "kv_gb": 1.0,
+      "required_gb": 6.99,
+      "ram_needed_gb": 8.99,
+      "mode": "gpu",
+      "gpu_name": "Example GPU",
+      "fits": true,
+      "reasons": [],
+      "speed": {
+        "kind": "unknown",
+        "low": null,
+        "high": null,
+        "note": "Benchmark required; no calibrated estimate for this hardware or CPU offload."
+      },
+      "target_likely": false,
+      "settings": {
+        "context_length": 8192,
+        "gpu_offload": "max",
+        "quantization": "Q4_K_M",
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": null,
+        "thinking": "off for interactive speed; enable deliberately for reasoning",
+        "advanced": "Keep engine defaults for Flash Attention and KV precision until supported settings are verified."
+      }
+    }
+  ],
+  "recommended_id": "bonsai-27b-q1",
+  "target_met": false,
+  "assumptions": "One inference host; main and selector together only when their combined budget fits, otherwise sequential switching. Secondary loads sequentially. OS/display headroom and optional CPU-embedding reserve included. Load contexts must match this plan; runtime estimates remain unverified until tested.",
+  "bundles": [
+    {
+      "id": "bonsai-27b-q1",
+      "primary": "bonsai-27b-q1",
+      "secondary": "qwen3.5-9b",
+      "selector": "qwen2.5-3b-instruct",
+      "selector_context": 8192,
+      "context": 8192,
+      "fits": true,
+      "reasons": [],
+      "new_bytes": 11535429600,
+      "residency": "main-and-selector",
+      "peak_host_gb": 10.0,
+      "runtime_budget_gb": 8.78,
+      "assets": [
+        {
+          "catalog_id": "bonsai-27b-q1",
+          "name": "Bonsai-27B",
+          "model_key": "lmstudio-community/Bonsai-27B-GGUF/Bonsai-27B-Q1_0.gguf",
+          "installed": false,
+          "size_bytes": 3803452576,
+          "license": "apache-2.0",
+          "source": "https://huggingface.co/lmstudio-community/Bonsai-27B-GGUF",
+          "required_gb": 5.79
+        },
+        {
+          "catalog_id": "qwen3.5-9b",
+          "name": "Qwen3.5-9B",
+          "model_key": "lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf",
+          "installed": false,
+          "size_bytes": 5627044256,
+          "license": "apache-2.0",
+          "source": "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF",
+          "required_gb": 6.99
+        },
+        {
+          "catalog_id": "qwen2.5-3b-instruct",
+          "name": "Qwen2.5-3B-Instruct",
+          "model_key": "Qwen/Qwen2.5-3B-Instruct-GGUF/qwen2.5-3b-instruct-q4_k_m.gguf",
+          "installed": false,
+          "size_bytes": 2104932768,
+          "license": "qwen-research",
+          "source": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF",
+          "required_gb": 2.99
+        }
+      ],
+      "runtime_note": "Requires a runtime with Bonsai Q1_0_g128 hybrid-attention support. Confirm by loading and testing this exact artifact; an installed model or engine name alone is not proof.",
+      "tools_ready": false,
+      "runtime_verified": false
+    },
+    {
+      "id": "qwen3.5-9b",
+      "primary": "qwen3.5-9b",
+      "secondary": "qwen3.5-9b",
+      "selector": "qwen2.5-3b-instruct",
+      "selector_context": 8192,
+      "context": 8192,
+      "fits": true,
+      "reasons": [],
+      "new_bytes": 7731977024,
+      "residency": "main-and-selector",
+      "peak_host_gb": 11.7,
+      "runtime_budget_gb": 9.98,
+      "assets": [
+        {
+          "catalog_id": "qwen3.5-9b",
+          "name": "Qwen3.5-9B",
+          "model_key": "lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf",
+          "installed": false,
+          "size_bytes": 5627044256,
+          "license": "apache-2.0",
+          "source": "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF",
+          "required_gb": 6.99
+        },
+        {
+          "catalog_id": "qwen2.5-3b-instruct",
+          "name": "Qwen2.5-3B-Instruct",
+          "model_key": "Qwen/Qwen2.5-3B-Instruct-GGUF/qwen2.5-3b-instruct-q4_k_m.gguf",
+          "installed": false,
+          "size_bytes": 2104932768,
+          "license": "qwen-research",
+          "source": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF",
+          "required_gb": 2.99
+        }
+      ],
+      "runtime_note": "Load and test each role before marking it ready.",
+      "tools_ready": false,
+      "runtime_verified": false
+    }
+  ],
+  "recommended_bundle_id": "bonsai-27b-q1",
+  "no_fit_note": "Free memory or model-drive space, correct detected hardware, or use an existing/cloud server."
+}

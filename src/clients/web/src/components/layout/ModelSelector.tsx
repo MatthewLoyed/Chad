@@ -165,7 +165,7 @@ export default function ModelSelector() {
             .replace(/GPT[-\s]*/gi, 'GPT ')
             .split('/').pop()?.split('-').slice(0, 3).join(' ') ?? label;
 
-        if (activeModel.mode === 'cloud') return <><Cloud size={13} /> {short}</>;
+        if (activeModel.mode === 'cloud' || activeModel.hosting === 'cloud') return <><Cloud size={13} /> {short}</>;
         return <><Cpu size={13} /> {short}</>;
     }, [isSwitching, activeModel]);
 
@@ -189,7 +189,7 @@ export default function ModelSelector() {
         }
     }, [isOpen, localModels.length, isRefreshing, refreshModels]);
 
-    const showSettingsGear = !isSwitching && activeModel?.mode === 'local';
+    const showSettingsGear = !isSwitching && activeModel?.mode === 'local' && activeModel.hosting !== 'cloud';
     const showToolWarning = activeModel?.mode === 'local'
         && activeModel.tools_verified
         && !activeModel.supports_tools;

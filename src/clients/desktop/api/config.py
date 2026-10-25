@@ -164,16 +164,8 @@ class ConfigAPIMixin(SetupAPIMixin):
                 # Full per-model settings from config.yaml local_models.model_settings
                 local_cfg = ConfigManager.get("local_models") or {}
                 model_settings = dict((local_cfg.get("model_settings") or {}).get(model_id, {}))
-                thinking_val = model_settings.get("thinking")
-                thinking_enabled = bool(thinking_val) if thinking_val is not None else None
-                return {
-                    "mode": "local",
-                    "name": model_id or "Choose a model",
-                    "provider": cfg.get("provider", "lmstudio"),
-                    "supports_tools": cfg.get("supports_tools", True),
-                    "thinking_enabled": thinking_enabled,
-                    "model_settings": model_settings,
-                }
+                from src.shared.model_selection import describe_endpoint_model
+                return describe_endpoint_model(cfg, model_settings)
         except Exception:
             pass
 
