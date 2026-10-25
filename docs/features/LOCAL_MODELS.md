@@ -109,8 +109,11 @@ than borrowing the selector. Cloud-only setup downloads no local bundle.
 headroom and selects co-resident main/selector only when both fit; otherwise
 roles switch sequentially. Exact installed files reduce new download bytes,
 not memory requirements. Preparation confirms aggregate downloads and checks
-pinned checksums before reuse. The Bonsai custom Q1 runtime and speed remain
-unverified until tested; fitting is not a 40–50 tokens/sec guarantee. Its optional
+pinned checksums before reuse. Curated LM Studio aliases can include an optional
+vision projector in their reported size; reuse checks the pinned language-model
+file separately. Bonsai/Qwen9B downloads use LM Studio Community artifacts.
+Runtime and speed remain unverified on each new installation until tested;
+fitting is not a 40–50 tokens/sec guarantee. Its optional
 vision projector/speculative draft are separate assets. Catalog entries retain
 their upstream licenses, including Qwen2.5's research license.
 
@@ -122,8 +125,13 @@ incompatible settings in LM Studio. Saved LM Studio defaults are not rewritten.
 Successful checks are bound to the endpoint, credentials and main model for
 30 minutes. Helper failure allows retry or explicit Chat-only completion.
 These checks do not certify main-model tool calling, images, later configuration
-changes or long-running workloads. The complete Bonsai bundle still needs live
-acceptance with the exact pinned artifact and supported runtime.
+changes or long-running workloads. Live acceptance on the maintainer’s 16 GB GPU verified the pinned Bonsai/Qwen9B
+files, main/secondary greetings, selector classification, sequential switch-back
+and main/selector co-residency. The live test corrected a selector fixture that
+wrongly mixed classification with a prohibition on calling tools; no tools execute. At 8192 context, batch 512,
+one parallel prediction and thinking off, 256-token samples measured about
+56 tokens/sec for Bonsai and 74 for Qwen9B. These are short local measurements,
+not universal hardware rankings or clean Windows installer acceptance.
 
 ## Quick automated setup (issue #406)
 

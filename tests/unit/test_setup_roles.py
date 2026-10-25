@@ -76,3 +76,16 @@ async def test_invalid_bundle_roles_fail_before_generation(monkeypatch):
     monkeypatch.setattr(roles, 'test_model', generate)
     assert not (await roles.validate_roles('http://localhost:1234/v1', '', 'main', {}, True))['success']
     generate.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('text,calls,expected', [('["demo_count_letters"]', None, True),
+    ('[]', None, False), ('["demo_get_weather"]', None, False),
+    ('["demo_count_letters"]', [{'name': 'demo_count_letters'}], False)])
+async def test_selector_proof_requires_requested_name_without_execution(monkeypatch, text, calls, expected):
+    from types import SimpleNamespace
+    from src.core.intelligence.adapters.litellm_adapter import LiteLLMAdapter
+    generate = AsyncMock(return_value=SimpleNamespace(text=text, tool_calls=calls, finish_reason='stop'))
+    monkeypatch.setattr(LiteLLMAdapter, 'generate', generate)
+    assert await roles._test_selector('http://localhost:1234/v1', '', 'instruct') is expected
+    assert generate.call_args.kwargs['tools'] is None

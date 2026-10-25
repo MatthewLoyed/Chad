@@ -22,10 +22,14 @@ def installed_assets(storage_path="", *, verify=False):
                     continue
             expected = f"{model['repo']}/{model['filename']}".lower()
             for row in rows:
-                # Exact path+size, never a family/quantization/name guess. Integrity
-                # is verified again by the download job before skipping acquisition.
-                if (row.get("type") == "llm" and row.get("path", "").replace("\\", "/").lower() == expected
-                        and row.get("sizeBytes") == model["size_bytes"]):
+                # Exact file identity is checked above. Curated LM Studio aliases
+                # may report weights + optional projector as their total size.
+                # Full checksums are required before testing or skipping acquisition.
+                if (row.get("type") == "llm" and (
+                        (row.get("path", "").replace("\\", "/").lower() == expected
+                         and row.get("sizeBytes") == model["size_bytes"])
+                        or (row.get("modelKey") in model.get("installed_aliases", [])
+                            and row.get("selectedVariant", "").endswith("@" + model["quantization"].lower())))):
                     result[model["id"]] = row["modelKey"]
             if file.is_file() and file.stat().st_size == model["size_bytes"]:
                 result.setdefault(model["id"], f"{model['repo']}/{model['filename']}")
