@@ -52,7 +52,7 @@ def update_download(readme: Path, tag: str) -> None:
     # Only the opening download block owns the current installer version.
     start = text.index("## Download Chad for Windows")
     end = text.index("\nStart with Chat mode", start)
-    block, count = re.subn(r"(?:v)?\d+\.\d+\.\d+-alpha\.\d+",
+    block, count = re.subn(r"(?:v)?\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.\d+)*)?",
                           lambda m: ("v" if m[0].startswith("v") else "") + version,
                           text[start:end])
     if count < 3:
