@@ -8,6 +8,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.core.intelligence.model_router import ModelRouter
 
+
+def test_downloaded_model_does_not_bypass_residency_coordinator(monkeypatch):
+    import io
+    import json
+    from src.shared.config_manager import ConfigManager
+    from src.shared.exceptions import ModelError
+    from src.core.intelligence import model_lifecycle
+
+    monkeypatch.setattr(ModelRouter, '_trigger_warmup', lambda self: None)
+    monkeypatch.setattr(ConfigManager, 'get_local_model_config', lambda *args: {
+        'name': 'example/main', 'provider': 'lmstudio',
+        'base_url': 'http://localhost:1234/v1', 'context_length': 8192,
+    })
+    # OpenAI listing includes DOWNLOADED models even when none are resident.
+    monkeypatch.setattr('urllib.request.urlopen', lambda *args, **kwargs:
+                        io.BytesIO(json.dumps({'data': [{'id': 'example/main'}]}).encode()))
+    ensure = MagicMock(return_value=False)
+    monkeypatch.setattr(model_lifecycle, 'ensure_resident_sync', ensure)
+    with patch('models.litellm_model.LiteLLMModel') as model:
+        with pytest.raises(ModelError):
+            ModelRouter({}, MagicMock())._ensure_local_model('chat')
+        model.assert_not_called()
+    ensure.assert_called_once_with(
+        'http://localhost:1234/v1', 'example/main', owner=model_lifecycle.OWNER_MAIN_MODEL,
+        priority=model_lifecycle.current_priority(), context_length=8192,
+    )
+
 @pytest.fixture
 def mock_config():
     return {

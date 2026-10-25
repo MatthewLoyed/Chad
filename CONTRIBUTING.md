@@ -46,6 +46,10 @@ $env:PYTHONPATH="."
 
 Tool-selection and database-backed replay evaluations are separate opt-in checks;
 they are not part of this repository's credential-free CI.
+Unit tests must mock model-server transports. Their session guard blocks socket
+connections to the default LM Studio/gate/Ollama ports (1234/1235/11434), and
+disables model tracing. This is a regression safeguard, not network isolation for
+custom ports or subprocesses; live acceptance uses a dedicated model server.
 The [Windows CI workflow](.github/workflows/evals.yml) owns clean test-environment
 setup: CPU PyTorch, the Transformers 4 API required by Nomic's custom model,
 ReportLab for PDF fixtures and Playwright Chromium for animation tests.
