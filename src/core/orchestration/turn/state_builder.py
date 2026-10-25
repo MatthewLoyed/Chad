@@ -37,6 +37,10 @@ class TurnStateBuilder:
     ) -> str:
         """Plan lane gets a bare memory block (scout/planner nodes add their own
         scoped role prompts); every other lane gets the full assembled prompt."""
+        if category == "feed":
+            from src.core.discovery.feed_context import build_feed_instruction
+            return build_feed_instruction()
+
         # Resolved once for BOTH lanes below. The plan lane bypasses SystemPromptBuilder.build
         # entirely, so it has to inject the domain persona and scope its memory itself —
         # forgetting that here is how a Financial plan turn ends up reading global memory.

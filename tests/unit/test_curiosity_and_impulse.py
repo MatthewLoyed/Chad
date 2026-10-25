@@ -217,3 +217,29 @@ async def test_manage_curiosity_tool_get_and_status():
         # Get next again when empty
         empty_res = await tool.execute(action="get_next")
         assert empty_res["success"] is False
+
+@pytest.mark.asyncio
+async def test_scavenger_publishes_finds_without_consuming_stash():
+    repo = InMemoryStateRepository()
+    service = CuriosityService(state_repo=repo)
+    with patch('src.core.discovery.pipeline.ContentDiscoveryPipeline') as pipeline_cls:
+        discover = pipeline_cls.return_value.discover = AsyncMock(return_value=[])
+        assert await service.scavenge() == 0
+        assert discover.await_args.kwargs['push_to_dashboard'] is True
+        assert discover.await_args.kwargs['push_to_stash'] is True
+        assert discover.await_args.kwargs['verify'] is True
+        assert service._get_sent_history() == {}
+
+@pytest.mark.asyncio
+async def test_curiosity_add_receipt_does_not_claim_feed_publication():
+    tool = ManageCuriosity()
+    tool.curiosity_service = MagicMock()
+    tool.curiosity_service.add_item = AsyncMock(return_value=True)
+    with patch('src.core.intelligence.dashboard_feed.append_entry', new=AsyncMock()) as publish:
+        result = await tool.execute(action='add', url='https://example.com/article', title='A useful discovery')
+    assert result['success'] is True
+    assert result['feed_published'] is False
+    assert 'entry_id' not in result
+    assert 'update_dashboard' in result['next_action']
+    assert 'search_for_tool' in tool.get_schema()['description']
+    publish.assert_not_awaited()

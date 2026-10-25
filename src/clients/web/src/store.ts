@@ -394,7 +394,7 @@ export interface VoiceAvailability {
     detail: string | null;
 }
 
-export type Workspace = 'chat' | 'routines' | 'board' | 'dashboard' | 'automations';
+export type Workspace = 'feed' | 'chat' | 'routines' | 'board' | 'dashboard' | 'automations';
 
 export type ChatTurnMode = 'auto' | 'agent' | 'chat' | 'plan';
 

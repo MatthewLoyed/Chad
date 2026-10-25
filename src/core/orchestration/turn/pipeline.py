@@ -10,6 +10,7 @@ import asyncio
 import inspect
 import random
 import time
+import uuid
 from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
 
 from src.shared.logger import setup_logger
@@ -55,7 +56,7 @@ def is_background_turn(category: Optional[str], platform: Optional[str]) -> bool
     ``platform="eval"`` is deliberately NOT background: eval harnesses (dry-run / live /
     workflow) take absolute precedence in development — they load as interactive and
     ``eval_exclusivity`` blocks other turns for the duration. See evals/live.py."""
-    return category == "autonomous" or platform in ("system", "background")
+    return category in ("autonomous", "feed") or platform in ("system", "background")
 
 
 def is_eval_turn(platform: Optional[str]) -> bool:
@@ -152,7 +153,7 @@ class TurnPipeline:
         """Phase list for one turn. Each step may short-circuit with a response."""
         from src.core.skill_system.skill_commands import prepare_skill_turn
         self.skill_command = None
-        if (self.prompt or "").lstrip().startswith("/"):
+        if self.category != "feed" and (self.prompt or "").lstrip().startswith("/"):
             self.skill_command, self.category, skill_adapter = await prepare_skill_turn(
                 self.prompt, self.category, self._c,
             )
@@ -174,7 +175,7 @@ class TurnPipeline:
 
         # An approval is continuation of an exact saved call, not a new task.
         # Avoid the mode router, tool-selector LLM, and history compaction LLM.
-        if not self.skill_command and await self._prepare_approval_continuation():
+        if self.category != "feed" and not self.skill_command and await self._prepare_approval_continuation():
             self._open_span()
             return await self._invoke()
 
@@ -259,7 +260,7 @@ class TurnPipeline:
 
         self.cache_eligible = (
             False
-            if self.is_retry or self.skill_command
+            if self.is_retry or self.skill_command or self.category == "feed"
             else self._c._semantic_cache_eligible(
                 self.category, self.content_blocks, self.image_base64
             )
@@ -394,7 +395,7 @@ class TurnPipeline:
         if self.category == "voice":
             self._emitter.status(random.choice(PROCESSING_LABELS), self.delivery)
 
-        if getattr(self, "is_retry", False):
+        if self.category != "feed" and getattr(self, "is_retry", False):
             from src.infrastructure.repositories.chat_history_repository import ChatHistoryRepository
             try:
                 repo = ChatHistoryRepository()
@@ -405,7 +406,7 @@ class TurnPipeline:
             except Exception as e:
                 logger.warning(f"[ RETRY ] Failed to prune conversation history: {e}")
 
-        self.history = await self._c._history_loader.load(self.session_id)
+        self.history = [] if self.category == "feed" else await self._c._history_loader.load(self.session_id)
         self.perf.mark("history")
         self._emitter.phase("history", self.delivery)
 
@@ -420,7 +421,7 @@ class TurnPipeline:
         )
         self.scratch.mode = mode
         engine = self._c._langgraph_engine
-        if engine and inspect.iscoroutinefunction(getattr(engine, "get_execution_resume_mode", None)) and self.category not in ("voice", "contact", "telegram_agent"):
+        if engine and inspect.iscoroutinefunction(getattr(engine, "get_execution_resume_mode", None)) and self.category not in ("voice", "contact", "telegram_agent", "feed"):
             resume_mode = await engine.get_execution_resume_mode(self.session_id, self.prompt)
             if resume_mode:
                 mode, self.mode_source, confidence = resume_mode, "execution_continuation", 1.0
@@ -452,7 +453,7 @@ class TurnPipeline:
                     self.active_adapter = chat_adapter
 
         mcp_ready = self._c.mcp_ready_event
-        if mcp_ready and not mcp_ready.is_set() and mode != "chat":
+        if mcp_ready and not mcp_ready.is_set() and mode != "chat" and self.category != "feed":
             logger.warning("[ TURN ] Waiting for MCP warmup to complete before executing turn...")
             await mcp_ready.wait()
             logger.warning("[ TURN ] MCP warmup complete. Proceeding with turn.")
@@ -504,22 +505,12 @@ class TurnPipeline:
     async def _resolve_tools(self) -> Optional[str]:
         """Pick this turn's tool menu. Returns a user-facing message if selection failed."""
         # Contact / telegram_agent resolve to special tool menus (must not take empty chat path).
-        if self.category == "contact":
-            selection = self._c._tool_selector.contact_schemas()
-            self.tools = selection.schemas
-            self.scratch.is_simple = selection.is_simple
-            self.scratch.tool_selection = selection.selection
-            self.scratch.bundled_skills = []
-            self.scratch.knowledge_boost = ""
-        elif self.category == "telegram_agent":
-            selection = self._c._tool_selector.telegram_agent_schemas()
-            self.tools = selection.schemas
-            self.scratch.is_simple = selection.is_simple
-            self.scratch.tool_selection = selection.selection
-            self.scratch.bundled_skills = []
-            self.scratch.knowledge_boost = ""
-        elif self.category == "voice":
-            selection = self._c._tool_selector.voice_schemas()
+        fixed_menus = {
+            "feed": "feed_schemas", "contact": "contact_schemas",
+            "telegram_agent": "telegram_agent_schemas", "voice": "voice_schemas",
+        }
+        if self.category in fixed_menus:
+            selection = getattr(self._c._tool_selector, fixed_menus[self.category])()
             self.tools = selection.schemas
             self.scratch.is_simple = selection.is_simple
             self.scratch.tool_selection = selection.selection
@@ -714,7 +705,7 @@ class TurnPipeline:
 
     async def _prepare_graph(self) -> None:
         """Preflight-consolidate history, ensure an engine, and compose the messages."""
-        self.history = await self._c._consolidator.preflight(
+        self.history = [] if self.category == "feed" else await self._c._consolidator.preflight(
             self.sys_instr,
             self.tools,
             history=self.history,
@@ -737,7 +728,7 @@ class TurnPipeline:
                 mcp_ready_event=self._c.mcp_ready_event,
             )
 
-        if getattr(self, "is_retry", False):
+        if self.category != "feed" and getattr(self, "is_retry", False):
             engine = self._c._langgraph_engine
             if engine:
                 try:
@@ -754,6 +745,8 @@ class TurnPipeline:
     async def _thread_has_checkpoint(self) -> bool:
         """Whether LangGraph already holds state for this thread. Non-fatal: a lookup
         failure is treated as "no checkpoint", which seeds from the DB instead."""
+        if self.category == "feed":
+            return False
         try:
             return bool(await self._c._langgraph_engine.get_history(self.session_id))
         except Exception as e:
@@ -837,7 +830,7 @@ class TurnPipeline:
             try:
                 logger.info(f"[ TURN ] Invoking LangGraph engine (session: {self.session_id})")
                 final_state = await self._c._langgraph_engine.invoke(
-                    initial_state, thread_id=self.session_id
+                    initial_state, thread_id=(f"feed:{uuid.uuid4().hex}" if self.category == "feed" else self.session_id)
                 )
 
                 escalated = await self._maybe_escalate_voice(final_state)

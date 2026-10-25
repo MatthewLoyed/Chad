@@ -225,14 +225,15 @@ class ContentDiscoveryPipeline:
             from src.core.intelligence.dashboard_feed import append_entry
             pushed = 0
             for it in items[:3]:  # Push top 3 to keep dashboard clean
-                title = f"💡 {it.title}"
-                body = f"{it.summary}\n\nLink: {it.url}"
+                title = it.title
+                from src.core.discovery.feed_preview import compact_preview
+                body = compact_preview(it.summary)
                 meta = {
+                    **it.metadata,
                     "source": it.source,
                     "category": it.category,
                     "url": it.url,
                     "score": it.final_score,
-                    **it.metadata,
                 }
                 action = {
                     "type": "open_url",
