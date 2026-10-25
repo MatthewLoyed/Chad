@@ -74,8 +74,9 @@ def shared_setup_selector(registry):
     from src.shared.config_manager import ConfigManager
 
     current = registry._llm_selector
-    if ConfigManager.get("setup.share_main_model", False):
-        selected = ConfigManager.get_local_model_config()
+    if ConfigManager.get("setup.share_main_model", False) or ConfigManager.get("tools.selector_model"):
+        from src.shared.model_selection import selector_config
+        selected = selector_config()
         if (getattr(current, "_model_id", None) != ConfigManager.get_llm_selector_model()
                 or getattr(current, "_base_url", "").rstrip("/") != selected.get("base_url", "").rstrip("/")):
             from src.infrastructure.tools.registry import _build_llm_selector
@@ -87,7 +88,8 @@ def shared_setup_selector(registry):
 def _selector_request_headers(base_url, capabilities):
     from src.shared.config_manager import ConfigManager
 
-    selected = ConfigManager.get_local_model_config()
+    from src.shared.model_selection import selector_config
+    selected = selector_config()
     api_key = capabilities.default_api_key
     if selected.get("base_url", "").rstrip("/") == base_url.rstrip("/"):
         api_key = selected.get("api_key") or api_key

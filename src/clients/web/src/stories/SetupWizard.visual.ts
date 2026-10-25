@@ -40,6 +40,29 @@ for (const width of [1280, 390]) {
 }
 
 for (const width of [1280, 390]) {
+    test(`recommended role bundle stays understandable at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto('/iframe.html?id=setup-first-conversation--recommended-bundles&viewMode=story');
+        await page.getByRole('button', { name: 'Get started' }).click();
+        await page.getByRole('button', { name: /LM Studio Recommended/ }).click();
+        await page.getByRole('button', { name: 'LM Studio is open — continue' }).click();
+        await page.getByRole('button', { name: 'Find a model for me' }).click();
+        await expect(page.getByRole('heading', { name: 'Bonsai-27B' })).toBeVisible();
+        await expect(page.getByText(/Qwen2.5-3B-Instruct — configured automatically/)).toBeVisible();
+        await expect(page.getByText('total new downloads')).toBeVisible();
+        await page.screenshot({ path: test.info().outputPath(`bundle-${width}.png`) });
+        await page.getByRole('button', { name: 'Prepare recommended setup' }).click();
+        await expect(page.getByRole('button', { name: 'Confirm model downloads' })).toBeFocused();
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await page.getByRole('button', { name: 'I already have a model — continue' }).click();
+        await page.getByRole('button', { name: 'Check connection' }).click();
+        await page.getByRole('button', { name: 'Test recommended setup' }).click();
+        await expect(page.getByRole('button', { name: 'Use this model and open Chat' })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+}
+
+for (const width of [1280, 390]) {
 test(`cloud API works without local installation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/iframe.html?id=setup-first-conversation--guided-setup&viewMode=story');

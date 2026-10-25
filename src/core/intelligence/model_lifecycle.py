@@ -238,6 +238,9 @@ def is_pinned(model_id: str) -> bool:
 
 def _estimate_size_gb(model_id: str, size_table: Dict[str, float]) -> float:
     key = _clean_model_id(model_id).lower()
+    exact = next((gb for pattern, gb in size_table.items() if _clean_model_id(pattern).lower() == key), None)
+    if exact is not None:
+        return exact
     for pattern, gb in size_table.items():
         if pattern.lower() in key:
             return gb

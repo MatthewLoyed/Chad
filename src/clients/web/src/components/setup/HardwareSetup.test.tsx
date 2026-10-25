@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import HardwareSetup from './HardwareSetup';
+import bundleFixture from '../../stories/fixtures/setupBundle.json';
 
 afterEach(() => { cleanup(); delete window.pywebview; });
 const assessment = {
@@ -54,6 +55,19 @@ it('keeps manual setup available when assessment fails', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Probe unavailable');
     expect(screen.getByRole('button', { name: 'Find a model for me' })).toHaveProperty('disabled', false);
+});
+
+it('explains one bundled download and never asks for a task questionnaire', async () => {
+    const start = vi.fn().mockResolvedValue({ success: true });
+    mount({ assess_model_hardware: vi.fn().mockResolvedValue(bundleFixture), start_model_setup_job: start });
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
+    await screen.findByRole('heading', { name: 'Bonsai-27B' });
+    expect(screen.getByText(/Qwen2.5-3B-Instruct — configured automatically/)).toBeTruthy();
+    expect(screen.getByText(/Subagents reuse/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare recommended setup' }));
+    expect(start).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm model downloads' }));
+    await waitFor(() => expect(start).toHaveBeenCalledWith('bundle', { catalog_ids: ['bonsai-27b-q1', 'qwen3.5-9b', 'qwen2.5-3b-instruct'], storage_path: '' }, true));
 });
 
 it('uses readable model cards, separates technical details and preserves the recommendation on return', async () => {

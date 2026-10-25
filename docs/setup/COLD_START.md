@@ -44,7 +44,7 @@ a precondition for Chad to work at all.
 | Cloud LLM key | No | Optional cloud provider configuration in `config/secrets.yaml` | Not needed for local chat |
 | Persona/prompts | Yes | **Built in, zero config** — local files, `prompts/persona/*.md` (#403, #589) | ✅ Verified |
 | **Supabase project** (richer memory/RAG, chat history sync) | **No — optional upgrade** | user provisions own project + runs one bootstrap script | Low — SQL cross-checked, live run pending a free project slot |
-| LM Studio (one chosen chat model) | Recommended | desktop setup assesses hardware and offers confirmed downloads | Optional CPU embedding assets are separate |
+| LM Studio (a compatible model setup) | Recommended | [Hardware-guided bundles and manual Chat setup](../features/LOCAL_MODELS.md#first-launch-chat-setup), with confirmed downloads and role checks | Exact Bonsai runtime and clean Windows acceptance remain pending; optional CPU embeddings are separate |
 | Docker services (SearXNG, Presenton, Kroki…) | Optional (tiered) | `docker/chad-services.yml` | Low — audited #405, every sidecar has a working fallback (live compose-up dry run still pending) |
 | Voice / STT / wake word | Optional | `requirements-voice.txt`, models | Low (off by default) |
 

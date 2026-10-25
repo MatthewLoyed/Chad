@@ -26,6 +26,8 @@ const DESKTOP_ONLY: Record<string, string> = {
     get_model_setup_job: 'desktop setup job progress',
     cancel_model_setup_job: 'desktop setup job cancellation',
     get_setup_status: 'first-run wizard is desktop-only (App.tsx guards on isBrowserTransport)',
+    test_setup_bundle: 'desktop model bundle role validation',
+    save_setup_bundle: 'desktop first-run role configuration',
     test_setup_model: 'first-run desktop-only explicit chat test',
     probe_local_backend: 'first-run wizard is desktop-only',
     save_provider_choice: 'first-run wizard is desktop-only',
@@ -109,9 +111,10 @@ describe('browser shim / UI parity', () => {
         // Issue #5 adds four intentionally local-only hardware/download job
         // methods. Exposing them over the network would scan the wrong host
         // and turn a desktop installer into a remote execution surface.
+        // 17 -> 19: explicit bundle validation/save extend the same desktop-only setup.
         // 16 -> 17: the first-run wizard now explicitly tests a chat model before
         // saving. App.tsx still excludes this wizard on browser transport; this
         // is not a newly exposed browser pane or a general-purpose generation API.
-        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(17);
+        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(19);
     });
 });

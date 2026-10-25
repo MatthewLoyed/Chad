@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import SetupWizard from './SetupWizard';
+import bundleFixture from '../../stories/fixtures/setupBundle.json';
 afterEach(() => { cleanup(); delete window.pywebview; });
 function enterLmStudio() {
     if (window.pywebview?.api) window.pywebview.api.test_setup_model = vi.fn().mockResolvedValue({ success: true, reply: 'Hello!' });
@@ -124,4 +125,30 @@ it('does not allow a failed chat test to complete setup', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send a short test message' }));
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Provider credit unavailable.');
     expect(screen.queryByRole('button', { name: /Use this model/ })).toBeNull();
+});
+
+it('offers explicit Chat-only fallback after a failed helper check and preserves its proof', async () => {
+    const save = vi.fn().mockResolvedValue({ success: true });
+    window.pywebview = { api: {
+        assess_model_hardware: vi.fn().mockResolvedValue(bundleFixture),
+        probe_local_backend: vi.fn().mockResolvedValue({ reachable: true, bundle_models: { 'bonsai-27b-q1': 'existing-bonsai' }, models: [{ id: 'existing-bonsai', display_name: 'Bonsai' }] }),
+        test_setup_model: vi.fn(),
+        test_setup_bundle: vi.fn().mockResolvedValue({ success: false, reply: 'Hello', detail: 'Helper unavailable.', validation_token: 'fictional-proof' }),
+        save_setup_bundle: save, save_provider_choice: vi.fn(),
+    } };
+    render(<SetupWizard onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
+    fireEvent.click(screen.getByRole('button', { name: /LM Studio Recommended/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'LM Studio is open — continue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Find a model for me' }));
+    await screen.findByRole('heading', { name: 'Bonsai-27B' });
+    fireEvent.click(screen.getByRole('button', { name: 'I already have a model — continue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check connection' }));
+    await screen.findByRole('option', { name: 'Bonsai' });
+    fireEvent.click(screen.getByRole('button', { name: 'Test recommended setup' }));
+    await screen.findByText('Helper unavailable.');
+    expect(screen.queryByRole('button', { name: 'Use this model and open Chat' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Chat only' }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith('http://localhost:1234/v1', '', 'existing-bonsai', 'fictional-proof', true));
+    expect(window.pywebview?.api?.save_provider_choice).not.toHaveBeenCalled();
 });

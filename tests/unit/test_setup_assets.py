@@ -50,3 +50,13 @@ def test_fully_received_partial_is_finalized_without_another_request(monkeypatch
     partial.write_bytes(b'test')
     assert assets._download({'catalog_id': 'example', 'storage_path': str(tmp_path)})['success']
     assert partial.with_suffix('').read_bytes() == b'test'
+
+
+def test_bundle_reuses_shared_assets_once_and_stops_after_failed_file(monkeypatch):
+    calls = []
+    monkeypatch.setattr(assets, 'catalog', lambda: [{'id': 'main'}, {'id': 'helper'}])
+    monkeypatch.setattr(assets, '_download', lambda options: calls.append(options['catalog_id']) or {'success': options['catalog_id'] != 'helper'})
+    assets._cancel.clear()
+    assert not assets._bundle({'catalog_ids': ['main', 'main', 'helper']})['success']
+    assert calls == ['main', 'helper']
+    assert not assets._bundle({'catalog_ids': ['../unknown']})['success']

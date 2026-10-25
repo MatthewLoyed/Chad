@@ -247,7 +247,7 @@ async def probe_local_backend(provider: str, base_url: str, api_key: str = "") -
 
 
 def save_provider_choice(
-    provider: str, base_url: str, api_key: str, model_id: str, supports_tools: bool = True
+    provider: str, base_url: str, api_key: str, model_id: str, supports_tools: bool = True, *, extra_updates=None
 ) -> Dict[str, Any]:
     """Persist the wizard's backend + model pick to preferences.yaml.
 
@@ -283,6 +283,8 @@ def save_provider_choice(
         "use_local": True, "active_model": active_model, "supervisor": active_model,
         "providers": {provider_key: {"base_url": base_url, "api_key": api_key or "", "enabled": True}},
     }}
+    if extra_updates:
+        ConfigManager._recursive_update(update, extra_updates)
     preferences = config_repo.load("preferences", use_cache=False)
     ConfigManager._recursive_update(preferences, update)
     if not config_repo.save("preferences", preferences, update_cache=True):

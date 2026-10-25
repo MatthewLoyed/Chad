@@ -9,9 +9,15 @@ interface Candidate {
     id: string; name: string; quantization: string; weights_gb: number; kv_gb: number;
     required_gb: number; fits: boolean; reasons: string[]; mode: string; source: string;
     speed: { kind: string; low: number | null; high: number | null; note: string };
-    settings: { gpu_offload: string; temperature: number; top_p: number; thinking: string; advanced: string };
+    settings: { context_length?: number; top_k?: number | null; gpu_offload: string; temperature: number; top_p: number; thinking: string; advanced: string };
+}
+export interface ModelBundle {
+    id: string; primary: string; secondary: string; selector: string | null; context: number;
+    fits: boolean; new_bytes: number; residency: string; runtime_note: string;
+    assets: { catalog_id: string; name: string; model_key: string; installed: boolean; size_bytes: number; license: string; source: string }[];
 }
 interface Assessment {
+    bundles?: ModelBundle[]; no_fit_note?: string;
     success?: boolean; detail?: string; recommended_id?: string; target_met: boolean;
     hardware: { ram_gb: number | null; available_ram_gb: number | null; cpu: string;
         physical_cores: number | null; storage_free_gb: number | null;
@@ -32,7 +38,7 @@ const isLocalServer = (value: string) => {
     catch { return false; }
 };
 
-export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: { baseUrl: string; apiKey: string; modelId: string; onContinue?: () => void }) {
+export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: { baseUrl: string; apiKey: string; modelId: string; onContinue?: (bundle?: ModelBundle) => void }) {
     const api = window.pywebview?.api;
     const [context, setContext] = useState(8192);
     const [storage, setStorage] = useState('');
@@ -46,6 +52,7 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: 
     const confirmation = useRef<HTMLDivElement>(null);
     const generation = useRef(0);
     const candidate = assessment?.models.find(model => model.id === selected);
+    const bundle = assessment?.bundles?.find(plan => plan.primary === selected);
     useEffect(() => {
         if (pending) {
             confirmation.current?.scrollIntoView?.({ block: 'nearest' });
@@ -87,7 +94,7 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: 
         } catch (e) { setError(e instanceof Error ? e.message : 'Setup operation failed.'); }
     };
     const queue = (operation: string, options: Record<string, unknown>, summary: string) => setPending({ operation, options, summary });
-    const continueButton = onContinue && <button style={styles.secondaryBtn} disabled={job.running || !!pending} onClick={onContinue}>{job.done && job.result?.success && job.operation === 'download' ? 'Continue to connection' : 'I already have a model — continue'} <ArrowRight size={16} /></button>;
+    const continueButton = onContinue && <button style={styles.secondaryBtn} disabled={job.running || !!pending} onClick={() => onContinue(bundle)}>{job.done && job.result?.success && (job.operation === 'download' || job.operation === 'bundle') ? 'Continue to connection' : 'I already have a model — continue'} <ArrowRight size={16} /></button>;
     return <div className="chad-setup setup-stack">
         <h1 style={styles.title} tabIndex={-1}>Find your first AI model</h1>
         {!assessment && <p style={styles.hint}>A model is the AI that answers your messages. We’ll check your computer and suggest one for smooth, everyday chat.</p>}
@@ -101,18 +108,28 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: 
             </button>
             {continueButton}
         </>}
+        {assessment && !candidate && <div role="status" className="setup-note setup-stack"><strong>No compatible setup fits right now</strong><p style={styles.hint}>{assessment.no_fit_note || 'Free memory or disk space, then scan again. You can also connect an existing model manually.'}</p>{continueButton}</div>}
         {assessment && candidate && <>
             <section className="setup-recommendation" aria-label="Suggested model">
                 <span className="setup-badge">{candidate.fits ? candidate.id === assessment.recommended_id ? 'Recommended for your computer' : 'Your selection' : 'Not enough memory right now'}</span>
                 <h2>{candidate.name}</h2>
-                <p style={styles.hint}>{candidate.fits ? 'A starting point for everyday chat on this computer.' : 'Try a smaller model or free some memory, then scan again.'}</p>
+                <p style={styles.hint}>{candidate.fits ? candidate.id === 'bonsai-27b-q1' ? 'Chad’s main-model default for compatible systems with 16 GB or more graphics memory.' : candidate.id === 'qwen3.5-9b' ? 'Chad’s fast main model, or fast secondary alongside Bonsai.' : 'A smaller starting model for this computer.' : 'Try a smaller model or free some memory, then scan again.'}</p>
                 <div className="setup-metrics">
-                    <div><strong>{gib(candidate.weights_gb)}</strong><span>download size</span></div>
+                    <div><strong>{gib(bundle ? bundle.new_bytes / 1024 ** 3 : candidate.weights_gb)}</strong><span>{bundle ? 'total new downloads' : 'download size'}</span></div>
                     <div><strong>{candidate.speed.low == null ? 'Needs a speed test' : `${candidate.speed.low}–${candidate.speed.high}`}</strong><span>{candidate.speed.low == null ? 'speed not yet known' : 'estimated tokens / second'}</span></div>
                 </div>
                 <p style={styles.hint}>{candidate.speed.low == null ? 'We can’t estimate speed reliably on this hardware.' : 'Estimated speed, not a benchmark. Actual speed varies.'}</p>
                 {candidate.reasons.map(reason => <p key={reason} role="note" style={styles.errText}>{reason}</p>)}
-                <button style={styles.primaryBtn} disabled={job.running || !candidate.fits || !!pending} onClick={() => queue('download', { catalog_id: candidate.id, storage_path: storage }, `Download ${candidate.name} (${gib(candidate.weights_gb)}) to ${storage || 'your default LM Studio model folder'}. You can pause and retry the download.`)}>Download {candidate.name}</button>
+                {bundle && <div className="setup-stack" style={{ gap: 8 }}>
+                    <p style={styles.hint}><strong>Main:</strong> {candidate.name}</p>
+                    <p style={styles.hint}><strong>Fast secondary:</strong> {bundle.assets.find(asset => asset.catalog_id === bundle.secondary)?.name}{bundle.secondary === bundle.primary ? ' (reuses your main model)' : ''}</p>
+                    <p style={styles.hint}><strong>Tool selection:</strong> {bundle.selector ? 'Qwen2.5-3B-Instruct — configured automatically' : 'No separate helper fits; start with basic Chat'}</p>
+                    <p style={styles.hint}>Subagents reuse your main/secondary models. No extra agent downloads.</p>
+                </div>}
+                <button style={styles.primaryBtn} disabled={job.running || !candidate.fits || !!pending} onClick={() => bundle
+                    ? queue('bundle', { catalog_ids: bundle.assets.map(asset => asset.catalog_id), storage_path: storage }, `Prepare this model setup (${gib(bundle.new_bytes / 1024 ** 3)} new downloads). Existing exact files are verified and reused; missing files download to ${storage || 'the default LM Studio model folder'}. You can pause and retry.`)
+                    : queue('download', { catalog_id: candidate.id, storage_path: storage }, `Download ${candidate.name} (${gib(candidate.weights_gb)}). You can pause and retry.`)}>{bundle ? bundle.new_bytes ? 'Prepare recommended setup' : 'Verify installed model files' : `Download ${candidate.name}`}</button>
+
             </section>
             {continueButton}
             <details><summary>Compare other models</summary><div className="setup-details setup-alternatives" role="group" aria-label="Model alternatives">
@@ -121,26 +138,33 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: 
                     <small>{gib(model.weights_gb)} download · {model.fits ? model.speed.low == null ? 'Speed needs testing' : `Estimated ${model.speed.low}–${model.speed.high} tokens/sec` : 'Does not fit available memory'}</small>
                 </button>)}
             </div></details>
+            {bundle && <details><summary>Model files and loading plan</summary><div className="setup-details">
+                {bundle.assets.map(asset => <p key={asset.catalog_id} style={styles.hint}>{asset.name} · {asset.installed ? 'Already installed; integrity check before reuse' : gib(asset.size_bytes / 1024 ** 3) + ' download'} · <a href={asset.source} target="_blank" rel="noreferrer">{asset.license}</a></p>)}
+                <p style={styles.hint}>Main/secondary context: {bundle.context} tokens. Selector context: 8192 tokens.</p>
+                <p style={styles.hint}>{bundle.residency === 'main-and-selector' ? 'Main and selector fit together in the estimated budget. Secondary loads as needed.' : 'Models run sequentially to leave memory headroom; switching can add delay.'}</p>
+                <p style={styles.hint}>{bundle.runtime_note} No optional vision or speculative-draft download is included.</p>
+            </div></details>}
             <details><summary>Suggested LM Studio settings</summary><div className="setup-details">
                 <p style={styles.hint}>Use these when loading this model in LM Studio. Chad does not apply them automatically.</p>
-                <p style={styles.hint}>Context: {context} tokens · GPU offload: {candidate.settings.gpu_offload}<br />Temperature: {candidate.settings.temperature} · Top-p: {candidate.settings.top_p}<br />Thinking: {candidate.settings.thinking}</p>
+                {bundle && <p style={styles.hint}>For the bundle budget: parallel predictions 1, evaluation batch size at most 512. Main/secondary context {bundle.context}; selector context 8192. Model tests check loaded settings.</p>}
+                <p style={styles.hint}>Context: {candidate.settings.context_length || context} tokens · GPU offload: {candidate.settings.gpu_offload}<br />Temperature: {candidate.settings.temperature} · Top-p: {candidate.settings.top_p}<br />Thinking: {candidate.settings.thinking}</p>
                 <p style={styles.hint}>{candidate.settings.advanced}</p>
             </div></details>
         </>}
         {pending && <div ref={confirmation} role="group" aria-label="Confirm setup operation" className="setup-note setup-stack">
-            <strong>Ready to {pending.operation === 'download' ? 'download this model' : pending.operation}?</strong>
+            <strong>Ready to {pending.operation === 'bundle' ? 'prepare your models' : pending.operation === 'download' ? 'download this model' : pending.operation}?</strong>
             <p style={styles.hint}>{pending.summary}</p>
-            <button style={styles.primaryBtn} onClick={() => void run()}>Confirm {pending.operation}</button>
+            <button style={styles.primaryBtn} onClick={() => void run()}>{pending.operation === 'bundle' ? 'Confirm model downloads' : `Confirm ${pending.operation}`}</button>
             <button style={styles.secondaryBtn} onClick={() => setPending(null)}>Cancel</button>
         </div>}
         {job.running && <div role="status" className="setup-status setup-stack">
-            <strong>{job.operation === 'download' ? 'Downloading your model' : 'Working on your request'}</strong>
+            <strong>{(job.operation === 'download' || job.operation === 'bundle') ? 'Downloading your model' : 'Working on your request'}</strong>
             <p style={styles.hint}>{job.total ? `${gib((job.bytes || 0) / 1024 ** 3)} of ${gib(job.total / 1024 ** 3)}` : job.note || 'This can take a few minutes. You can leave this window open.'}</p>
             <progress value={job.total ? job.bytes || 0 : undefined} max={job.total || undefined} aria-label="Model download progress" />
-            {(job.operation === 'download' || job.operation === 'embedding') && <button style={styles.secondaryBtn} onClick={() => void api?.cancel_model_setup_job?.()}>Pause download</button>}
+            {((job.operation === 'download' || job.operation === 'bundle') || job.operation === 'embedding') && <button style={styles.secondaryBtn} onClick={() => void api?.cancel_model_setup_job?.()}>Pause download</button>}
         </div>}
         {job.done && job.result && <div role={job.result.success ? 'status' : 'alert'} className="setup-status setup-stack">
-            {job.result.success && <strong>{job.operation === 'download' ? 'Download complete. Load your model in LM Studio next.' : 'Check complete'}</strong>}
+            {job.result.success && <strong>{(job.operation === 'download' || job.operation === 'bundle') ? 'Download complete. Load your model in LM Studio next.' : 'Check complete'}</strong>}
             <p style={{ ...styles.hint, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{job.result.detail || job.result.note}</p>
             {job.result.stats && <p style={styles.hint}>Measured {job.result.stats.tokens_per_second.toFixed(1)} tokens/sec · first response {job.result.stats.time_to_first_token_seconds.toFixed(2)}s.</p>}
         </div>}

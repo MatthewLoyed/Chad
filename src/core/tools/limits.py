@@ -75,6 +75,10 @@ class Limit:
 LIMITS: Dict[str, Limit] = {
     lim.name: lim
     for lim in [
+        Limit("setup_bundle_timeout", "setup.bundle_test_timeout_s", 240.0, HINT,
+              "Sequential, user-confirmed main/secondary/selector setup checks."),
+        Limit("setup_validation_ttl", "setup.validation_ttl_s", 1800.0, HINT,
+              "Role verification lifetime before selected routes must be retested."),
         Limit("setup_test_timeout", "setup.test_timeout_s", 60.0, HINT,
               "Explicit onboarding chat test timeout; the user can retry after checking the provider."),
         Limit("setup_test_tokens", "setup.test_max_tokens", 64, HINT,

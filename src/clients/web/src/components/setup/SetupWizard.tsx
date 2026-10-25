@@ -7,7 +7,7 @@ import { Loader2, ExternalLink, Server, Sparkles, Check, ShieldCheck } from 'luc
 import { useAppStore } from '../../store';
 import { setupRequest } from './setupRequest';
 import { styles } from './SetupWizard.styles';
-import HardwareSetup from './HardwareSetup';
+import HardwareSetup, { type ModelBundle } from './HardwareSetup';
 import './SetupWizard.css';
 
 type Step = 'welcome' | 'backend-choice' | 'lmstudio-install' | 'lmstudio' | 'lmstudio-connect' | 'ollama' | 'custom' | 'cloud' | 'later';
@@ -20,7 +20,7 @@ interface SetupStatus {
     error?: string;
 }
 interface Model { id: string; display_name: string; supports_tools?: boolean; }
-interface Probe { reachable?: boolean; models?: Model[]; detail?: string; success?: boolean; }
+interface Probe { bundle_models?: Record<string, string>; reachable?: boolean; models?: Model[]; detail?: string; success?: boolean; }
 const DEFAULT_URLS: Record<Provider, string> = {
     lmstudio: 'http://localhost:1234/v1', ollama: 'http://localhost:11434/v1', custom: 'http://localhost:8000/v1', cloud: 'https://openrouter.ai/api/v1',
 };
@@ -36,6 +36,9 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [testReply, setTestReply] = useState('');
+    const [bundle, setBundle] = useState<ModelBundle | undefined>();
+    const [roleToken, setRoleToken] = useState('');
+    const [rolesReady, setRolesReady] = useState(false);
     // Ignore late replies after navigating away, editing the endpoint, or unmounting.
     const generation = useRef(0);
     useEffect(() => () => { generation.current++; }, []);
@@ -43,18 +46,18 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
     const provider: Provider = step === 'ollama' ? 'ollama' : step === 'custom' ? 'custom' : step === 'cloud' ? 'cloud' : 'lmstudio';
     const navigate = (next: Step) => {
         generation.current++;
-        setBusy(false); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply('');
+        setBusy(false); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply(''); setRoleToken(''); setRolesReady(false);
         setStep(next);
     };
     const choose = (next: Provider) => {
-        setBaseUrl(DEFAULT_URLS[next]); setCloudService(DEFAULT_URLS.cloud); setApiKey(''); navigate(next === 'lmstudio' ? 'lmstudio-install' : next);
+        setBundle(undefined); setBaseUrl(DEFAULT_URLS[next]); setCloudService(DEFAULT_URLS.cloud); setApiKey(''); navigate(next === 'lmstudio' ? 'lmstudio-install' : next);
     };
     const resetConnection = () => {
-        generation.current++; setBusy(false); setProbe(null); setSelected(''); setError(''); setMessage(''); setTestReply('');
+        generation.current++; setBusy(false); setProbe(null); setSelected(''); setError(''); setMessage(''); setTestReply(''); setRoleToken(''); setRolesReady(false);
     };
     const check = async () => {
         const request = ++generation.current;
-        setBusy(true); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply('');
+        setBusy(true); setError(''); setMessage(''); setProbe(null); setSelected(''); setTestReply(''); setRoleToken(''); setRolesReady(false);
         try {
             if (!api?.probe_local_backend) throw new Error('Chad is still connecting. Please try again.');
             // Probe HTTP first: CLI discovery must never gate a usable model server.
@@ -62,7 +65,8 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             if (request !== generation.current) return;
             setProbe(result);
             if (result?.reachable && result.models?.length) {
-                setSelected(result.models[0].id);
+                const preferred = bundle && result.bundle_models?.[bundle.id];
+                setSelected(result.models.find(model => model.id === preferred)?.id || (bundle ? preferred || bundle.assets.find(asset => asset.catalog_id === bundle.primary)?.model_key || '' : result.models[0].id));
                 setMessage('Model list received. Choose a model, then try a short chat test.');
             } else if (result?.detail) {
                 setMessage(result.detail);
@@ -87,29 +91,40 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
             if (request === generation.current) setBusy(false);
         }
     };
-    const invalidateTest = () => { generation.current++; setBusy(false); setTestReply(''); setError(''); };
+    const invalidateTest = () => { generation.current++; setBusy(false); setTestReply(''); setRoleToken(''); setRolesReady(false); setError(''); };
     const testChat = async () => {
         const request = ++generation.current;
-        setBusy(true); setError(''); setTestReply('');
+        setBusy(true); setError(''); setTestReply(''); setRoleToken(''); setRolesReady(false);
         try {
+            if (bundle && !api?.test_setup_bundle) throw new Error('The desktop role-check bridge is not ready. Reopen the development app or use manual Chat setup.');
             if (provider === 'cloud' && !baseUrl.startsWith('https://')) throw new Error('Use your cloud provider’s HTTPS API address. A local server can use the existing model server option.');
             if (!api?.test_setup_model) throw new Error('Chad is still connecting. Please try again.');
-            const result = await setupRequest(api.test_setup_model(baseUrl, apiKey, selected, true), 95000) as { success?: boolean; reply?: string; detail?: string };
+            const result = await setupRequest(bundle && api.test_setup_bundle
+                ? api.test_setup_bundle(bundle.id, baseUrl, apiKey, selected, true)
+                : api.test_setup_model(baseUrl, apiKey, selected, true), bundle ? 275000 : 95000) as { success?: boolean; reply?: string; detail?: string; validation_token?: string };
+            if (request !== generation.current) return;
+            if (result.validation_token && result.reply) {
+                setRoleToken(result.validation_token); setRolesReady(!!result.success); setTestReply(result.reply);
+                if (!result.success) setError(result.detail || 'A helper model is not ready. Retry or continue with Chat only.');
+                return;
+            }
             if (request !== generation.current) return;
             if (!result?.success || !result.reply?.trim()) throw new Error(result?.detail || 'The model did not answer. Check its load state, API key and model ID, then retry.');
             setTestReply(result.reply);
         } catch (e) { if (request === generation.current) setError(e instanceof Error ? e.message : 'The chat test could not finish.'); }
         finally { if (request === generation.current) setBusy(false); }
     };
-    const save = async () => {
+    const save = async (chatOnly = false) => {
         if (!testReply) return;
         const request = ++generation.current;
         setBusy(true); setError('');
         try {
-            if (!api?.save_provider_choice) throw new Error('Chad is still connecting. Please try again.');
-            const result = await setupRequest(api.save_provider_choice(provider, baseUrl, apiKey, selected, false)) as { success?: boolean; error?: string };
+            if (!api?.save_provider_choice || (bundle && (!roleToken || !api.save_setup_bundle))) throw new Error('Chad is still connecting. Test the selected setup again before saving.');
+            const result = await setupRequest(bundle && roleToken && api.save_setup_bundle
+                ? api.save_setup_bundle(baseUrl, apiKey, selected, roleToken, chatOnly)
+                : api.save_provider_choice(provider, baseUrl, apiKey, selected, false)) as { success?: boolean; error?: string; detail?: string };
             if (request !== generation.current) return;
-            if (!result?.success) throw new Error(result?.error || 'The model choice could not be saved. Please try again.');
+            if (!result?.success) throw new Error(result?.detail || result?.error || 'The model choice could not be saved. Please try again.');
             useAppStore.getState().setActiveModel({
                 mode: 'local', name: selected, provider: provider === 'custom' || provider === 'cloud' ? 'static' : provider,
                 hosting: provider === 'cloud' ? 'cloud' : 'unknown',
@@ -193,7 +208,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     <button style={styles.primaryBtn} onClick={() => navigate('lmstudio')}>LM Studio is open — continue</button>
                 </>}
                 {(step === 'lmstudio' || step === 'lmstudio-connect') && <div hidden={step !== 'lmstudio'}>
-                    <HardwareSetup baseUrl={baseUrl} apiKey={apiKey} modelId={selected} onContinue={() => navigate('lmstudio-connect')} />
+                    <HardwareSetup baseUrl={baseUrl} apiKey={apiKey} modelId={selected} onContinue={plan => { setBundle(plan); navigate('lmstudio-connect'); }} />
                 </div>}
                 {connecting && <>
                     <h1 ref={heading} tabIndex={-1} style={styles.title}>{step === 'lmstudio-connect' ? 'Connect and start chatting' : step === 'ollama' ? 'Connect Ollama' : step === 'cloud' ? 'Connect your cloud model' : 'Connect your model server'}</h1>
@@ -229,22 +244,27 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     {message && <p role="status" className="setup-status" style={styles.hint}>{message}</p>}
                     {hasModels && <>
                         <label style={styles.fieldLabel} htmlFor="setup-model">Chat model</label>
-                        <select id="setup-model" style={styles.textInput} value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); invalidateTest(); }}>
+                        <select id="setup-model" style={styles.textInput} value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); setBundle(undefined); invalidateTest(); }}>
                             {probe?.models?.map(model => <option key={model.id} value={model.id}>{model.display_name}</option>)}
                         </select>
                     </>}
                     {(provider === 'cloud' || provider === 'custom' || (probe && !hasModels)) && <>
                         <label style={styles.fieldLabel} htmlFor="setup-model-id">Model ID (from your model app or provider)</label>
-                        <input id="setup-model-id" style={styles.textInput} value={selected} disabled={busy} placeholder="Exact model ID" onChange={e => { setSelected(e.target.value); invalidateTest(); }} />
+                        <input id="setup-model-id" style={styles.textInput} value={selected} disabled={busy} placeholder="Exact model ID" onChange={e => { setSelected(e.target.value); setBundle(undefined); invalidateTest(); }} />
                         <p style={styles.hint}>Some providers do not list models. You can enter an ID and test it directly.</p>
                     </>}
+                    {bundle && <div className="setup-note setup-stack"><strong>Recommended model roles selected</strong><p style={styles.hint}>Main, fast secondary and tool selection will be checked separately. Subagents inherit your main/secondary models.</p><button style={styles.secondaryBtn} onClick={() => { setBundle(undefined); invalidateTest(); }}>Use manual Chat setup instead</button></div>}
                     {selected && <>
                         {!testReply ? <>
-                            <p style={styles.hint}>Try one short greeting with this model. It may load a local model; a hosted service may charge for this request. No tools will run.</p>
-                            <button style={styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void testChat()}>{busy ? 'Testing…' : 'Send a short test message'}</button>
+                            <p style={styles.hint}>{bundle ? 'Check the main, secondary and tool-selector roles. Models may load or be evicted. The selector checks a fictional tool list; no real tools run.' : 'Try one short greeting with this model. It may load a local model; a hosted service may charge for this request. No tools will run.'}</p>
+                            <button style={styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void testChat()}>{busy ? 'Testing…' : bundle ? 'Test recommended setup' : 'Send a short test message'}</button>
                         </> : <>
                             <div className="setup-status setup-stack" role="status"><strong>Your model answered</strong><p style={styles.hint}>{testReply}</p></div>
-                            <button style={styles.primaryBtn} disabled={busy} onClick={() => void save()}>Use this model and open Chat</button>
+                            {(!bundle || rolesReady) && <button style={styles.primaryBtn} disabled={busy} onClick={() => void save()}>Use this model and open Chat</button>}
+                            {bundle && !rolesReady && <>
+                                <button style={styles.primaryBtn} disabled={busy} onClick={() => void testChat()}>Retry model-role checks</button>
+                                <button style={styles.secondaryBtn} disabled={busy} onClick={() => void save(true)}>Continue with Chat only</button>
+                            </>}
                         </>}
                         <p style={styles.hint}>Chat setup does not verify tool calling, images or reasoning modes. You can change models and configure those features later.</p>
                     </>}

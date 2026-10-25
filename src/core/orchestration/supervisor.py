@@ -77,8 +77,7 @@ _DEEP_RESEARCH_AGENT_FALLBACK_PROMPT = (
 def _build_scout_model(main_model):
     """
     Build the Scout's model. Scout does fast, read-only gather work, so it runs on the
-    smaller secondary model (the 9B tool-selector model, already resident in LM Studio)
-    instead of the heavy main model. Falls back to the main model on any failure.
+    configured secondary model, independently of the tool selector. Falls back to the main model on any failure.
     """
     from src.shared.config_manager import ConfigManager
 
@@ -86,11 +85,9 @@ def _build_scout_model(main_model):
         return main_model
 
     try:
-        model_name = ConfigManager.get("planner.scout_model") or ConfigManager.get_llm_selector_model()
-        base_url = ConfigManager.get(
-            "local_models.providers.lmstudio.base_url", "http://localhost:1234/v1"
-        )
-        api_key = ConfigManager.get("local_models.providers.lmstudio.api_key", "lm-studio")
+        from src.shared.model_selection import secondary_config
+        secondary = secondary_config()
+        model_name, base_url, api_key = secondary.get("name"), secondary.get("base_url"), secondary.get("api_key")
 
         from src.core.intelligence.adapters.litellm_adapter import LiteLLMAdapter
         from src.core.intelligence.lc_wrapper import ChatChad

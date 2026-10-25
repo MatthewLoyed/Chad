@@ -56,6 +56,8 @@ def _gpu_budget(gpu: dict) -> float:
 
 
 def _speed(model: dict, gpu: dict | None, weights: float) -> dict:
+    if model.get("speed_unverified"):
+        return {"kind": "unknown", "low": None, "high": None, "note": "Custom low-bit runtime: measure locally; weight bandwidth alone is not a validated speed estimate."}
     name = str((gpu or {}).get("name", "")).lower()
     bandwidth = None if "laptop" in name or "mobile" in name else next(
         (bw for key, bw in sorted(BANDWIDTH.items(), key=lambda item: -len(item[0])) if name.endswith(key)), None)
@@ -85,7 +87,7 @@ def recommend(hardware: dict, context: int = 8192, models: list[dict] | None = N
         # FP16 K+V bound. Hybrid attention uses this conservative full-attention
         # bound until the installed engine provides an estimate for the artifact.
         kv = 2 * model["layers"] * model["kv_heads"] * model["head_dim"] * 2 * context / GIB
-        required = weights + kv + RUNTIME_GB
+        required = weights + kv + model.get("runtime_gb", RUNTIME_GB)
         mode = "gpu" if required <= gpu_budget else "cpu"
         # Reserve host space for mapped weights as well as CPU embeddings. A
         # fully offloaded model can still need RAM while loading or staging.
@@ -112,7 +114,9 @@ def recommend(hardware: dict, context: int = 8192, models: list[dict] | None = N
                            "settings": {"context_length": context,
                                         "gpu_offload": "max" if mode == "gpu" else "off",
                                         "quantization": model["quantization"],
-                                        "temperature": 0.7, "top_p": 0.8,
+                                        "temperature": model.get("settings", {}).get("temperature", 0.7),
+                                        "top_p": model.get("settings", {}).get("top_p", 0.8),
+                                        "top_k": model.get("settings", {}).get("top_k"),
                                         "thinking": "off for interactive speed; enable deliberately for reasoning",
                                         "advanced": "Keep engine defaults for Flash Attention and KV precision until supported settings are verified."}})
     candidates.sort(key=lambda m: (m["fits"], m["target_likely"], m["capability_rank"]), reverse=True)

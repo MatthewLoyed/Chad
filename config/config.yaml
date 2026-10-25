@@ -171,6 +171,8 @@ dev_debug: false
 ui:
   default_turn_mode: auto
 setup:
+  bundle_test_timeout_s: 240.0
+  validation_ttl_s: 1800.0
   test_timeout_s: 60.0
   test_max_tokens: 64
   network_timeout_s: 30.0
