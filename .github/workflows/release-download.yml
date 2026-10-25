@@ -1,0 +1,51 @@
+name: Update installer download after publication
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  download-link:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check published asset and update download links
+        run: |
+          gh release view "$RELEASE_TAG" --json isDraft,assets > /tmp/release.json
+          python - "$RELEASE_TAG" <<'PY'
+          import json, sys
+          release = json.load(open('/tmp/release.json'))
+          expected = f'Chad-Setup-{sys.argv[1].removeprefix("v")}.exe'
+          assert not release['isDraft'], 'Drafts must not change the public download'
+          assert any(asset['name'] == expected for asset in release['assets']), 'Installer asset missing'
+          PY
+          python scripts/prod/release_metadata.py readme --tag "$RELEASE_TAG"
+      - name: Open download-link PR into dev
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch="codex/download-${RELEASE_TAG}"
+          git switch -c "$branch"
+          git add README.md
+          git commit -m "Point Windows downloads to ${RELEASE_TAG}"
+          git push origin "$branch"
+          gh pr create --base dev --head "$branch" --title "Point Windows downloads to ${RELEASE_TAG}" --body "The accepted installer ${RELEASE_TAG} is published. Update the public download block through dev, then promote to master. This changes links only; it does not rebuild the accepted artifact."

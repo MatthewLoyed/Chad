@@ -2,9 +2,47 @@
 
 This guide owns release evidence, approval points and the publication procedure.
 
+## Current release pipeline
+
+The public repository is `MatthewLoyed/Chad`. Feature PRs merge into `dev`, then
+an approved promotion PR merges `dev` into `master`. A source merge makes code
+public; it does **not** update the previously published Windows installer.
+
+1. A runtime change promoted to `master` runs **Release installer**. The workflow
+   can also be dispatched with an explicit version (for example `0.2.0-alpha.11`);
+   otherwise it chooses the next alpha after existing releases, including drafts.
+   Documentation-only/download-link promotions do not rebuild the installer.
+2. The workflow builds GUI + Brain from that exact commit, tests silent install
+   and reinstall/data retention in an isolated runner directory, and creates an
+   **unpublished draft** with the installer, `SHA256SUMS`, `release-manifest.json`
+   and `installer-smoke.json`. Missing dependencies or assets fail the build.
+3. Download the exact draft asset and verify its SHA-256 against the manifest.
+   Check it on the clean Windows acceptance VM: startup, model connection, chat,
+   persisted state, Feed layout, and upgrade retention. Record actual evidence
+   and limitations in the draft release notes. Packaging smoke alone is not UI
+   or model acceptance. Never run these checks against the production Brain.
+4. Publish only the accepted draft. The **Update installer download after
+   publication** workflow verifies that the installer asset exists, then opens a
+   README download-link PR into `dev`. Promote that link change through `master`
+   after CI passes. The workflow requires Actions to be allowed to create PRs;
+   if disabled, use the same `release_metadata.py readme --tag <tag>` command and
+   open the PR normally. Do not silently broaden token permissions.
+5. Verify the public release/README download without credentials and compare the
+   downloaded bytes with the accepted checksum. Installer users manually run the
+   new installer; the in-app Git update command is for source checkouts.
+
+The draft gate is intentional: tags and builds do not establish acceptance, and
+publishing a release must not expose an untested installer. A failed release
+build leaves the existing download intact. Release maintenance owns this guide,
+`.github/workflows/release.yml`, `.github/workflows/release-download.yml` and the
+helpers in `scripts/prod/release_metadata.py` and `test_installer.ps1`.
+
+The October 22 records below describe the original publication and superseded
+infrastructure; they are historical evidence, not the current procedure.
+
 ## Clean repository publication — October 22, 2026
 
-The destination is `MatthewLoyed/Chad`, currently private, with a fresh source
+The original publication destination was `MatthewLoyed/Chad`, then private, with a fresh source
 snapshot and no imported legacy Git history, discussions or old releases.
 The original development repository remains private. Legacy issue/commit links
 below are historical maintainer references and are unavailable to public readers;
