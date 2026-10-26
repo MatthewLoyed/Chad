@@ -119,6 +119,28 @@ async def test_rejects_invalid_kind():
     assert await dashboard_feed.append_entry("bogus", "t", "b") is None
 
 
+async def test_repeated_discovery_enriches_one_active_card():
+    original = await dashboard_feed.append_entry(
+        "discovery", "Fictional note search", "Two thousand notes were searched. Semantic search was not tested.",
+        metadata={"url": "https://example.com/notes", "image_url": "https://example.com/image.png"},
+    )
+    corrected = await dashboard_feed.append_entry(
+        "discovery", original["title"], original["body"],
+        metadata={"url": "https://example.com/notes", "selection_reason": "Local tools", "content_type": "source_summary"},
+    )
+    assert corrected["id"] == original["id"]
+    feed = await dashboard_feed.get_feed()
+    assert len(feed) == 1
+    assert feed[0]["metadata"]["selection_reason"] == "Local tools"
+    assert feed[0]["metadata"]["image_url"] == "https://example.com/image.png"
+
+
+async def test_distinct_discovery_summaries_are_not_collapsed():
+    for body in ("Initial fictional result.", "A later fictional result."):
+        await dashboard_feed.append_entry("discovery", "Notes", body, metadata={"url": "https://example.com/notes"})
+    assert len(await dashboard_feed.get_feed()) == 2
+
+
 async def test_run_entry_action_executes_tool_and_marks_done():
     entry = await dashboard_feed.append_entry(
         "action", "run me", "body",

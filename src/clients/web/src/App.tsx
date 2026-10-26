@@ -909,7 +909,7 @@ function App() {
     const contentBlocks = failedMsg?.contentBlocks || null;
     const category = retryTurnCategory(failedMsg?.category, useAppStore.getState().chatTurnMode);
     const thinkingEnabled = failedMsg?.thinkingEnabled ?? null;
-    const domain = failedMsg?.domain || pendingDomainId || null;
+    const domain = failedMsg?.domain !== undefined ? failedMsg.domain : pendingDomainId || null;
 
     setMessageSendStatus(messageId, 'sending');
     setStatus('thinking');
@@ -922,7 +922,7 @@ function App() {
         failOutboundSend(messageId);
         return;
       }
-      const retryMeta = failedMsg?.attachments && failedMsg.attachments.length > 0 ? { attachments: failedMsg.attachments } : null;
+      const retryMeta = { attachments: failedMsg?.attachments || [], category, thinkingEnabled, domain };
       await api.send_text_command(
         (text || failedMsg?.text || '').trim(),
         null,
@@ -965,7 +965,7 @@ function App() {
     setStreamingResponse(null);
 
     const targetConversationId = activeConversationId;
-    const domain = targetMsg?.domain || pendingDomainId || null;
+    const domain = targetMsg?.domain !== undefined ? targetMsg.domain : pendingDomainId || null;
     const category = retryTurnCategory(targetMsg?.category, useAppStore.getState().chatTurnMode);
     const thinkingEnabled = targetMsg?.thinkingEnabled ?? null;
 
@@ -985,7 +985,7 @@ function App() {
         null,
         null,
         targetConversationId,
-        null,
+        { category, thinkingEnabled, domain },
         category,
         thinkingEnabled,
         domain,

@@ -94,6 +94,9 @@ async def append_entry(
     try:
         from src.infrastructure.database.supabase_manager import get_supabase_manager
         supabase = get_supabase_manager()
+        repeated = await _refresh_repeated_discovery(supabase, row)
+        if repeated is not None:
+            return repeated
         res = await supabase.async_insert("dashboard_entries", row)
         if not res:
             return None
@@ -112,6 +115,30 @@ async def append_entry(
         logger.error(f"[ DASHBOARD ] Failed to publish DashboardEntryCreated: {e}")
 
     return entry
+
+
+async def _refresh_repeated_discovery(supabase, row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """A sequential metadata correction for the same read should not add a card.
+
+    Only identical active discoveries with an actual source URL qualify. Different
+    summaries, actions and non-discovery events retain their normal append behavior.
+    This is not a cross-process uniqueness constraint.
+    """
+    source = row["metadata"].get("url")
+    if row["kind"] != "discovery" or not source or row["action"]:
+        return None
+    for existing in await get_feed():
+        if (existing.get("kind") == "discovery" and not existing.get("action")
+                and existing.get("title") == row["title"] and existing.get("body") == row["body"]
+                and _entry_metadata(existing).get("url") == source):
+            metadata = {**_entry_metadata(existing), **row["metadata"]}
+            changes = {"metadata": metadata, "updated_at": row["updated_at"]}
+            result = await supabase.async_update(
+                "dashboard_entries", {"id": f"eq.{existing['id']}"}, changes)
+            if not result:
+                raise RuntimeError("Repeated discovery metadata could not be refreshed")
+            return {**existing, **changes}
+    return None
 
 
 async def get_feed(limit: int = 50) -> List[Dict[str, Any]]:
