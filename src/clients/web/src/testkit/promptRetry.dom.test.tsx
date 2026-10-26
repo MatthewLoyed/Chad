@@ -9,6 +9,7 @@ import { render, cleanup, fireEvent } from '@testing-library/react';
 import ChatStream from '../components/layout/ChatStream';
 import { useAppStore, type ChatMessage } from '../store';
 import { REPLAY_CONVERSATION_ID } from './domReplay';
+import { retryTurnCategory } from '../utils/turn-mode';
 
 afterEach(cleanup);
 
@@ -46,6 +47,25 @@ const mockMessages: ChatMessage[] = [
 ];
 
 describe('Prompt Retry and Regenerate', () => {
+    it('retains the original Chat mode after the composer switches to Agent', () => {
+        useAppStore.setState({ chatMessages: [], activeConversationId: REPLAY_CONVERSATION_ID });
+        useAppStore.getState().addChatMessage('user', 'Summarize the fictional note', [], undefined, 'retry-mode', {
+            sendStatus: 'sending', category: 'chat', thinkingEnabled: false, domain: 'fictional-project',
+        });
+        const message = useAppStore.getState().chatMessages[0];
+        expect(retryTurnCategory(message.category, 'agent')).toBe('chat');
+        expect(message.thinkingEnabled).toBe(false);
+        expect(message.domain).toBe('fictional-project');
+        expect(message.conversationId).toBe(REPLAY_CONVERSATION_ID);
+    });
+
+    it('uses the visible mode for legacy messages with no saved category', () => {
+        expect(retryTurnCategory(undefined, 'chat')).toBe('chat');
+        expect(retryTurnCategory(undefined, 'plan')).toBe('planning');
+        expect(retryTurnCategory('planning', 'chat')).toBe('planning');
+        expect(retryTurnCategory('feed', 'agent')).toBe('feed');
+    });
+
     it('renders retry button on user prompt and invokes onRetryPrompt when clicked', () => {
         installShims();
         useAppStore.getState().clearThinkingEvents();
