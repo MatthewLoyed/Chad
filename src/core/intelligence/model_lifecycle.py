@@ -538,6 +538,46 @@ async def _mark_active_if_resident_impl(base_url: str, model_id: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
+async def switch_main_model(previous: dict, selected: dict) -> bool:
+    """Release the previous supervisor before explicitly loading its replacement.
+
+    All provider operations stay on the coordinator loop. Respect other owners
+    and reject a switch while the previous model is serving a request.
+    """
+    async def switch():
+        old_url, old_id = previous.get("base_url"), previous.get("name")
+        new_url, new_id = selected.get("base_url"), selected.get("name")
+        if old_url and old_id and (not new_id or old_url != new_url or not _same_model(old_id, new_id)):
+            state = _state_for(old_url)
+            async with state.condition:
+                if state.active.get(_clean_model_id(old_id).split(":")[0], 0):
+                    return False
+                for key in list(state.wanted):
+                    if _same_model(key, old_id):
+                        state.wanted[key].discard(OWNER_MAIN_MODEL)
+                        if not state.wanted[key]:
+                            state.wanted.pop(key)
+                if not any(_same_model(key, old_id) and owners for key, owners in state.wanted.items()):
+                    await unload_model(old_url, old_id)
+                state.condition.notify_all()
+        if not new_id or not new_url:
+            return True  # Cloud selection has no local model to load.
+        try:
+            ok = await _ensure_resident_impl(new_url, new_id, OWNER_MAIN_MODEL, "interactive",
+                                             DEFAULT_LOAD_TIMEOUT, None)
+        except Exception:
+            logger.exception("Selected model failed to load; restoring previous supervisor")
+            ok = False
+        if not ok:
+            await _release_impl(new_url, new_id, OWNER_MAIN_MODEL)
+            if old_url and old_id:
+                await _ensure_resident_impl(old_url, old_id, OWNER_MAIN_MODEL, "interactive",
+                                            DEFAULT_LOAD_TIMEOUT, None)
+        return ok
+
+    return await asyncio.wrap_future(asyncio.run_coroutine_threadsafe(switch(), _ensure_bg_loop()))
+
+
 async def ensure_resident(
     base_url: str,
     model_id: str,

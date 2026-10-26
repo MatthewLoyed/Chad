@@ -125,6 +125,66 @@ def _mock_lm_studio(monkeypatch, *, loaded=None):
 
 
 @pytest.mark.asyncio
+async def test_picker_unloads_previous_before_loading_selection(monkeypatch):
+    url = "http://test-picker.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    await ml.ensure_resident(url, "old", ml.OWNER_MAIN_MODEL)
+    assert await ml.switch_main_model({"name": "old", "base_url": url},
+                                      {"name": "new", "base_url": url})
+    assert state["unload_calls"] == ["old"]
+    assert state["load_calls"] == ["new"]
+    assert state["loaded"] == {"new"}
+    assert "old" not in ml.get_diagnostics(url)["wanted"]
+
+
+@pytest.mark.asyncio
+async def test_picker_rejects_switch_during_active_request(monkeypatch):
+    url = "http://test-picker-active.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    async with ml.active_use(url, "old"):
+        assert not await ml.switch_main_model({"name": "old", "base_url": url},
+                                              {"name": "new", "base_url": url})
+    assert not state["unload_calls"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_picker_reselects_resident_model_without_unload(monkeypatch):
+    url = "http://test-picker-same.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["same"])
+    selected = {"name": "same", "base_url": url}
+    assert await ml.switch_main_model(selected, selected)
+    assert not state["unload_calls"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_cloud_selection_unloads_local_supervisor(monkeypatch):
+    url = "http://test-picker-cloud.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    assert await ml.switch_main_model({"name": "old", "base_url": url}, {})
+    assert state["unload_calls"] == ["old"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_picker_restores_previous_if_load_fails(monkeypatch):
+    url = "http://test-picker-failure.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    original = ml.load_model
+
+    async def load(base_url, model_id, **kwargs):
+        if model_id == "new":
+            return False
+        return await original(base_url, model_id, **kwargs)
+
+    monkeypatch.setattr(ml, "load_model", load)
+    assert not await ml.switch_main_model({"name": "old", "base_url": url},
+                                          {"name": "new", "base_url": url})
+    assert state["loaded"] == {"old"}
+
+
+@pytest.mark.asyncio
 async def test_concurrent_ensure_resident_dedups_to_one_load(monkeypatch):
     base_url = "http://test-dedup.local/v1"
     state = _mock_lm_studio(monkeypatch)

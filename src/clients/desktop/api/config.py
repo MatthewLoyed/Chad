@@ -36,7 +36,10 @@ from src.application.commands import (
 logger = setup_logger("WebViewAPI")
 
 
-class ConfigAPIMixin(SetupAPIMixin):
+from .tool_selector import ToolSelectorAPIMixin
+
+
+class ConfigAPIMixin(SetupAPIMixin, ToolSelectorAPIMixin):
     """Mixin for configuration-related WebView API methods (models, voice, preferences)."""
 
     def get_voice(self):
@@ -116,7 +119,7 @@ class ConfigAPIMixin(SetupAPIMixin):
                 return False
 
         is_cloud = model_info.get("mode") == "cloud" or not model_info.get("name")
-        result = self._execute_command(SetActiveModelCommand(model_info=model_info), timeout=30.0, default_fallback=False)
+        result = self._execute_command(SetActiveModelCommand(model_info=model_info), timeout=420.0, default_fallback=False)
         
         # Support both boolean (legacy/cloud) and dict (new/local) results
         if isinstance(result, bool):
