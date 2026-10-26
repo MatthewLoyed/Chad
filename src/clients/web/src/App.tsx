@@ -25,6 +25,7 @@ import WorkspaceRail from './components/layout/WorkspaceRail'
 import CommandPalette from './components/common/CommandPalette'
 import { initAccent } from './utils/accent'
 import { readCache } from './utils/localCache'
+import { retryTurnCategory } from './utils/turn-mode'
 import { extractSourcesFromThoughts } from './utils/sources'
 import ChatPanel from './components/layout/ChatPanel'
 import ArtifactSidePanel from './components/layout/ArtifactSidePanel'
@@ -669,6 +670,10 @@ function App() {
             actions: m.metadata?.actions,
             clarifyingReply: m.metadata?.clarifying_reply ?? m.metadata?.clarifyingReply,
             attachments: m.metadata?.attachments,
+            category: m.metadata?.category,
+            thinkingEnabled: m.metadata?.thinkingEnabled,
+            domain: m.metadata?.domain,
+            conversationId: id,
             artifacts: m.metadata?.artifacts || (normalizedThoughts.length > 0 ? normalizedThoughts.filter(e => e.type === 'tool_end' && e.success && e.download_token) : undefined),
             // Sources must be derived BEFORE the truncation below — it would otherwise
             // corrupt the JSON-stringified web_search payload in `result` before it can
@@ -825,7 +830,11 @@ function App() {
     })) || [];
 
     const outboundId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    addChatMessage('user', displayText, mappedAttachments, undefined, outboundId, { sendStatus: 'sending' });
+    addChatMessage('user', displayText, mappedAttachments, undefined, outboundId, {
+      sendStatus: 'sending', category, thinkingEnabled: thinkingEnabled ?? null,
+      domain: pendingDomainId,
+      conversationId: activeConversationId,
+    });
 
     const isSystemReady = apiReady && status !== 'initializing';
     if (!isSystemReady) {
@@ -885,7 +894,7 @@ function App() {
         failOutboundSend(outboundId);
         return;
       }
-      const meta = mappedAttachments.length > 0 ? { attachments: mappedAttachments } : null;
+      const meta = { attachments: mappedAttachments, category, thinkingEnabled: thinkingEnabled ?? null, domain: turnDomain };
       await api.send_text_command(text.trim(), null, contentBlocks || null, targetConversationId, meta, category, thinkingEnabled ?? null, turnDomain);
       setMessageSendStatus(outboundId, null);
     } catch (e) {
@@ -898,9 +907,9 @@ function App() {
     const failedMsg = useAppStore.getState().chatMessages.find(m => m.id === messageId);
     const targetConversationId = failedMsg?.conversationId || activeConversationId;
     const contentBlocks = failedMsg?.contentBlocks || null;
-    const category = failedMsg?.category || null;
+    const category = retryTurnCategory(failedMsg?.category, useAppStore.getState().chatTurnMode);
     const thinkingEnabled = failedMsg?.thinkingEnabled ?? null;
-    const domain = failedMsg?.domain || pendingDomainId || null;
+    const domain = failedMsg?.domain !== undefined ? failedMsg.domain : pendingDomainId || null;
 
     setMessageSendStatus(messageId, 'sending');
     setStatus('thinking');
@@ -913,7 +922,7 @@ function App() {
         failOutboundSend(messageId);
         return;
       }
-      const retryMeta = failedMsg?.attachments && failedMsg.attachments.length > 0 ? { attachments: failedMsg.attachments } : null;
+      const retryMeta = { attachments: failedMsg?.attachments || [], category, thinkingEnabled, domain };
       await api.send_text_command(
         (text || failedMsg?.text || '').trim(),
         null,
@@ -956,8 +965,8 @@ function App() {
     setStreamingResponse(null);
 
     const targetConversationId = activeConversationId;
-    const domain = targetMsg?.domain || pendingDomainId || null;
-    const category = targetMsg?.category || undefined;
+    const domain = targetMsg?.domain !== undefined ? targetMsg.domain : pendingDomainId || null;
+    const category = retryTurnCategory(targetMsg?.category, useAppStore.getState().chatTurnMode);
     const thinkingEnabled = targetMsg?.thinkingEnabled ?? null;
 
     setStatus('thinking');
@@ -976,7 +985,7 @@ function App() {
         null,
         null,
         targetConversationId,
-        null,
+        { category, thinkingEnabled, domain },
         category,
         thinkingEnabled,
         domain,
