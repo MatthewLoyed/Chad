@@ -14,6 +14,16 @@ from __future__ import annotations
 
 import time
 from typing import Any, Optional, Tuple
+from src.shared.exceptions import ModelError
+from src.core.tools.failure import failure, UNAVAILABLE
+
+
+async def _require_supervisor(base_url, model_id, priority):
+    from src.core.intelligence.model_lifecycle import ensure_resident, OWNER_MAIN_MODEL
+    if not await ensure_resident(base_url, model_id, owner=OWNER_MAIN_MODEL, priority=priority):
+        result = failure("Supervisor residency refused", failure_class=UNAVAILABLE,
+                         next_actions=["Choose the resident model in Chad's model dropdown, or explicitly select its replacement."])
+        raise ModelError(result["error"])
 
 from src.shared.logger import setup_logger
 from src.core.orchestration.turn.status_emitter import TurnStatusEmitter
@@ -90,7 +100,7 @@ class TurnModelPreloader:
                 f"{'resident' if already else 'NOT resident'} (loaded={loaded})"
             )
             if already:
-                await ensure_resident(base_url, model_id, owner=OWNER_MAIN_MODEL, priority=priority)
+                await _require_supervisor(base_url, model_id, priority)
                 return  # already resident — no reload needed
             short = str(model_id).split("/")[-1]
             if self._emitter:
@@ -99,8 +109,10 @@ class TurnModelPreloader:
                 f"[ TURN ] Supervisor model '{model_id}' not resident — preloading before invoke."
             )
             t0 = time.time()
-            await ensure_resident(base_url, model_id, owner=OWNER_MAIN_MODEL, priority=priority)
+            await _require_supervisor(base_url, model_id, priority)
             logger.warning(f"[ TURN ] Supervisor model preload took {time.time() - t0:.1f}s.")
+        except ModelError:
+            raise  # Never fall through to JIT after a deliberate residency refusal.
         except Exception as e:
             logger.debug(f"[ TURN ] Main-model preload skipped (non-fatal): {e}")
 

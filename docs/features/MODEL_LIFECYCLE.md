@@ -34,6 +34,9 @@ load/unload implementation.** Always go through `ensure_resident` / `release` (o
 
 ## Changing the main model in the GUI
 
+Automatic supervisor loads refuse to add a second supervisor when another model is already resident (including one loaded directly in LM Studio). Known tool-selector and intent-router roles may coexist. Only an explicit GUI switch replaces an unclaimed resident supervisor; it confirms unloading before loading the replacement. The coordinator records the new supervisor target and rejects stale warmup requests. A refused turn preload stops the turn instead of falling through to implicit JIT loading. This governs Chad requests; independent clients and an older production Brain must follow the same policy to provide a machine-wide guarantee.
+
+
 The chat dropdown and **Settings → Models** run the same `SetActiveModelCommand`.
 For local selections, `ModelsFacadeMixin` calls the lifecycle coordinator's
 `switch_main_model` before saving or changing the active adapter: it releases the
