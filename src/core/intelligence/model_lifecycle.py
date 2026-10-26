@@ -427,10 +427,9 @@ async def _ensure_resident_impl(
     state = _state_for(base_url)
 
     async with state.condition:
-        if owner == OWNER_MAIN_MODEL and state.supervisor_target is not None:
-            if not state.supervisor_target or not _same_model(model_id, state.supervisor_target):
-                logger.warning("[ MODEL_LIFECYCLE ] Rejected stale supervisor request for '%s'.", model_id)
-                return False
+        if owner == OWNER_MAIN_MODEL and not _current_supervisor_request(state, base_url, model_id):
+            logger.warning("[ MODEL_LIFECYCLE ] Rejected stale supervisor request for '%s'.", model_id)
+            return False
         if priority == "background":
             deadline = time.monotonic() + (queue_timeout or _background_queue_timeout())
             window = _interactive_active_window()
@@ -465,10 +464,12 @@ async def _ensure_resident_impl(
 
         try:
             loaded = await get_loaded_model_ids(base_url)
-            if owner == OWNER_MAIN_MODEL and _supervisor_conflicts(state, loaded, model_id):
-                state.wanted.get(model_id, set()).discard(owner)
-                logger.warning("[ MODEL_LIFECYCLE ] Another supervisor is resident; select '%s' in the GUI to replace it.", model_id)
-                return False
+            if owner == OWNER_MAIN_MODEL:
+                if not await _reconcile_supervisor(base_url, state, loaded, model_id):
+                    state.wanted.get(model_id, set()).discard(owner)
+                    return False
+                state.supervisor_target = model_id
+                loaded = await get_loaded_model_ids(base_url)
             if any(_same_model(m, model_id) for m in loaded):
                 # Already resident: no new VRAM is being requested, so `_make_room` has
                 # nothing useful to do here. Reclaiming a co-resident model that pushes us
@@ -548,16 +549,39 @@ async def _mark_active_if_resident_impl(base_url: str, model_id: str) -> bool:
 
 
 def _supervisor_conflicts(state, loaded, requested):
-    """Unknown resident models are protected from automatic supervisor loads.
-
-    Known auxiliary roles may coexist. Explicit selection owns the transition
-    for otherwise unclaimed models loaded outside Chad (for example in LM Studio).
-    """
+    """Known auxiliary roles may coexist with the selected supervisor."""
     auxiliary = [selector_model_id(), router_model_id()]
     return [model for model in loaded if not _same_model(model, requested)
             and not any(aux and _same_model(model, aux) for aux in auxiliary)
             and not any(_same_model(model, key) and owners - {OWNER_MAIN_MODEL}
                         for key, owners in state.wanted.items())]
+
+
+def _current_supervisor_request(state, base_url, model_id):
+    if state.supervisor_target is not None:
+        return bool(state.supervisor_target and _same_model(model_id, state.supervisor_target))
+    from src.shared.config_manager import ConfigManager
+    selected = ConfigManager.get_local_model_config() or {}
+    if selected.get("base_url", "").rstrip("/") == base_url.rstrip("/") and selected.get("name"):
+        return _same_model(model_id, selected["name"])
+    return True
+
+
+async def _reconcile_supervisor(base_url, state, loaded, model_id):
+    """Called with the endpoint condition held: unload, verify, then allow load."""
+    conflicts = _supervisor_conflicts(state, loaded, model_id)
+    if any(state.active.get(_clean_model_id(model).split(":")[0], 0) for model in conflicts):
+        return False
+    for model in conflicts:
+        if not await unload_model(base_url, model):
+            return False
+    if conflicts and _supervisor_conflicts(state, await get_loaded_model_ids(base_url), model_id):
+        logger.warning("[ MODEL_LIFECYCLE ] Previous supervisor still resident; refusing replacement load.")
+        return False
+    for key in list(state.wanted):
+        if any(_same_model(key, model) for model in conflicts):
+            state.wanted.pop(key)
+    return True
 
 
 async def switch_main_model(previous: dict, selected: dict) -> bool:
@@ -579,14 +603,8 @@ async def switch_main_model(previous: dict, selected: dict) -> bool:
                 conflicts = _supervisor_conflicts(target, loaded, new_id)
                 if conflicts and not any(old_id and _same_model(old_id, model) for model in loaded):
                     restore_url, restore_id = new_url, conflicts[0]
-                if any(target.active.get(_clean_model_id(model).split(":")[0], 0) for model in conflicts):
+                if not await _reconcile_supervisor(new_url, target, loaded, new_id):
                     return False
-                for model in conflicts:
-                    if not await unload_model(new_url, model):
-                        return False
-                    for key in list(target.wanted):
-                        if _same_model(key, model):
-                            target.wanted.pop(key)
                 target.supervisor_target = new_id
         if old_url and old_id and (not new_id or old_url != new_url or not _same_model(old_id, new_id)):
             state = _state_for(old_url)
@@ -598,10 +616,9 @@ async def switch_main_model(previous: dict, selected: dict) -> bool:
                         state.wanted[key].discard(OWNER_MAIN_MODEL)
                         if not state.wanted[key]:
                             state.wanted.pop(key)
-                if not any(_same_model(key, old_id) and owners for key, owners in state.wanted.items()):
-                    if old_url != new_url or not new_id:
-                        await unload_model(old_url, old_id)
                 if old_url != new_url or not new_id:
+                    if not await _reconcile_supervisor(old_url, state, await get_loaded_model_ids(old_url), ""):
+                        return False
                     state.supervisor_target = ""
                 state.condition.notify_all()
         if not new_id or not new_url:
@@ -1000,6 +1017,7 @@ async def warm_models(
     turn_coordinator: Optional["TurnCoordinator"] = None,
     ui_mode: Optional[str] = None,
     canonical_lane: Optional[str] = None,
+    restore_selection: bool = False,
 ) -> None:
     """
     Load auxiliary models first, then main — the order a turn actually needs them in.
@@ -1021,18 +1039,25 @@ async def warm_models(
     ending with only one model up). The real turn-path calls (tool selector, main-model
     preload) keep budget enforcement on and do the actual swap once inference starts.
     """
-    if not _lifecycle_enabled():
+    preload_aux = _lifecycle_enabled()
+    if not preload_aux and not restore_selection:
         return
 
-    base_url = main_base_url(turn_coordinator)
-    main_id = main_model_id(turn_coordinator)
+    if restore_selection:
+        from src.shared.config_manager import ConfigManager
+        if not ConfigManager.is_local_model_active():
+            return
+        selected = ConfigManager.get_local_model_config()
+        base_url, main_id = selected.get("base_url"), selected.get("name")
+    else:
+        base_url, main_id = main_base_url(turn_coordinator), main_model_id(turn_coordinator)
     if not main_id:
         return
 
     aux: List[str] = []
-    if canonical_lane is not None:
+    if preload_aux and canonical_lane is not None:
         aux = aux_models_for_canonical(canonical_lane, turn_coordinator)
-    elif ui_mode is not None:
+    elif preload_aux and ui_mode is not None:
         aux = aux_models_for_ui_mode(ui_mode, turn_coordinator)
 
     for model_id in aux:
@@ -1056,6 +1081,7 @@ def schedule_warm(
     turn_coordinator: Optional["TurnCoordinator"] = None,
     ui_mode: Optional[str] = None,
     canonical_lane: Optional[str] = None,
+    restore_selection: bool = False,
 ) -> None:
     """Fire-and-forget background warm (GUI connect / mode change)."""
 
@@ -1067,6 +1093,7 @@ def schedule_warm(
                     turn_coordinator=turn_coordinator,
                     ui_mode=ui_mode,
                     canonical_lane=canonical_lane,
+                    restore_selection=restore_selection,
                 )
             )
         except Exception as e:
