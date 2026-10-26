@@ -772,6 +772,10 @@ export const useAppStore = create<AppState>((set, get) => ({
             stop_reason?: string;
             speed?: number;
             sendStatus?: 'sending' | 'failed';
+            category?: string;
+            thinkingEnabled?: boolean | null;
+            domain?: string | null;
+            conversationId?: string | null;
         } | null | undefined;
 
         let turnStartTime = state.turnStartTime;
@@ -847,6 +851,10 @@ export const useAppStore = create<AppState>((set, get) => ({
                 stop_reason: meta?.stop_reason,
                 speed: meta?.speed,
                 ...(role === 'user' && meta?.sendStatus ? { sendStatus: meta.sendStatus } : {}),
+                ...(role === 'user' ? {
+                    category: meta?.category, thinkingEnabled: meta?.thinkingEnabled,
+                    domain: meta?.domain, conversationId: meta?.conversationId || state.activeConversationId || undefined,
+                } : {}),
             },
         ];
 

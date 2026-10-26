@@ -378,6 +378,12 @@ The fix is almost always a **missing subscription** or a **wrong message type st
 
 ## Worktree Setup Notes
 
+For retry and regenerate changes, verify the original Chat/Agent/Plan mode is
+retained after changing the composer mode and after reopening conversation history.
+Exercise the actual send bridge: a rendered retry button alone does not prove that
+the original category reaches the Brain. Preserve the original thinking setting
+and domain; legacy messages without a category use the visible composer mode.
+
 When working in `.claude/worktrees/*`:
 
 - As of the Storybook install, `node_modules` is a **real directory** (npm replaced the junction during install). No junction needed.
