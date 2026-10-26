@@ -6,8 +6,8 @@ unattributed dead air — and worse, LM Studio's Auto-Evict can kill a
 still-loading selector mid-swap (#592). So the load happens here, up front,
 behind a visible "Loading …" status.
 
-Local (LM Studio) adapters only, and non-fatal throughout: worst case the model
-JIT-loads on the next call exactly as it did before.
+Local (LM Studio) adapters only. A deliberate residency refusal stops the turn
+before inference can bypass the coordinator by implicitly JIT-loading a model.
 """
 
 from __future__ import annotations
