@@ -119,6 +119,7 @@ def _same_model(a: str, b: str) -> bool:
 @dataclass
 class _BaseUrlState:
     condition: asyncio.Condition = field(default_factory=asyncio.Condition)
+    supervisor_target: Optional[str] = None  # Empty string means explicitly switched to cloud.
     # model_id -> owner tags currently claiming it resident.
     wanted: Dict[str, Set[str]] = field(default_factory=dict)
     # monotonic timestamp a model was last touched (registered or reconfirmed) — LRU order.
@@ -426,6 +427,10 @@ async def _ensure_resident_impl(
     state = _state_for(base_url)
 
     async with state.condition:
+        if owner == OWNER_MAIN_MODEL and state.supervisor_target is not None:
+            if not state.supervisor_target or not _same_model(model_id, state.supervisor_target):
+                logger.warning("[ MODEL_LIFECYCLE ] Rejected stale supervisor request for '%s'.", model_id)
+                return False
         if priority == "background":
             deadline = time.monotonic() + (queue_timeout or _background_queue_timeout())
             window = _interactive_active_window()
@@ -460,6 +465,10 @@ async def _ensure_resident_impl(
 
         try:
             loaded = await get_loaded_model_ids(base_url)
+            if owner == OWNER_MAIN_MODEL and _supervisor_conflicts(state, loaded, model_id):
+                state.wanted.get(model_id, set()).discard(owner)
+                logger.warning("[ MODEL_LIFECYCLE ] Another supervisor is resident; select '%s' in the GUI to replace it.", model_id)
+                return False
             if any(_same_model(m, model_id) for m in loaded):
                 # Already resident: no new VRAM is being requested, so `_make_room` has
                 # nothing useful to do here. Reclaiming a co-resident model that pushes us
@@ -538,6 +547,19 @@ async def _mark_active_if_resident_impl(base_url: str, model_id: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _supervisor_conflicts(state, loaded, requested):
+    """Unknown resident models are protected from automatic supervisor loads.
+
+    Known auxiliary roles may coexist. Explicit selection owns the transition
+    for otherwise unclaimed models loaded outside Chad (for example in LM Studio).
+    """
+    auxiliary = [selector_model_id(), router_model_id()]
+    return [model for model in loaded if not _same_model(model, requested)
+            and not any(aux and _same_model(model, aux) for aux in auxiliary)
+            and not any(_same_model(model, key) and owners - {OWNER_MAIN_MODEL}
+                        for key, owners in state.wanted.items())]
+
+
 async def switch_main_model(previous: dict, selected: dict) -> bool:
     """Release the previous supervisor before explicitly loading its replacement.
 
@@ -547,6 +569,25 @@ async def switch_main_model(previous: dict, selected: dict) -> bool:
     async def switch():
         old_url, old_id = previous.get("base_url"), previous.get("name")
         new_url, new_id = selected.get("base_url"), selected.get("name")
+        restore_url, restore_id = old_url, old_id
+        if new_url and new_id:
+            target = _state_for(new_url)
+            async with target.condition:
+                if old_url == new_url and old_id and target.active.get(_clean_model_id(old_id).split(":")[0], 0):
+                    return False
+                loaded = await get_loaded_model_ids(new_url)
+                conflicts = _supervisor_conflicts(target, loaded, new_id)
+                if conflicts and not any(old_id and _same_model(old_id, model) for model in loaded):
+                    restore_url, restore_id = new_url, conflicts[0]
+                if any(target.active.get(_clean_model_id(model).split(":")[0], 0) for model in conflicts):
+                    return False
+                for model in conflicts:
+                    if not await unload_model(new_url, model):
+                        return False
+                    for key in list(target.wanted):
+                        if _same_model(key, model):
+                            target.wanted.pop(key)
+                target.supervisor_target = new_id
         if old_url and old_id and (not new_id or old_url != new_url or not _same_model(old_id, new_id)):
             state = _state_for(old_url)
             async with state.condition:
@@ -558,7 +599,10 @@ async def switch_main_model(previous: dict, selected: dict) -> bool:
                         if not state.wanted[key]:
                             state.wanted.pop(key)
                 if not any(_same_model(key, old_id) and owners for key, owners in state.wanted.items()):
-                    await unload_model(old_url, old_id)
+                    if old_url != new_url or not new_id:
+                        await unload_model(old_url, old_id)
+                if old_url != new_url or not new_id:
+                    state.supervisor_target = ""
                 state.condition.notify_all()
         if not new_id or not new_url:
             return True  # Cloud selection has no local model to load.
@@ -570,8 +614,10 @@ async def switch_main_model(previous: dict, selected: dict) -> bool:
             ok = False
         if not ok:
             await _release_impl(new_url, new_id, OWNER_MAIN_MODEL)
-            if old_url and old_id:
-                await _ensure_resident_impl(old_url, old_id, OWNER_MAIN_MODEL, "interactive",
+            _state_for(new_url).supervisor_target = ""
+            if restore_url and restore_id:
+                _state_for(restore_url).supervisor_target = restore_id
+                await _ensure_resident_impl(restore_url, restore_id, OWNER_MAIN_MODEL, "interactive",
                                             DEFAULT_LOAD_TIMEOUT, None)
         return ok
 

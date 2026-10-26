@@ -138,6 +138,51 @@ async def test_picker_unloads_previous_before_loading_selection(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_automatic_load_never_adds_supervisor_beside_external_resident(monkeypatch):
+    url = "http://test-external-supervisor.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    assert not await ml.ensure_resident(url, "lfm-fixture", ml.OWNER_MAIN_MODEL, enforce_budget=False)
+    assert state["loaded"] == {"bonsai-fixture"}
+    assert not state["load_calls"]
+    assert not state["unload_calls"]
+
+
+@pytest.mark.asyncio
+async def test_explicit_selection_replaces_external_supervisor_and_blocks_stale_warm(monkeypatch):
+    url = "http://test-external-switch.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    selected = {"name": "lfm-fixture", "base_url": url}
+    assert await ml.switch_main_model(selected, selected)
+    assert state["loaded"] == {"lfm-fixture"}
+    assert state["unload_calls"] == ["bonsai-fixture"]
+    assert not await ml.ensure_resident(url, "bonsai-fixture", ml.OWNER_MAIN_MODEL, enforce_budget=False)
+    assert state["loaded"] == {"lfm-fixture"}
+
+
+@pytest.mark.asyncio
+async def test_replacement_cannot_load_when_unload_fails(monkeypatch):
+    url = "http://test-failed-unload.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(ml, "unload_model", AsyncMock(return_value=False))
+    assert not await ml.switch_main_model({}, {"name": "lfm-fixture", "base_url": url})
+    assert state["loaded"] == {"bonsai-fixture"}
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_supervisor_refusal_stops_turn_before_jit(monkeypatch):
+    from src.core.orchestration.turn.model_preloader import TurnModelPreloader
+    from src.shared.exceptions import ModelError
+    url = "http://localhost:19191/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    adapter = _StubAdapter(model_name="lfm-fixture", base_url=url)
+    with pytest.raises(ModelError, match="Supervisor residency refused"):
+        await TurnModelPreloader().preload(adapter)
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
 async def test_picker_rejects_switch_during_active_request(monkeypatch):
     url = "http://test-picker-active.local/v1"
     state = _mock_lm_studio(monkeypatch, loaded=["old"])

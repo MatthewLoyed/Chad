@@ -28,7 +28,7 @@ class ModelsFacadeMixin:
                 
                 logger.info(f"[ FACADE ] Restoring active local model: {active_model.get('name')}")
                 # USE AWAIT here to ensure boot blocks until we know if it's UP
-                await self.set_local_model(active_model)
+                await self.set_local_model(active_model, explicit_selection=False)
         else:
             # Cloud model is the default, ensure its adapter is ready too
             if self._text_mode_client and hasattr(self._text_mode_client, 'adapter'):
@@ -83,7 +83,7 @@ class ModelsFacadeMixin:
             logger.error(f"discover_local_models failed: {e}", exc_info=True)
             return []
 
-    async def set_local_model(self, model_info: Dict[str, Any]) -> bool:
+    async def set_local_model(self, model_info: Dict[str, Any], *, explicit_selection: bool = True) -> bool:
         """
         Switch to a local AI model.
 
@@ -107,13 +107,15 @@ class ModelsFacadeMixin:
             api_key = model_info.get("api_key")
             supports_tools = model_info.get("supports_tools", True)
             
-            from src.core.intelligence.model_lifecycle import switch_main_model
+            from src.core.intelligence.model_lifecycle import switch_main_model, ensure_resident, OWNER_MAIN_MODEL
             from src.core.tools.failure import failure, UNAVAILABLE
             if not model_name or not base_url:
                 return failure("Selected model has no name or provider endpoint", failure_class=UNAVAILABLE)
             previous = (ConfigManager.get_local_model_config()
                         if ConfigManager.is_local_model_active() else {})
-            if not await switch_main_model(previous, model_info):
+            ready = (await switch_main_model(previous, model_info) if explicit_selection else
+                     await ensure_resident(base_url, model_name, OWNER_MAIN_MODEL))
+            if not ready:
                 return failure(
                     f"Could not load selected model {model_name}", failure_class=UNAVAILABLE,
                     next_actions=["Wait for any active chat to finish and check the local model server before selecting again."],
