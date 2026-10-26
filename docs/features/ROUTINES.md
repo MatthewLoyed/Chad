@@ -103,6 +103,10 @@ an original-source link, an image when available, and an info button explaining
 why Chad selected it. **Discuss** opens an editable chat draft and preserves any
 existing draft text. **Dismiss** persists only after the server confirms success.
 Failed refreshes retain cached posts; broken images are omitted.
+Sequential publication of an identical active discovery (same source URL, title
+and summary) enriches its metadata instead of adding another recent card. This
+handles a model correcting its interest reason; it does not enforce uniqueness
+across concurrent writers or collapse different summaries of the same source.
 
 The format draws on [Muse's interest feed](https://introducing.muse.ai/). Chad
 uses its existing interest profile, curiosity/discovery pipeline, dashboard rows,
