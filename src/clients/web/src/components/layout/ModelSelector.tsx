@@ -49,6 +49,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 // ──────────────────────────────────────────────────────────────────────────────
 
 export default function ModelSelector() {
+    const [switchError, setSwitchError] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isSwitching, setIsSwitching] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -93,6 +94,8 @@ export default function ModelSelector() {
         const api = getApi();
         if (!api || typeof api.set_active_model !== 'function') return;
 
+        if (isSwitching) return;
+        setSwitchError('');
         setIsSwitching(true);
         setIsOpen(false);
         try {
@@ -101,7 +104,7 @@ export default function ModelSelector() {
                 : modelInfo;
 
             const success = await api.set_active_model(payload);
-            if (success) {
+            if (success === true) {
                 if ('mode' in modelInfo && modelInfo.mode === 'cloud') {
                     setActiveModel({
                         mode: 'cloud',
@@ -145,12 +148,14 @@ export default function ModelSelector() {
                     }
                 }
             }
+            else setSwitchError('Could not load the selected model. Check the local server and wait for any active chat to finish.');
         } catch (e) {
+            setSwitchError('Model switching failed. Check the Brain connection and local model server.');
             console.error('[ModelSelector] set_active_model failed:', e);
         } finally {
             setIsSwitching(false);
         }
-    }, [setActiveModel]);
+    }, [setActiveModel, isSwitching]);
 
     // ── Render label ──────────────────────────────────────────────────────────
     const labelContent = useMemo(() => {
@@ -197,10 +202,12 @@ export default function ModelSelector() {
     return (
         <>
         <div className="model-selector" ref={dropdownRef}>
+            {switchError && <span className="model-selector__error" role="alert">{switchError}</span>}
             <motion.button
                 type="button"
                 className={`model-selector__trigger ${activeModel?.mode === 'local' ? 'local' : ''}`}
                 onClick={() => setIsOpen(v => !v)}
+                disabled={isSwitching}
                 title={`Active: ${activeModel?.name}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

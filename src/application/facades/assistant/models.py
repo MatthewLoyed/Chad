@@ -107,6 +107,18 @@ class ModelsFacadeMixin:
             api_key = model_info.get("api_key")
             supports_tools = model_info.get("supports_tools", True)
             
+            from src.core.intelligence.model_lifecycle import switch_main_model
+            from src.core.tools.failure import failure, UNAVAILABLE
+            if not model_name or not base_url:
+                return failure("Selected model has no name or provider endpoint", failure_class=UNAVAILABLE)
+            previous = (ConfigManager.get_local_model_config()
+                        if ConfigManager.is_local_model_active() else {})
+            if not await switch_main_model(previous, model_info):
+                return failure(
+                    f"Could not load selected model {model_name}", failure_class=UNAVAILABLE,
+                    next_actions=["Wait for any active chat to finish and check the local model server before selecting again."],
+                )
+
             # LiteLLMAdapter handles provider prefixing automatically
             llm_model_name = model_name
 
@@ -116,22 +128,6 @@ class ModelsFacadeMixin:
                 model_name=llm_model_name,
                 system_instruction=ConfigManager.get_persona_instruction()
             )
-
-            # 2. Update existing text_mode_client or create one
-            if self._text_mode_client:
-                # Hot-swap the adapter
-                self._text_mode_client.adapter = adapter
-                # We should clear history when switching models to prevent context contamination
-                self._text_mode_client.clear_history()
-            else:
-                from src.core.interfaces.text_mode import TextModeClient
-                tmc = TextModeClient(
-                    adapter=adapter,
-                    tool_registry=getattr(getattr(self._assistant, 'session_manager', None), 'tools', None),
-                    tool_executor=getattr(getattr(self._assistant, 'session_manager', None), 'tool_executor', None),
-                    memory_engine=getattr(self._assistant, 'memory', None),
-                )
-                self._text_mode_client = tmc
 
             # 2. Persist to config so orchestrator also picks it up
             config_repo = ConfigRepository()
@@ -150,7 +146,25 @@ class ModelsFacadeMixin:
             prefs = config_repo.load("preferences", use_cache=False)
             ConfigManager._recursive_update(prefs, {"local_models": local_patch})
             if not config_repo.save("preferences", prefs):
-                raise RuntimeError("Could not persist selected local model")
+                await switch_main_model(model_info, previous)
+                return failure("Could not persist selected local model", failure_class=UNAVAILABLE)
+
+            # 2. Update existing text_mode_client or create one
+            if self._text_mode_client:
+                # Hot-swap the adapter
+                self._text_mode_client.adapter = adapter
+                # We should clear history when switching models to prevent context contamination
+                self._text_mode_client.clear_history()
+            else:
+                from src.core.interfaces.text_mode import TextModeClient
+                tmc = TextModeClient(
+                    adapter=adapter,
+                    tool_registry=getattr(getattr(self._assistant, 'session_manager', None), 'tools', None),
+                    tool_executor=getattr(getattr(self._assistant, 'session_manager', None), 'tool_executor', None),
+                    memory_engine=getattr(self._assistant, 'memory', None),
+                )
+                self._text_mode_client = tmc
+
 
             # 3. Also update in-memory config so _is_local_model_active() fires immediately
             ConfigManager._recursive_update(
@@ -164,22 +178,6 @@ class ModelsFacadeMixin:
                 await self._uplink.send_model_update({"local_models": local_patch})
 
             logger.info(f"[ LOCAL ] Switched to local model: {model_name} (provider: {provider})")
-            
-            # 4. Verify correct model is loaded
-            logger.info(f"[ LOCAL ] Verifying {model_name} is active in local inference server...")
-            is_ready = await adapter.is_ready()
-
-            if not is_ready:
-                # Server might be up but wrong model loaded
-                logger.warning(
-                    f"[ LOCAL ] '{model_name}' is not the active model. "
-                    f"Load it in your local server (LM Studio/Ollama) first."
-                )
-                return {
-                    "success": True, 
-                    "warning": "model_not_loaded", 
-                    "model_name": model_name
-                }
             
             # 5. Update shared assistant state
             if self._assistant:
@@ -211,6 +209,14 @@ class ModelsFacadeMixin:
             from src.infrastructure.repositories import ConfigRepository
             from src.core.intelligence.adapters.litellm_adapter import LiteLLMAdapter
             import os
+
+            from src.core.intelligence.model_lifecycle import switch_main_model
+            from src.core.tools.failure import failure, UNAVAILABLE
+            previous = (ConfigManager.get_local_model_config()
+                        if ConfigManager.is_local_model_active() else {})
+            if not await switch_main_model(previous, {}):
+                return failure("The current local model is still serving a request", failure_class=UNAVAILABLE,
+                               next_actions=["Wait for the active chat to finish before changing models."])
             
             # Persist: disable local mode
             config_repo = ConfigRepository()

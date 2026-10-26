@@ -32,6 +32,19 @@ swap), so they hit the race far more often than a plain chat turn.
 load/unload implementation.** Always go through `ensure_resident` / `release` (or their
 `*_sync` counterparts) in `model_lifecycle.py`.
 
+## Changing the main model in the GUI
+
+The chat dropdown and **Settings → Models** run the same `SetActiveModelCommand`.
+For local selections, `ModelsFacadeMixin` calls the lifecycle coordinator's
+`switch_main_model` before saving or changing the active adapter: it releases the
+previous supervisor claim, unloads the old model when no other owner needs it,
+and explicitly loads the selected model. An active inference request prevents
+the switch; the GUI shows a failure and keeps its previous selection. Failed loads
+attempt to restore the previous model and do not save the new selection.
+Selecting a cloud model releases the old local supervisor without loading another
+local model. Re-selecting the same local model ensures residency without unloading it.
+Desktop and browser command relays allow time for a model load and recovery load.
+
 ## API
 
 ```python
