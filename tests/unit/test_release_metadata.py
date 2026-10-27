@@ -14,6 +14,23 @@ def test_next_alpha_uses_numeric_order_and_reserves_existing_drafts():
     assert release.next_version([{"tag_name": "v0.2.0-alpha.9"}, {"tag_name": "v0.2.0-alpha.10", "draft": True}]) == "0.2.0-alpha.11"
 
 
+@pytest.mark.parametrize("draft", [True, False])
+def test_rebuild_cannot_replace_an_existing_draft_or_published_release(draft):
+    releases = [{"tag_name": "v0.2.0-alpha.13", "draft": draft}]
+    with pytest.raises(ValueError, match="already exists"):
+        release.ensure_new_release("0.2.0-alpha.13", releases)
+    assert release.ensure_new_release("0.2.0-alpha.14", releases) == "0.2.0-alpha.14"
+
+
+def test_release_inventory_includes_all_pages(monkeypatch):
+    monkeypatch.setattr(release.subprocess, "check_output", lambda *args, **kwargs: json.dumps([
+        [{"tag_name": "v0.2.0-alpha.14", "draft": True}],
+        [{"tag_name": "v0.2.0-alpha.13", "draft": False}],
+    ]))
+    with pytest.raises(ValueError, match="already exists"):
+        release.ensure_new_release("0.2.0-alpha.13", release.repository_releases())
+
+
 def test_provenance_matches_installer_bytes(tmp_path):
     installer = tmp_path / "Chad-Setup-0.2.0-alpha.11.exe"
     installer.write_bytes(b"fictional installer fixture")

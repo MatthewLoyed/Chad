@@ -12,6 +12,9 @@ public; it does **not** update the previously published Windows installer.
    can also be dispatched with an explicit version (for example `0.2.0-alpha.11`);
    otherwise it chooses the next alpha after existing releases, including drafts.
    Documentation-only/download-link promotions do not rebuild the installer.
+   Tag pushes do not trigger builds: publishing a draft creates its tag, and
+   rebuilding on that event would replace the accepted binary. Existing release
+   versions (including drafts) are reserved; retries must choose a new version.
 2. The workflow builds GUI + Brain from that exact commit, tests silent install
    and reinstall/data retention in an isolated runner directory, and creates an
    **unpublished draft** with the installer, `SHA256SUMS`, `release-manifest.json`
@@ -43,6 +46,18 @@ helpers in `scripts/prod/release_metadata.py` and `test_installer.ps1`.
 
 The October 22 records below describe the original publication and superseded
 infrastructure; they are historical evidence, not the current procedure.
+
+### Alpha.13 artifact repair — October 27, 2026
+
+Publishing alpha.13 triggered the former tag-push build, which replaced its
+accepted installer and provenance files after publication. The replacement had
+SHA-256 `fd243186f5b674f7965930b160a0f86ff162322242e337f57bb1e59c961e355c`
+(391,662,788 bytes); the release notes and acceptance evidence describe the
+original SHA-256 `b0a77f5273a1501901e0d6a726c27040e7783c11e2c04ad241226496596e0491`
+(391,664,022 bytes). Restore only the retained, hash-verified accepted installer
+and its original manifest/checksums/smoke evidence; do not relabel acceptance
+reports to certify the replacement. The workflow now creates new drafts only
+and rejects existing release versions before upload.
 
 ## Clean repository publication — October 22, 2026
 
