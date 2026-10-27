@@ -27,6 +27,20 @@ def validate_version(version: str) -> str:
     return version
 
 
+def ensure_new_release(version: str, releases: list[dict]) -> str:
+    """Reserve existing drafts and published artifacts against rebuild replacement."""
+    tag = f"v{validate_version(version)}"
+    if any(release["tag_name"] == tag for release in releases):
+        raise ValueError(f"Release {tag} already exists; choose a new version instead of replacing its assets")
+    return version
+
+
+def repository_releases() -> list[dict]:
+    pages = json.loads(subprocess.check_output(
+        ["gh", "api", "--paginate", "--slurp", "repos/{owner}/{repo}/releases?per_page=100"], text=True))
+    return [release for page in pages for release in page]
+
+
 def write_provenance(installer: Path, version: str, source: str) -> Path:
     validate_version(version)
     if installer.name != f"Chad-Setup-{version}.exe" or not installer.is_file():
@@ -62,7 +76,7 @@ def update_download(readme: Path, tag: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["version", "manifest", "readme"])
+    parser.add_argument("command", choices=["version", "check-new", "manifest", "readme"])
     parser.add_argument("--version", default="")
     parser.add_argument("--tag", default="")
     parser.add_argument("--installer", type=Path)
@@ -71,11 +85,12 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "version":
         version = args.version or args.tag.removeprefix("v")
+        releases = repository_releases()
         if not version:
-            releases = json.loads(subprocess.check_output(
-                ["gh", "api", "repos/{owner}/{repo}/releases?per_page=100"], text=True))
             version = next_version(releases)
-        print(validate_version(version))
+        print(ensure_new_release(version, releases))
+    elif args.command == "check-new":
+        print(ensure_new_release(args.version, repository_releases()))
     elif args.command == "manifest":
         print(write_provenance(args.installer, args.version, args.source))
     else:
