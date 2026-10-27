@@ -176,11 +176,13 @@ class SetActiveModelCommand(Command):
 
     async def execute(self, facade):
         try:
-            is_cloud = self.model_info.get("mode") == "cloud" or not self.model_info.get("name")
-            if is_cloud:
-                # Support both legacy boolean return and unified result dictionary
-                return await facade.set_cloud_model(model_id=self.model_info.get("name"))
-            else:
+            import asyncio
+            if not hasattr(facade, "_model_selection_lock"):
+                facade._model_selection_lock = asyncio.Lock()
+            async with facade._model_selection_lock:
+                is_cloud = self.model_info.get("mode") == "cloud" or not self.model_info.get("name")
+                if is_cloud:
+                    return await facade.set_cloud_model(model_id=self.model_info.get("name"))
                 return await facade.set_local_model(self.model_info)
         except Exception as e:
             logger.error(f"SetActiveModelCommand failed: {e}", exc_info=True)

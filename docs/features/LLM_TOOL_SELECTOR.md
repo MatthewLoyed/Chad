@@ -79,6 +79,15 @@ Backend reachable?
 
 ## Configuration
 
+In the desktop GUI or browser client, open **Settings → Models → Tool selector model**.
+Choose a discovered local model and click **Save tool selector**. **Rescan** refreshes
+models from the local providers without loading them. The choice is saved in
+`config/preferences.yaml` as `tools.llm_selector_model` and
+`tools.llm_selector_provider`; it takes effect on the next tool selection without
+changing the main chat model or restarting the Brain. The configured choice remains
+visible even when its provider is offline. Saving the choice does not load the model.
+
+
 ```yaml
 # config/config.yaml
 tools:
@@ -90,7 +99,7 @@ The base URL is read from the configured provider under `local_models.providers.
 resolves the backend identity via `providers.resolve_provider_name`, so pointing the selector
 at Ollama or a static endpoint requires no code change.
 
-To swap to a different small model, update `tools.llm_selector_model`. The model needs to:
+To swap to a different small model, use the GUI above or update `tools.llm_selector_model`. The model needs to:
 - Be accessible via the backend's OpenAI-compatible API
 - Return clean JSON arrays reliably at `temperature: 0`
 

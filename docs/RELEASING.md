@@ -12,6 +12,9 @@ public; it does **not** update the previously published Windows installer.
    can also be dispatched with an explicit version (for example `0.2.0-alpha.11`);
    otherwise it chooses the next alpha after existing releases, including drafts.
    Documentation-only/download-link promotions do not rebuild the installer.
+   Tag pushes do not trigger builds: publishing a draft creates its tag, and
+   rebuilding on that event would replace the accepted binary. Existing release
+   versions (including drafts) are reserved; retries must choose a new version.
 2. The workflow builds GUI + Brain from that exact commit, tests silent install
    and reinstall/data retention in an isolated runner directory, and creates an
    **unpublished draft** with the installer, `SHA256SUMS`, `release-manifest.json`
@@ -43,6 +46,18 @@ helpers in `scripts/prod/release_metadata.py` and `test_installer.ps1`.
 
 The October 22 records below describe the original publication and superseded
 infrastructure; they are historical evidence, not the current procedure.
+
+### Alpha.13 artifact repair — October 27, 2026
+
+Publishing alpha.13 triggered the former tag-push build, which replaced its
+accepted installer and provenance files after publication. The replacement had
+SHA-256 `fd243186f5b674f7965930b160a0f86ff162322242e337f57bb1e59c961e355c`
+(391,662,788 bytes); the release notes and acceptance evidence describe the
+original SHA-256 `b0a77f5273a1501901e0d6a726c27040e7783c11e2c04ad241226496596e0491`
+(391,664,022 bytes). Restore only the retained, hash-verified accepted installer
+and its original manifest/checksums/smoke evidence; do not relabel acceptance
+reports to certify the replacement. The workflow now creates new drafts only
+and rejects existing release versions before upload.
 
 ## Clean repository publication — October 22, 2026
 
@@ -290,46 +305,32 @@ On both `master` and `dev`:
 
 ## Cutting a release
 
-1. **Stabilize `dev`.** All intended PRs merged; CI green on `dev`.
-2. **Run the pre-release gate locally** (see checklist below).
-3. **Promote to `master`** via PR (`dev` â†’ `master`), not a direct push.
-   Wait for CI green, then merge.
-4. **Tag it:**
-   ```bash
-   git checkout master && git pull
-   git tag -a vX.Y.Z -m "Chad vX.Y.Z â€” <one-line summary>"
-   git push origin vX.Y.Z
-   ```
-   Versioning is semver-ish: bump **minor** for features, **patch** for fixes,
-   **major** for breaking config/protocol changes.
-5. **Pushing the tag triggers `.github/workflows/release.yml`**, which builds
-   `Chad-Setup-vX.Y.Z.exe` (PyInstaller + NSIS, see `packaging/README.md`) and
-   creates/updates the GitHub Release for that tag with the installer
-   attached and auto-generated notes â€” no manual `gh release create` needed.
-   The installer is **unsigned** until a code-signing cert is configured
-   (`CHAD_SIGN_PFX_BASE64`/`CHAD_SIGN_PFX_PASSWORD` repo secrets â€” see
-   `scripts/prod/sign_installer.ps1`); until then SmartScreen may warn on
-   first run (#430).
-6. **Users update** via Settings â†’ System â†’ "Update Chad" (or auto-update).
+Follow the current release pipeline at the top of this guide. Stabilize `dev`,
+run the relevant contribution checks, then promote through a reviewed PR into
+`master`. Wait for required CI before merging. The master workflow builds a new
+unpublished installer draft; verify the exact asset before publishing it. Do not
+push a tag to request a rebuild or reuse an existing draft/published version.
 
-## Pre-release gate (before promoting `dev` â†’ `master`)
+Installer upgrades are manual downloads. The source-checkout Update command
+requires Git and does not upgrade a packaged installation. Installers remain
+unsigned until the signing secrets described in `scripts/prod/sign_installer.ps1`
+are configured.
 
-Free, zero-token â€” run every time:
+## Pre-release gate (before promoting dev to master)
 
-```powershell
-$env:PYTHONPATH="."
-.\.venv\Scripts\python.exe -m evals.runner --suite tool_selection
-.\.venv\Scripts\python.exe -m evals.runner --prompt-audit
-.\.venv\Scripts\python.exe -m evals.runner --tool-contract
-.\.venv\Scripts\python.exe -m evals.runner --replay
-cd src/clients/web; npm run build; npm run lint
-```
+Run the credential-free checks in [CONTRIBUTING.md](../CONTRIBUTING.md): unit
+tests, prompt audit, tool contract and documentation integrity, plus the web
+build/lint for frontend changes. CI also checks persona parity. Tool selection,
+database replay and live model lanes are opt-in checks with their own prerequisites;
+do not describe them as universally offline or token-free.
 
-For a meaningful release, also run the semantic + live lanes against the running
-Brain (see `evals/AGENTS.md` / `evals/README.md`), and confirm a **cold-start install** still works
-(see `docs/setup/COLD_START.md`).
+Source checks do not replace exact-installer acceptance. Verify cold startup,
+the affected GUI/model paths, persisted state and upgrade retention on an isolated
+acceptance installation before publishing. Use the production-port boundary and
+model-residency rules in the current pipeline above.
 
 ## Hotfixes
 
-For an urgent production fix: branch `fix/*` off `master`, PR into `master`,
-tag a patch release, then merge `master` back into `dev` so they don't diverge.
+For an urgent production fix, branch `fix/*` off `master` and open a PR into
+`master`. After CI passes, use the same draft-build and exact-artifact acceptance
+gates. Merge `master` back into `dev` so the source branches do not diverge.
