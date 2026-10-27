@@ -32,6 +32,32 @@ swap), so they hit the race far more often than a plain chat turn.
 load/unload implementation.** Always go through `ensure_resident` / `release` (or their
 `*_sync` counterparts) in `model_lifecycle.py`.
 
+## Changing the main model in the GUI
+
+The GUI's selected supervisor is authoritative at startup, reconnect, and during
+chat. If another supervisor is resident (including one loaded directly in
+LM Studio), the coordinator unloads it and verifies that it is gone before
+loading the selected model. An unload failure or active inference request blocks
+the replacement load. Known tool-selector and intent-router roles may coexist.
+The coordinator records the selected supervisor target and rejects stale warmup
+requests. A refused turn preload stops the turn instead of falling through to
+implicit JIT loading. Independent clients and older Brains need the same policy
+for a machine-wide guarantee.
+
+The chat dropdown and **Settings → Models** run the same `SetActiveModelCommand`.
+For local selections, `ModelsFacadeMixin` calls the lifecycle coordinator's
+`switch_main_model` before saving or changing the active adapter: it releases the
+previous supervisor claim, unloads the old model when no other owner needs it,
+and explicitly loads the selected model. An active inference request prevents
+the switch; the GUI shows a failure and keeps its previous selection. Failed loads
+attempt to restore the previous model and do not save the new selection.
+Selecting a cloud model releases the old local supervisor without loading another
+local model. Re-selecting the same local model ensures residency without unloading it.
+Desktop and browser command relays allow time for a model load and recovery load.
+Restoring the selected supervisor on GUI connection is mandatory;
+`preload_on_connect` controls optional auxiliary preloading, not whether the
+selected supervisor takes effect.
+
 ## API
 
 ```python

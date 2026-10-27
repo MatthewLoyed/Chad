@@ -23,11 +23,12 @@ def isolated_config(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("ready", [True, False])
-async def test_gui_selection_survives_reload_and_reaches_brain(monkeypatch, isolated_config, ready):
+async def test_gui_selection_survives_reload_and_reaches_brain(monkeypatch, isolated_config):
     from src.application.facades.assistant.models import ModelsFacadeMixin
     adapter = MagicMock()
-    adapter.is_ready = AsyncMock(return_value=ready)
+    adapter.is_ready = AsyncMock(return_value=True)
+    switch = AsyncMock(return_value=True)
+    monkeypatch.setattr("src.core.intelligence.model_lifecycle.switch_main_model", switch)
     monkeypatch.setattr("src.core.intelligence.adapters.litellm_adapter.LiteLLMAdapter", lambda **kw: adapter)
     monkeypatch.setattr(ConfigManager, "get_persona_instruction", classmethod(lambda cls: "test"))
     facade = ModelsFacadeMixin()
@@ -46,7 +47,9 @@ async def test_gui_selection_survives_reload_and_reaches_brain(monkeypatch, isol
     assert ConfigManager.get_local_model_config("agent")["name"] == selected["name"]
     update = facade._uplink.send_model_update.await_args.args[0]
     assert update["local_models"]["supervisor"]["name"] == selected["name"]
-    assert (result.get("warning") == "model_not_loaded") == (not ready)
+    switch.assert_awaited_once()
+    assert switch.await_args.args[1] == selected
+    assert result.get("warning") is None
 
 
 def test_old_client_update_clears_stale_supervisor_pin(isolated_config):
@@ -60,6 +63,20 @@ def test_old_client_update_clears_stale_supervisor_pin(isolated_config):
     persisted = isolated_config.load("preferences", use_cache=False)
     assert persisted["local_models"]["supervisor"]["name"] == "bonsai-new"
     assert events.publish.call_args.args[0].new_model == "bonsai-new"
+
+
+@pytest.mark.asyncio
+async def test_failed_load_does_not_change_preferences_or_adapter(monkeypatch, isolated_config):
+    from src.application.facades.assistant.models import ModelsFacadeMixin
+    monkeypatch.setattr("src.core.intelligence.model_lifecycle.switch_main_model", AsyncMock(return_value=False))
+    facade = ModelsFacadeMixin()
+    facade._text_mode_client = SimpleNamespace(adapter="previous-adapter")
+    result = await facade.set_local_model({"name": "new", "provider": "lmstudio",
+                                           "base_url": "http://fixture.invalid/v1"})
+    assert not result["success"]
+    assert result["failure_class"] == "unavailable"
+    assert facade._text_mode_client.adapter == "previous-adapter"
+    assert isolated_config.load("preferences", use_cache=False)["local_models"]["supervisor"]["name"] == "lfm-old"
 
 
 def test_setup_choice_routes_immediately_and_survives_reload(monkeypatch, isolated_config):

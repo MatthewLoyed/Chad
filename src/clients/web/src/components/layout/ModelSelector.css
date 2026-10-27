@@ -282,3 +282,18 @@
 .spin {
     animation: spin 1s linear infinite;
 }
+
+.model-selector__error {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    width: min(320px, 80vw);
+    padding: 12px;
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    border-radius: 10px;
+    background: var(--chad-bg, #1b1b24);
+    color: #fca5a5;
+    font-size: 12px;
+    line-height: 1.5;
+    z-index: 100;
+}
