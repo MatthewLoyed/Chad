@@ -102,18 +102,20 @@ def _reset_config(monkeypatch):
 
 def _mock_lm_studio(monkeypatch, *, loaded=None):
     """Patch the three model_swap primitives the coordinator calls, tracking invocations."""
-    state = {"loaded": set(loaded or []), "load_calls": [], "unload_calls": []}
+    state = {"loaded": set(loaded or []), "load_calls": [], "unload_calls": [], "events": []}
 
     async def _get_loaded_model_ids(base_url):
         return list(state["loaded"])
 
     async def _load_model(base_url, model_id, timeout=180.0, context_length=None):
+        state["events"].append(("load", model_id, set(state["loaded"])))
         state["load_calls"].append(model_id)
         await asyncio.sleep(0)  # yield, so concurrent callers actually interleave
         state["loaded"].add(model_id)
         return True
 
     async def _unload_model(base_url, model_id):
+        state["events"].append(("unload", model_id, set(state["loaded"])))
         state["unload_calls"].append(model_id)
         state["loaded"].discard(model_id)
         return True
@@ -122,6 +124,152 @@ def _mock_lm_studio(monkeypatch, *, loaded=None):
     monkeypatch.setattr(ml, "load_model", _load_model)
     monkeypatch.setattr(ml, "unload_model", _unload_model)
     return state
+
+
+@pytest.mark.asyncio
+async def test_picker_unloads_previous_before_loading_selection(monkeypatch):
+    url = "http://test-picker.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    await ml.ensure_resident(url, "old", ml.OWNER_MAIN_MODEL)
+    assert await ml.switch_main_model({"name": "old", "base_url": url},
+                                      {"name": "new", "base_url": url})
+    assert state["unload_calls"] == ["old"]
+    assert state["load_calls"] == ["new"]
+    assert state["loaded"] == {"new"}
+    assert "old" not in ml.get_diagnostics(url)["wanted"]
+
+
+@pytest.mark.asyncio
+async def test_startup_replaces_external_supervisor_with_selected_model(monkeypatch):
+    url = "http://test-external-supervisor.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    assert await ml.ensure_resident(url, "lfm-fixture", ml.OWNER_MAIN_MODEL, enforce_budget=False)
+    assert state["loaded"] == {"lfm-fixture"}
+    assert state["load_calls"] == ["lfm-fixture"]
+    assert state["unload_calls"] == ["bonsai-fixture"]
+    assert state["events"] == [("unload", "bonsai-fixture", {"bonsai-fixture"}),
+                               ("load", "lfm-fixture", set())]
+
+
+@pytest.mark.asyncio
+async def test_connect_restores_selection_even_when_preloading_is_disabled(monkeypatch):
+    from src.shared.config_manager import ConfigManager
+    url = "http://test-connect-selection.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    monkeypatch.setattr(ConfigManager, "is_local_model_active", lambda: True)
+    monkeypatch.setattr(ConfigManager, "get_local_model_config", lambda: {"name": "lfm-fixture", "base_url": url})
+    monkeypatch.setattr(ml, "_lifecycle_enabled", lambda: False)
+    await ml.warm_models(turn_coordinator=_FakeTC(_StubAdapter("stale-model", url)), restore_selection=True)
+    assert state["loaded"] == {"lfm-fixture"}
+    assert state["unload_calls"] == ["bonsai-fixture"]
+    assert state["load_calls"] == ["lfm-fixture"]
+
+
+@pytest.mark.asyncio
+async def test_reported_unload_success_is_verified_before_loading(monkeypatch):
+    from unittest.mock import AsyncMock
+    url = "http://test-verify-unload.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    monkeypatch.setattr(ml, "unload_model", AsyncMock(return_value=True))
+    assert not await ml.ensure_resident(url, "lfm-fixture", ml.OWNER_MAIN_MODEL)
+    assert state["loaded"] == {"bonsai-fixture"}
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_first_warmup_cannot_override_configured_selection(monkeypatch):
+    from src.shared.config_manager import ConfigManager
+    url = "http://test-configured-selection.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["selected-fixture"])
+    monkeypatch.setattr(ConfigManager, "get_local_model_config", lambda: {"name": "selected-fixture", "base_url": url})
+    assert not await ml.ensure_resident(url, "stale-fixture", ml.OWNER_MAIN_MODEL)
+    assert state["loaded"] == {"selected-fixture"}
+    assert not state["load_calls"]
+    assert not state["unload_calls"]
+
+
+@pytest.mark.asyncio
+async def test_explicit_selection_replaces_external_supervisor_and_blocks_stale_warm(monkeypatch):
+    url = "http://test-external-switch.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    selected = {"name": "lfm-fixture", "base_url": url}
+    assert await ml.switch_main_model(selected, selected)
+    assert state["loaded"] == {"lfm-fixture"}
+    assert state["unload_calls"] == ["bonsai-fixture"]
+    assert not await ml.ensure_resident(url, "bonsai-fixture", ml.OWNER_MAIN_MODEL, enforce_budget=False)
+    assert state["loaded"] == {"lfm-fixture"}
+
+
+@pytest.mark.asyncio
+async def test_replacement_cannot_load_when_unload_fails(monkeypatch):
+    url = "http://test-failed-unload.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(ml, "unload_model", AsyncMock(return_value=False))
+    assert not await ml.switch_main_model({}, {"name": "lfm-fixture", "base_url": url})
+    assert state["loaded"] == {"bonsai-fixture"}
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_supervisor_refusal_stops_turn_before_jit(monkeypatch):
+    from src.core.orchestration.turn.model_preloader import TurnModelPreloader
+    from src.shared.exceptions import ModelError
+    url = "http://localhost:19191/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["bonsai-fixture"])
+    adapter = _StubAdapter(model_name="lfm-fixture", base_url=url)
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(ml, "unload_model", AsyncMock(return_value=False))
+    with pytest.raises(ModelError, match="Supervisor residency refused"):
+        await TurnModelPreloader().preload(adapter)
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_picker_rejects_switch_during_active_request(monkeypatch):
+    url = "http://test-picker-active.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    async with ml.active_use(url, "old"):
+        assert not await ml.switch_main_model({"name": "old", "base_url": url},
+                                              {"name": "new", "base_url": url})
+    assert not state["unload_calls"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_picker_reselects_resident_model_without_unload(monkeypatch):
+    url = "http://test-picker-same.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["same"])
+    selected = {"name": "same", "base_url": url}
+    assert await ml.switch_main_model(selected, selected)
+    assert not state["unload_calls"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_cloud_selection_unloads_local_supervisor(monkeypatch):
+    url = "http://test-picker-cloud.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    assert await ml.switch_main_model({"name": "old", "base_url": url}, {})
+    assert state["unload_calls"] == ["old"]
+    assert not state["load_calls"]
+
+
+@pytest.mark.asyncio
+async def test_picker_restores_previous_if_load_fails(monkeypatch):
+    url = "http://test-picker-failure.local/v1"
+    state = _mock_lm_studio(monkeypatch, loaded=["old"])
+    original = ml.load_model
+
+    async def load(base_url, model_id, **kwargs):
+        if model_id == "new":
+            return False
+        return await original(base_url, model_id, **kwargs)
+
+    monkeypatch.setattr(ml, "load_model", load)
+    assert not await ml.switch_main_model({"name": "old", "base_url": url},
+                                          {"name": "new", "base_url": url})
+    assert state["loaded"] == {"old"}
 
 
 @pytest.mark.asyncio
