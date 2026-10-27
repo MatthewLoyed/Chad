@@ -130,6 +130,7 @@ from .routine_commands import (
     ListSkillsCatalogCommand,
     GetSkillContentCommand,
 )
+from .tool_selector_commands import GetToolSelectorModelCommand, SetToolSelectorModelCommand
 from .routine_builder_commands import (
     GetRoutineBuilderModelCommand,
     SetRoutineBuilderModelCommand,
@@ -256,6 +257,8 @@ __all__ = [
     'DraftRoutineCommand',
     'ListSkillsCatalogCommand',
     'GetSkillContentCommand',
+    'GetToolSelectorModelCommand',
+    'SetToolSelectorModelCommand',
     'GetRoutineBuilderModelCommand',
     'SetRoutineBuilderModelCommand',
     'GetCapabilitySuggestionsCommand',
