@@ -9,7 +9,7 @@ an approved promotion PR merges `dev` into `master`. A source merge makes code
 public; it does **not** update the previously published Windows installer.
 
 1. A runtime change promoted to `master` runs **Release installer**. The workflow
-   can also be dispatched with an explicit version (for example `0.2.0-alpha.11`);
+   can also be dispatched with an explicit unused version;
    otherwise it chooses the next alpha after existing releases, including drafts.
    Documentation-only/download-link promotions do not rebuild the installer.
    Tag pushes do not trigger builds: publishing a draft creates its tag, and
@@ -54,9 +54,10 @@ accepted installer and provenance files after publication. The replacement had
 SHA-256 `fd243186f5b674f7965930b160a0f86ff162322242e337f57bb1e59c961e355c`
 (391,662,788 bytes); the release notes and acceptance evidence describe the
 original SHA-256 `b0a77f5273a1501901e0d6a726c27040e7783c11e2c04ad241226496596e0491`
-(391,664,022 bytes). Restore only the retained, hash-verified accepted installer
-and its original manifest/checksums/smoke evidence; do not relabel acceptance
-reports to certify the replacement. The workflow now creates new drafts only
+(391,664,022 bytes). The retained, hash-verified accepted installer and its
+original manifest/checksums/smoke evidence were restored on October 27. A full
+unauthenticated download matched the original accepted hash and byte count;
+acceptance reports were not relabelled to certify the replacement. The workflow now creates new drafts only
 and rejects existing release versions before upload.
 
 ## Clean repository publication — October 22, 2026
