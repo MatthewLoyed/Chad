@@ -195,7 +195,8 @@ class LimbCoordinator:
                 self.client_type,
                 getattr(self, "_connect_preload_ui_mode", None),
             )
-            schedule_warm(turn_coordinator=self.turn_coordinator, ui_mode=ui_mode)
+            schedule_warm(turn_coordinator=self.turn_coordinator, ui_mode=ui_mode,
+                          restore_selection=self.client_type != "eval")
             logger.info(
                 f"[ COORDINATOR ] Model preload scheduled "
                 f"(ui_mode={ui_mode}, client_type={self.client_type})."

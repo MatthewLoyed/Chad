@@ -4,6 +4,7 @@ import { useAppStore } from '../../../store';
 import type { ActiveModelInfo, LocalModelInfo } from '../../../store';
 import { useApiReady } from '../../../store';
 import './ModelsTab.css';
+import ToolSelectorSettings from './ToolSelectorSettings';
 
 const DISCOVERY_TIMEOUT_MS = 12000;
 
@@ -32,6 +33,7 @@ export default function ModelsTab() {
     const isLocalScanning = useAppStore((s) => s.isLocalScanning);
     const setIsLocalScanning = useAppStore((s) => s.setIsLocalScanning);
 
+    const [switchError, setSwitchError] = useState('');
     const [switching, setSwitching] = useState(false);
     const [bootstrapped, setBootstrapped] = useState(false);
 
@@ -84,13 +86,17 @@ export default function ModelsTab() {
     const selectModel = async (payload: LocalModelInfo | { mode: 'cloud'; id: string; name: string }) => {
         if (!api?.set_active_model || switching) return;
         setSwitching(true);
+        setSwitchError('');
         try {
             const modelInfo = 'mode' in payload && payload.mode === 'cloud'
                 ? { mode: 'cloud', name: payload.id, display_name: payload.name }
                 : payload;
 
             const success = await api.set_active_model(modelInfo);
-            if (!success) return;
+            if (success !== true) {
+                setSwitchError('Could not load the selected model. Check the local server and wait for any active chat to finish.');
+                return;
+            }
 
             if ('mode' in payload && payload.mode === 'cloud') {
                 setActiveModel({
@@ -121,6 +127,7 @@ export default function ModelsTab() {
             }
         } catch (e) {
             console.error('[ModelsTab] set_active_model failed:', e);
+            setSwitchError('Model switching failed. Check the Brain connection and local model server.');
         } finally {
             setSwitching(false);
         }
@@ -134,6 +141,7 @@ export default function ModelsTab() {
 
     return (
         <div className="models-tab">
+            {switchError && <p role="alert">{switchError}</p>}
             {activeModel && (
                 <div className={`models-tab__active ${activeModel.mode}`}>
                     <div className="models-tab__active-icon">
@@ -250,6 +258,8 @@ export default function ModelsTab() {
                     </div>
                 )}
             </section>
+
+            <ToolSelectorSettings models={localModels} />
 
             <section className="models-tab__section">
                 <h3 className="models-tab__heading">Routine builder</h3>

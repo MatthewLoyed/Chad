@@ -111,6 +111,9 @@ function buildApi(): Record<string, ApiFn> {
         get_skills_catalog: () => executeCommand('ListSkillsCatalogCommand', {}),
         get_skill_content: (skill_name) =>
             executeCommand('GetSkillContentCommand', { skill_name: String(skill_name) }),
+        get_tool_selector_model: () => executeCommand('GetToolSelectorModelCommand', {}),
+        set_tool_selector_model: (model_id, provider) =>
+            executeCommand('SetToolSelectorModelCommand', { model_id, provider }),
         get_routine_builder_model: () => executeCommand('GetRoutineBuilderModelCommand', {}),
         set_routine_builder_model: (model_id) =>
             executeCommand('SetRoutineBuilderModelCommand', { model_id: String(model_id) }),
@@ -254,7 +257,8 @@ function buildApi(): Record<string, ApiFn> {
         discover_local_models: () => executeCommand('DiscoverLocalModelsCommand', {}),
         set_active_model: (model_info) => {
             const mi = typeof model_info === 'string' ? JSON.parse(model_info) : model_info;
-            return executeCommand('SetActiveModelCommand', { model_info: mi });
+            return executeCommand<boolean | { success: boolean }>('SetActiveModelCommand', { model_info: mi })
+                .then(result => typeof result === 'boolean' ? result : result?.success === true);
         },
         get_mcp_servers: () => executeCommand('GetMCPServersCommand', {}).catch(() => []),
         add_mcp_server: (name, command, env, extra = null) =>
