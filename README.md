@@ -4,11 +4,11 @@
 
 ## Download Chad for Windows
 
-**[Download the Windows installer (.exe) — v0.2.0-alpha.13](https://github.com/MatthewLoyed/Chad/releases/download/v0.2.0-alpha.13/Chad-Setup-0.2.0-alpha.13.exe)**
+**[Download the Windows installer (.exe) — v0.2.0-alpha.14](https://github.com/MatthewLoyed/Chad/releases/download/v0.2.0-alpha.14/Chad-Setup-0.2.0-alpha.14.exe)**
 
-Download and run `Chad-Setup-0.2.0-alpha.13.exe`. No Python or Node installation
+Download and run `Chad-Setup-0.2.0-alpha.14.exe`. No Python or Node installation
 is required. A local model server and model are installed separately.
-[Release notes, checksums and other downloads](https://github.com/MatthewLoyed/Chad/releases/tag/v0.2.0-alpha.13).
+[Release notes, checksums and other downloads](https://github.com/MatthewLoyed/Chad/releases/tag/v0.2.0-alpha.14).
 
 Start with Chat mode for conversation, summaries and rewrites. Specialist tools,
 connected services, browser and system capabilities require additional setup;
