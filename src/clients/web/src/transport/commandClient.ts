@@ -33,12 +33,13 @@ export async function executeCommand<T = unknown>(
     commandClass: string,
     args: Record<string, unknown> = {},
 ): Promise<T> {
+    const timeoutMs = commandClass === 'SetActiveModelCommand' ? 420000 : COMMAND_TIMEOUT_MS;
     const base = toHttpBase(getServerUrl());
     const token = getToken();
     const url = `${base}/api/command`;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), COMMAND_TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         const resp = await fetch(url, {
