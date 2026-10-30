@@ -15,10 +15,15 @@ class RefreshGoogleAuthTool(BaseTool):
     
     name = "refresh_google_auth"
     description = (
-        "Refresh Google Workspace/Gmail credentials. "
-        "Use this if other workspace tools (gmail, calendar, etc.) fail with authentication errors. "
+        "Repair the shared Google authorization for Gmail, Google Drive (file search/read), "
+        "Docs, Sheets, Slides, Calendar and Contacts. All these Google Workspace tools "
+        "use the same credentials. Use for GOOGLE_AUTH_REQUIRED, expired/revoked tokens, "
+        "invalid_grant or missing OAuth scopes from any of these services. "
+        "A non-retryable auth failure means repair authorization first, then retry the "
+        "original operation after this tool succeeds; it does not forbid auth recovery. "
         "First tries existing credentials and automatic token refresh. If Google rejects "
-        "the saved authorization, opens sign-in for the user to approve access."
+        "the saved authorization, opens sign-in for the user to approve access. "
+        "Valid credentials do not bypass a file owner's sharing restrictions."
     )
     category = "workspace"
     
@@ -35,7 +40,7 @@ class RefreshGoogleAuthTool(BaseTool):
                 "properties": {
                     "reason": {
                         "type": "string",
-                        "description": "The reason why authentication is being requested (e.g., 'Gmail token expired')."
+                        "description": "The Google service and authentication failure to repair (e.g., 'Drive file read returned GOOGLE_AUTH_REQUIRED')."
                     }
                 },
                 "required": ["reason"]
