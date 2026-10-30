@@ -232,6 +232,28 @@ async def test_lmstudio_load_strips_provider_prefix(monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("model_id", ["openai/gpt-oss-20b", "openai/openai/gpt-oss-20b"])
+async def test_lmstudio_load_preserves_native_openai_publisher(monkeypatch, model_id):
+    """A native publisher is not a LiteLLM prefix: loading the alias can select
+    another on-disk copy absent from the native residency listing.
+    """
+    from src.core.intelligence.providers import lmstudio as mod
+
+    routes = {
+        ("GET", "http://localhost:1234/api/v1/models"): _FakeResponse(
+            200, {"models": [{"key": "openai/gpt-oss-20b", "loaded_instances": []}]}
+        ),
+        ("POST", "http://localhost:1234/api/v1/models/load"): _FakeResponse(200, {}),
+    }
+    calls = _patch_httpx(monkeypatch, mod, routes)
+    prov = LMStudioLifecycle("http://localhost:1234/v1")
+    assert await prov.load(model_id) is True
+    assert [body for method, _, body in calls if method == "POST"] == [
+        {"model": "openai/gpt-oss-20b"}
+    ]
+
+
+@pytest.mark.asyncio
 async def test_lmstudio_load_refuses_when_residency_probe_fails(monkeypatch):
     """An unreachable listing must NOT be read as "nothing is resident".
 

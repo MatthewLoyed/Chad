@@ -28,6 +28,12 @@ swap), so they hit the race far more often than a plain chat turn.
 
 ## Convention
 
+LM Studio loads resolve against its native catalog keys before removing a
+LiteLLM provider prefix. A publisher such as `openai/` in
+`openai/gpt-oss-20b` is part of the native key. Stripping it can load another
+installed copy through a bare alias that the native residency listing does
+not expose, causing repeated supervisor loads despite an existing instance.
+
 **New code must never call `model_swap.py` directly, and must never hand-roll another
 load/unload implementation.** Always go through `ensure_resident` / `release` (or their
 `*_sync` counterparts) in `model_lifecycle.py`.
