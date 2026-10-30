@@ -77,7 +77,7 @@ FULL_CATALOG: Dict[str, str] = {
     "read_course_page": "Read the full content of a Canvas wiki page.",
     "read_file": "Read the text contents of a local file. Supports .txt, .md, .py, .json, .yaml, .csv.",
     "refresh_browser_history": "Manually refresh and sync the user's latest browser/Chrome history into memory.",
-    "refresh_google_auth": "Refresh Google Workspace/Gmail credentials when other workspace tools fail with auth errors.",
+    "refresh_google_auth": "Repair shared Google credentials for Drive, Gmail, Docs, Sheets, Slides, Calendar and Contacts after authentication errors; retry the original operation after successful repair.",
     "resolve_path": "Resolve a user-friendly path alias (e.g., 'Downloads', 'Desktop', '~') to an absolute system path.",
     "run_host_command": "Execute shell commands, run git operations, and terminal scripts on the host system.",
     "run_routine": "Execute a predefined multi-step routine (macro) from the configuration (e.g., 'start_work', 'shutdown').",
