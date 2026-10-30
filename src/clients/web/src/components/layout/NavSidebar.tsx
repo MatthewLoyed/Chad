@@ -59,11 +59,30 @@ interface NavSidebarProps {
 type ActionMenuState = { chatId: string; chatTitle: string } | null;
 type MoveProjectState = { chatId: string; chatTitle: string; projectPath?: string | null } | null;
 
-function NavSidebarSkeleton({ count = 5 }: { count?: number }) {
+function NavSidebarSkeleton({ count = 5, fill = false }: { count?: number; fill?: boolean }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [visibleCount, setVisibleCount] = useState(count);
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!fill || !container) return;
+        const resize = () => {
+            const row = container.firstElementChild as HTMLElement | null;
+            if (!row) return;
+            const style = getComputedStyle(container);
+            const gap = parseFloat(style.rowGap) || 0;
+            const height = container.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+            const stride = row.offsetHeight + gap;
+            if (stride > 0) setVisibleCount(Math.max(1, Math.ceil((height + gap) / stride)));
+        };
+        resize();
+        const observer = new ResizeObserver(resize);
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [fill]);
     const widths = ['75%', '55%', '88%', '65%', '45%', '80%'];
     return (
-        <div className="nav-sidebar-skeleton" aria-busy="true" aria-label="Loading list">
-            {Array.from({ length: count }).map((_, i) => (
+        <div ref={containerRef} className={`nav-sidebar-skeleton${fill ? ' nav-sidebar-skeleton--fill' : ''}`} aria-busy="true" aria-label="Loading list">
+            {Array.from({ length: fill ? visibleCount : count }).map((_, i) => (
                 <div key={i} className="nav-sidebar-skeleton__item">
                     <div className="nav-sidebar-skeleton__icon" />
                     <div
@@ -691,7 +710,7 @@ export default function NavSidebar({
                                 sidebar sat on "Loading chats..." indefinitely. Fall through to
                                 the offline block below, which offers a reconnect. */}
                             {isHistoryLoading && conversations.length === 0 && !isOffline ? (
-                                <NavSidebarSkeleton count={6} />
+                                <NavSidebarSkeleton fill />
                             ) : (
                                 <>
                                     {visibleConversations.map(renderRecentItem)}

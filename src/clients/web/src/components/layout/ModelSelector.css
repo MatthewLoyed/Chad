@@ -100,7 +100,9 @@
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
     z-index: 1000;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     padding: 6px;
@@ -140,14 +142,6 @@
     background: rgba(255, 255, 255, 0.06);
     margin: 4px 6px;
     flex-shrink: 0;
-}
-
-/* Local list scrolls inside the capped dropdown; cloud + headers stay pinned */
-.model-selector__list--local {
-    flex: 0 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
 }
 
 .model-selector__refresh {

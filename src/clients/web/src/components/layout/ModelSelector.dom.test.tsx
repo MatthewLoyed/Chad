@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Guards the model picker from growing unbounded when many local models
- * are discovered — the local list must be a scroll container inside a
- * viewport-capped dropdown.
+ * are discovered — cloud and local models share one viewport-capped scroller.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -38,8 +37,8 @@ function makeLocal(i: number): LocalModelInfo {
     };
 }
 
-describe('ModelSelector local list overflow', () => {
-    it('marks the local list as a scroll container when the menu opens', () => {
+describe('ModelSelector overflow', () => {
+    it('puts cloud and local models in the same scroll container', () => {
         useAppStore.setState({
             availableCloudModels: [{ id: 'gemini', name: 'Gemini 2.0 Flash' }],
             availableLocalModels: Array.from({ length: 20 }, (_, i) => makeLocal(i)),
@@ -58,20 +57,17 @@ describe('ModelSelector local list overflow', () => {
         render(<ModelSelector />);
         fireEvent.click(screen.getByTitle(/Active:/));
 
-        const localList = document.querySelector('.model-selector__list--local');
-        expect(localList).toBeTruthy();
-        expect(localList?.getAttribute('data-scrollable')).toBe('true');
-        expect(screen.getByText('Model 19')).toBeTruthy();
+        const dropdown = document.querySelector('.model-selector__dropdown');
+        expect(dropdown?.getAttribute('data-scrollable')).toBe('true');
+        expect(dropdown?.contains(screen.getByText('Gemini 2.0 Flash'))).toBe(true);
+        expect(dropdown?.contains(screen.getByText('Model 19'))).toBe(true);
     });
 
-    it('caps dropdown height and scrolls the local list in CSS', () => {
+    it('caps dropdown height and scrolls the whole dropdown in CSS', () => {
         const css = readFileSync(join(here, 'ModelSelector.css'), 'utf8');
         expect(css).toMatch(/\.model-selector__dropdown\s*\{[^}]*max-height:\s*min\(420px/s);
         expect(css).toMatch(
-            /\.model-selector__list--local\s*\{[^}]*overflow-y:\s*auto/s
-        );
-        expect(css).toMatch(
-            /\.model-selector__list--local\s*\{[^}]*min-height:\s*0/s
+            /\.model-selector__dropdown\s*\{[^}]*overflow-y:\s*auto/s
         );
     });
 });
