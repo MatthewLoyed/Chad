@@ -97,6 +97,9 @@ profile without these links, shared database settings, or dev-profile markers.
 Never point `CHAD_HOME` at main to reuse data: that can select main's code/assets.
 Before reporting a launch ready, check the actual GUI shows the existing workspace
 and confirm the Brain is on 8788. A health response alone misses onboarding.
+Use `scripts/prod/launch_dev.ps1 -CurrentCheckout` to run the current branch's
+Brain and UI with that profile. Without this option the legacy launcher redirects
+to the sibling dev checkout, which can run a different repository and old UI.
 
 For source startup commands use [cold start](../setup/COLD_START.md). Keep runtime
 entrypoints in [the project map](../architecture/END_TO_END.md), not local copies.
