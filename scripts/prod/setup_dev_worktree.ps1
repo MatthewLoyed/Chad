@@ -14,7 +14,9 @@
 #>
 
 param(
-    [string]$Branch = "dev"
+    [string]$Branch = "dev",
+    # Reuse the main profile in any existing branch checkout, not only the sibling.
+    [string]$DevRoot
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,7 +27,11 @@ $MainRoot = if ($env:CHAD_MAIN_ROOT -and (Test-Path $env:CHAD_MAIN_ROOT)) {
 } else {
     Get-ChadMainRepoRoot -FromPath $SelfRoot
 }
-$DevRoot  = Get-ChadDevRepoRoot -MainRoot $MainRoot
+if (-not $DevRoot) { $DevRoot = Get-ChadDevRepoRoot -MainRoot $MainRoot }
+$DevRoot = [IO.Path]::GetFullPath($DevRoot)
+if ($DevRoot.TrimEnd('\') -eq $MainRoot.TrimEnd('\')) {
+    throw "The dev checkout must be separate from the main checkout."
+}
 
 function Test-SameFileId($PathA, $PathB) {
     try {
@@ -163,6 +169,7 @@ Ensure-Junction (Join-Path $DevRoot "src\clients\web\node_modules") (Join-Path $
 # old divergent .env copy from a prior setup cannot keep credentials out of sync.
 Ensure-FileLink (Join-Path $DevRoot ".env") (Join-Path $MainRoot ".env") -ForceReplace
 Ensure-FileLink (Join-Path $DevRoot "config\secrets.yaml") (Join-Path $MainRoot "config\secrets.yaml") -ForceReplace
+Ensure-FileLink (Join-Path $DevRoot "config\preferences.yaml") (Join-Path $MainRoot "config\preferences.yaml") -ForceReplace
 Ensure-FileLink (Join-Path $DevRoot "config\personal_knowledge.md") (Join-Path $MainRoot "config\personal_knowledge.md") -ForceReplace
 Ensure-FileLink (Join-Path $DevRoot "data\knowledge_graph.json") (Join-Path $MainRoot "data\knowledge_graph.json") -ForceReplace
 

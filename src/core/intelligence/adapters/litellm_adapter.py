@@ -69,6 +69,7 @@ class LiteLLMAdapter(AIAdapter):
         self.system_instruction = system_instruction
         self.supports_tools = supports_tools
         self.profile = profile  # Optional[ModelProfile] — drives quirk logic
+        self._configured_model_name = model_name
         self.model_name = self._normalise_model_name(model_name, base_url)
 
         # LiteLLM global settings
@@ -339,8 +340,9 @@ class LiteLLMAdapter(AIAdapter):
         final_tools = self.convert_tool_schemas(tools) if tools else None
 
         # 3. Build request
+        from src.core.intelligence.endpoint_contract import inference_model_name
         req = {
-            "model": self.model_name,
+            "model": await inference_model_name(self._configured_model_name, self.base_url),
             "messages": final_messages,
             "temperature": temperature,
             "stream": True,

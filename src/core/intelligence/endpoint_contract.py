@@ -31,6 +31,21 @@ def normalize_model_name(model_name, base_url=None):
     return model_name
 
 
+async def inference_model_name(model_name, base_url):
+    """Keep the native LM Studio ID after LiteLLM consumes its routing prefix.
+
+    Preload and inference must address the same catalog key. For example,
+    native `openai/gpt-oss-20b` needs `openai/openai/gpt-oss-20b` in LiteLLM.
+    """
+    from src.core.intelligence.providers import get_provider_for
+    if base_url:
+        provider = get_provider_for(base_url)
+        if provider.name == "lmstudio":
+            native = await provider.resolve_model_id(model_name)
+            return "openai/" + native
+    return normalize_model_name(model_name, base_url)
+
+
 def deepseek_thinking_options(base_url, enabled):
     """Official DeepSeek API switch; never infer its wire protocol from model names."""
     from urllib.parse import urlsplit

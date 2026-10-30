@@ -18,7 +18,9 @@ param(
     # Force background daemons (heartbeat/cron/sync) off in dev instead of following preferences.yaml
     [switch]$DisableDaemons,
     # Skip launching ngrok even if telegram.public_base_url is configured
-    [switch]$NoNgrok
+    [switch]$NoNgrok,
+    # Run code/assets from this checkout instead of redirecting to the legacy sibling.
+    [switch]$CurrentCheckout
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,7 +31,9 @@ $MainRoot = if ($env:CHAD_MAIN_ROOT -and (Test-Path $env:CHAD_MAIN_ROOT)) {
 } else {
     Get-ChadMainRepoRoot -FromPath $SelfRoot
 }
-$DevRoot  = & (Join-Path $PSScriptRoot "setup_dev_worktree.ps1") | Select-Object -Last 1
+$setupOptions = @{}
+if ($CurrentCheckout) { $setupOptions.DevRoot = $SelfRoot }
+$DevRoot = & (Join-Path $PSScriptRoot "setup_dev_worktree.ps1") @setupOptions | Select-Object -Last 1
 if (-not (Test-Path $DevRoot)) {
     Write-Host "[FAIL] Dev worktree setup failed." -ForegroundColor Red
     exit 1
@@ -39,7 +43,7 @@ if (-not (Test-Path $DevRoot)) {
 # so edits to dev launcher (daemons, tunnels, flags) take effect immediately without
 # needing a merge to master first.
 if ($SelfRoot -ne $DevRoot -and (Test-Path (Join-Path $DevRoot "scripts\prod\launch_dev.ps1"))) {
-    & (Join-Path $DevRoot "scripts\prod\launch_dev.ps1") @args
+    & (Join-Path $DevRoot "scripts\prod\launch_dev.ps1") @PSBoundParameters
     exit $LASTEXITCODE
 }
 
@@ -196,7 +200,9 @@ $env:CHAD_MAIN_ROOT   = $MainRoot
 $env:CHAD_LOCAL_DB_PATH = $LocalDb
 $guiProc = Start-Process -FilePath $VenvPythonw `
     -ArgumentList @(Join-Path $DevRoot "main_gui.py") `
-    -WorkingDirectory $DevRoot -PassThru
+    -WorkingDirectory $DevRoot -PassThru `
+    -RedirectStandardOutput (Join-Path $LogDir "gui_$stamp.log") `
+    -RedirectStandardError (Join-Path $LogDir "gui_$stamp.err.log")
 
 $pids = @($viteProc.Id, $brainProc.Id, $guiProc.Id)
 if ($ngrokProc) { $pids += $ngrokProc.Id }

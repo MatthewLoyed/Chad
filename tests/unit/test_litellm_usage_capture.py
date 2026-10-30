@@ -52,7 +52,11 @@ class _FakeStream:
 
 
 @pytest.fixture
-def adapter():
+def adapter(monkeypatch):
+    monkeypatch.setattr(
+        "src.core.intelligence.providers.LMStudioLifecycle.resolve_model_id",
+        AsyncMock(return_value="openai/gpt-oss-20b"),
+    )
     return LiteLLMAdapter(
         model_name="openai/gpt-oss-20b",
         base_url="http://localhost:1234/v1",

@@ -76,5 +76,30 @@ look like revoked credentials. Never print credential contents or overwrite an
 existing local file; use your private workspace setup to supply missing files.
 Deterministic documentation checks need no secrets.
 
+## Existing-profile testing
+
+Normal branch testing uses the maintainer's main local profile. Repeated launches
+have accidentally opened **Welcome to Chad** because the dev setup shared memory
+and secrets but omitted `config/preferences.yaml`, and legacy onboarding required
+the default model catalog instead of accepting the existing selected model.
+
+`scripts/prod/setup_dev_worktree.ps1` now shares preferences alongside credentials
+and personal knowledge, and uses the main database's absolute path. Divergent
+local files are backed up before linking. Preferences changes in dev are therefore
+changes to the main profile. Persona experiments retain an independent copy.
+Set `CHAD_MAIN_ROOT` to the main checkout; `-DevRoot <branch-checkout>` prepares any
+existing checkout, while the default prepares the usual sibling dev checkout.
+The dev launcher sets `CHAD_DEV_WORKTREE=1`; setup recognizes legacy model choices
+only when the preferences file is actually shared with that main checkout.
+
+Fresh-install tests must be explicitly requested and run in a separate clean
+profile without these links, shared database settings, or dev-profile markers.
+Never point `CHAD_HOME` at main to reuse data: that can select main's code/assets.
+Before reporting a launch ready, check the actual GUI shows the existing workspace
+and confirm the Brain is on 8788. A health response alone misses onboarding.
+Use `scripts/prod/launch_dev.ps1 -CurrentCheckout` to run the current branch's
+Brain and UI with that profile. Without this option the legacy launcher redirects
+to the sibling dev checkout, which can run a different repository and old UI.
+
 For source startup commands use [cold start](../setup/COLD_START.md). Keep runtime
 entrypoints in [the project map](../architecture/END_TO_END.md), not local copies.
