@@ -8,6 +8,9 @@ Locate the existing implementation before proposing a new one.
 - Use an isolated worktree/branch; open PRs into `dev`. Preserve unrelated work.
 - Never start, stop, kill or restart the production Brain on port **8767**.
   Development uses **8788**: [production rules](docs/guides/PRODUCTION_BRAIN.md).
+- Normal branch testing reuses the main local profile, memory, credentials and
+  database. Fresh-install testing must be explicitly requested. Verify the actual
+  GUI opens the existing workspace, not onboarding; see [dev workspace](docs/guides/DEV_WORKSPACE.md#existing-profile-testing).
 - Read [contribution and documentation rules](CONTRIBUTING.md) before editing.
   Update the owning guide instead of duplicating instructions or ideas.
 - Keep secrets and personal data local; use fictional fixtures. See
