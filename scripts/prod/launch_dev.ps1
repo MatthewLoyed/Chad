@@ -196,7 +196,9 @@ $env:CHAD_MAIN_ROOT   = $MainRoot
 $env:CHAD_LOCAL_DB_PATH = $LocalDb
 $guiProc = Start-Process -FilePath $VenvPythonw `
     -ArgumentList @(Join-Path $DevRoot "main_gui.py") `
-    -WorkingDirectory $DevRoot -PassThru
+    -WorkingDirectory $DevRoot -PassThru `
+    -RedirectStandardOutput (Join-Path $LogDir "gui_$stamp.log") `
+    -RedirectStandardError (Join-Path $LogDir "gui_$stamp.err.log")
 
 $pids = @($viteProc.Id, $brainProc.Id, $guiProc.Id)
 if ($ngrokProc) { $pids += $ngrokProc.Id }
