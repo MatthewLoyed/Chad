@@ -805,6 +805,9 @@ local_models:
     # Substring-matched (case-insensitive) against the model id -> rough size in GB. Used only
     # to decide whether an incoming model fits alongside what's currently claimed resident.
     model_size_estimates_gb:
+      # Q1_0 weights, 60,416 context: LM Studio --estimate-only reports 7.75 GiB.
+      # Exact model IDs take precedence over broad parameter-count patterns.
+      "prism-ml/bonsai-27b": 8
       "1b": 1
       "3b": 2.5
       "9b": 6

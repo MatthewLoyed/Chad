@@ -1020,24 +1020,14 @@ async def warm_models(
     restore_selection: bool = False,
 ) -> None:
     """
-    Load auxiliary models first, then main — the order a turn actually needs them in.
+    Keep the selected main resident; warm auxiliaries only when they fit alongside it.
 
     Pass ``ui_mode`` for connect / manual dropdown changes (auto/agent/plan/chat).
     Pass ``canonical_lane`` after Auto classification to add selector when agent/plan.
 
-    Aux (the tool selector) goes FIRST (refs #592). A turn needs the selector before it
-    ever touches the main model; loading main first meant a cold GUI connect always paid
-    for a main-model load that got evicted moments later when the selector claimed the
-    (single-slot) VRAM budget for the actual turn — visible as a ~17s load thrown away on
-    every first turn. Reversing the order means whichever model a turn needs FIRST is
-    also the one connect-warm finishes FIRST.
-
-    Both loads skip budget enforcement (refs #592): the whole point of warming is to have
-    BOTH resident and ready before the next message arrives, and with budget enforcement
-    on, loading the second would just evict the first — exactly the churn observed when
-    this used the default-enforced path (aux loads, then main's load evicts aux again,
-    ending with only one model up). The real turn-path calls (tool selector, main-model
-    preload) keep budget enforcement on and do the actual swap once inference starts.
+    Warming uses the same size estimates and budget as real turn preparation.
+    Forcing an incompatible pair resident at idle only makes the next turn evict
+    and reload it again. Explicitly pinned pairs retain their coexistence policy.
     """
     preload_aux = _lifecycle_enabled()
     if not preload_aux and not restore_selection:
@@ -1060,12 +1050,20 @@ async def warm_models(
     elif preload_aux and ui_mode is not None:
         aux = aux_models_for_ui_mode(ui_mode, turn_coordinator)
 
+    if not await ensure_resident(base_url, main_id, owner=OWNER_MAIN_MODEL):
+        return
+    budget = _vram_budget_gb()
+    sizes = _model_size_table()
+    projected = _estimate_size_gb(main_id, sizes)
     for model_id in aux:
         if model_id and not _same_model(model_id, main_id):
-            await ensure_model_loaded(
-                base_url, model_id, enforce_budget=False, owner=OWNER_TOOL_SELECTOR
-            )
-    await ensure_resident(base_url, main_id, owner=OWNER_MAIN_MODEL, enforce_budget=False)
+            size = _estimate_size_gb(model_id, sizes)
+            pinned_pair = is_pinned(main_id) and is_pinned(model_id)
+            if budget > 0 and projected + size > budget and not pinned_pair:
+                logger.debug("[ MODEL_LIFECYCLE ] Skipping over-budget idle warm of '%s'.", model_id)
+                continue
+            if await ensure_model_loaded(base_url, model_id, owner=OWNER_TOOL_SELECTOR):
+                projected += size
 
 
 def _lifecycle_enabled() -> bool:
