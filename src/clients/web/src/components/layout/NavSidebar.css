@@ -520,6 +520,13 @@
     gap: 10px;
     padding: 8px 10px;
     border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.nav-sidebar-skeleton--fill {
+    flex: 1 0 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .nav-sidebar-skeleton__icon {
