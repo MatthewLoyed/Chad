@@ -127,6 +127,45 @@ def _mock_lm_studio(monkeypatch, *, loaded=None):
 
 
 @pytest.mark.asyncio
+async def test_bonsai_switch_selector_main_and_idle_warm_do_not_churn(monkeypatch, _reset_config):
+    import yaml
+    from pathlib import Path
+    table = yaml.safe_load((Path(__file__).parents[2] / "config/config.yaml").read_text(encoding="utf-8"))["local_models"]["lifecycle"]["model_size_estimates_gb"]
+    _reset_config["local_models.lifecycle.vram_budget_gb"] = 16
+    _reset_config["local_models.lifecycle.model_size_estimates_gb"] = table
+    url, old, main, selector = "http://test-bonsai-cycle.local/v1", "openai/gpt-oss-20b", "prism-ml/bonsai-27b", "qwen2.5-3b-instruct"
+    monkeypatch.setattr(ml, "selector_model_id", lambda *a: selector)
+    monkeypatch.setattr(ml, "router_model_id", lambda: None)
+    monkeypatch.setattr(ml, "_lifecycle_enabled", lambda: True)
+    monkeypatch.setattr(ml, "main_base_url", lambda *a: url)
+    monkeypatch.setattr(ml, "main_model_id", lambda *a: main)
+    state = _mock_lm_studio(monkeypatch, loaded=[old, selector])
+    assert await ml.switch_main_model({"name": old, "base_url": url}, {"name": main, "base_url": url})
+    assert await ml.ensure_resident(url, selector, ml.OWNER_TOOL_SELECTOR)
+    assert await ml.ensure_resident(url, "openai/" + main, ml.OWNER_MAIN_MODEL)
+    await ml.warm_models(canonical_lane="agent")
+    assert state["unload_calls"] == [old]
+    assert state["load_calls"] == [main]
+    assert state["loaded"] == {main, selector}
+
+
+@pytest.mark.asyncio
+async def test_idle_warm_does_not_load_an_auxiliary_that_cannot_fit(monkeypatch, _reset_config):
+    _reset_config["local_models.lifecycle.vram_budget_gb"] = 16
+    _reset_config["local_models.lifecycle.model_size_estimates_gb"] = {"main": 16, "selector": 3}
+    url = "http://test-warm-budget.local/v1"
+    monkeypatch.setattr(ml, "_lifecycle_enabled", lambda: True)
+    monkeypatch.setattr(ml, "main_base_url", lambda *a: url)
+    monkeypatch.setattr(ml, "main_model_id", lambda *a: "main")
+    monkeypatch.setattr(ml, "selector_model_id", lambda *a: "selector")
+    state = _mock_lm_studio(monkeypatch, loaded=["main"])
+    await ml.warm_models(canonical_lane="agent")
+    assert state["loaded"] == {"main"}
+    assert not state["load_calls"]
+    assert not state["unload_calls"]
+
+
+@pytest.mark.asyncio
 async def test_picker_unloads_previous_before_loading_selection(monkeypatch):
     url = "http://test-picker.local/v1"
     state = _mock_lm_studio(monkeypatch, loaded=["old"])
