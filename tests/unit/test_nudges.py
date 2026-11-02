@@ -99,7 +99,13 @@ class _FakeStream:
 
 
 @pytest.fixture
-def adapter():
+def adapter(monkeypatch):
+    # Inference now resolves native model IDs before LiteLLM strips routing
+    # prefixes. Keep this watchdog test entirely offline, including discovery.
+    monkeypatch.setattr(
+        "src.core.intelligence.providers.LMStudioLifecycle.resolve_model_id",
+        AsyncMock(return_value="google/gemma-4-31b-it-qat-q4_0"),
+    )
     return LiteLLMAdapter(model_name="openai/google/gemma-4-31b-it-qat-q4_0", base_url="http://localhost:1234/v1")
 
 
