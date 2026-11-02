@@ -60,6 +60,14 @@ attempt to restore the previous model and do not save the new selection.
 Selecting a cloud model releases the old local supervisor without loading another
 local model. Re-selecting the same local model ensures residency without unloading it.
 Desktop and browser command relays allow time for a model load and recovery load.
+Idle warming follows the same memory budget as turn preparation: it keeps the
+selected supervisor and warms auxiliary models only when the estimated pair fits
+(or both are explicitly pinned). It does not force an over-budget pair back into
+memory after every turn. Model-specific quantized estimates take precedence over
+parameter-count patterns: Bonsai 27B Q1_0 at 60,416 context is estimated by LM Studio
+at 7.75 GiB, so its configured 8 GiB estimate allows the 3B selector to coexist
+within a 16 GiB budget. Other quantizations or larger contexts need an adjusted
+exact-ID override in local preferences.
 Restoring the selected supervisor on GUI connection is mandatory;
 `preload_on_connect` controls optional auxiliary preloading, not whether the
 selected supervisor takes effect.
