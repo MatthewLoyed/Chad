@@ -36,6 +36,8 @@ import os
 import sys
 import threading
 
+from chad_workspace_brief import workspace_brief
+
 from chad_run_validation import IncompleteRunError, validate_conversation
 
 import openhands.tools  # noqa: F401 — registers the `terminal` + `file_editor` tools
@@ -143,6 +145,8 @@ def main() -> int:
     if not task:
         print(f"{_SENTINEL_ERR}: no CHAD_TASK provided")
         return 2
+
+    task = workspace_brief(task)
 
     model = os.environ.get("CHAD_MODEL", "openai/qwen/qwen3.6-35b-a3b")
     base_url = os.environ.get("CHAD_LLM_BASE_URL", "http://host.docker.internal:1234/v1")

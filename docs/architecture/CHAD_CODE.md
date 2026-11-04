@@ -321,3 +321,15 @@ sub-issues:
    patch for the `exposed_urls` race, to restore live steering.
 4. **Housekeeping** — job-container lifecycle/pruning; surface model + `native_tool_calling`
    as config; confirm the `qwen3.6-35b-a3b` vs `qwen3-coder-30b` default.
+
+### Workspace orientation
+
+The headless runner prepends observed workspace facts to the original request.
+It reports the mounted project root, root manifests and directories, available
+executables, and declared package.json check scripts. It reads metadata without
+executing repository code or installing tools. Missing commands remain missing
+and check declarations do not establish successful verification.
+
+The original request follows the facts verbatim. This orientation applies to
+direct runner launches as well as dispatched jobs. It reduces repeated discovery
+and makes unsupported tool assumptions visible before the first model call.
