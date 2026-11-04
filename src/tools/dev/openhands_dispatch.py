@@ -1,21 +1,21 @@
-"""OpenHands dispatch â€” Chad Code's coding-harness bridge (epic #569, issue #447).
+"""OpenHands dispatch — Chad Code's coding-harness bridge (epic #569, issue #447).
 
 Chad Code delegates real coding work to **OpenHands** running a **local model** (via LM
 Studio), 24/7 with no cloud usage limits. This module is the Chad-side "launcher +
 reporter".
 
-It uses OpenHands' **headless SDK** path â€” a single detached ``docker run`` that executes
+It uses OpenHands' **headless SDK** path — a single detached ``docker run`` that executes
 ``docker/openhands/chad_headless_runner.py`` inside the image against a mounted workspace.
 This deliberately avoids the OpenHands *app-server* (its Windows sandbox-startup
-``exposed_urls`` race blocks that path â€” see #447); the headless path was proven end-to-end
+``exposed_urls`` race blocks that path — see #447); the headless path was proven end-to-end
 2026-07-20. The tradeoff is no live web-UI to steer the run; dispatch is fire-and-report.
 
 Two tools:
-  - ``dispatch_coding_task`` â€” ensure model resident â†’ launch a detached container â†’ return
+  - ``dispatch_coding_task`` — ensure model resident → launch a detached container → return
     a job handle (job id + workspace path). Returns without waiting for the coding job to
     finish; it may wait briefly (awaited, not blocking the event loop) for the model to
     become resident on a cold load.
-  - ``check_coding_task``    â€” report a job's status, transcript tail, and workspace files.
+  - ``check_coding_task``    — report a job's status, transcript tail, and workspace files.
 
 Notes learned live (2026-07-20):
   - Legacy Qwen uses text parsing. ``openhands_native_tool_calling_by_model`` enables
@@ -41,10 +41,10 @@ from src.tools.base_tool import BaseTool
 
 logger = setup_logger("OpenHandsDispatch")
 
-# Defaults â€” overridable via config.yaml `tools.openhands_*`.
+# Defaults — overridable via config.yaml `tools.openhands_*`.
 _DEFAULT_IMAGE = "docker.openhands.dev/openhands/openhands:latest"
 # Custom layer (docker/openhands/Dockerfile.codegraph) adding Node + the codegraph MCP CLI on
-# top of the base image â€” see codegraph section below. Only used for reference-mounted jobs.
+# top of the base image — see codegraph section below. Only used for reference-mounted jobs.
 _DEFAULT_CODEGRAPH_IMAGE = "chad-code/openhands-codegraph:latest"
 _DEFAULT_MODEL = "openai/qwen/qwen3.6-35b-a3b"
 _DEFAULT_HOST_LM_URL = "http://localhost:1234/v1"                  # Chad (host) -> LM Studio
@@ -60,18 +60,18 @@ _DONE_SENTINEL = "CHAD_DISPATCH_DONE"
 _ERR_SENTINEL = "CHAD_DISPATCH_ERROR"
 
 # GitHub's hosted Streamable-HTTP MCP endpoint. Enabled only when tools.openhands_github_mcp is
-# True AND a real PAT is present (the base image has no npx/uvx, so a stdio GitHub MCP won't run â€”
+# True AND a real PAT is present (the base image has no npx/uvx, so a stdio GitHub MCP won't run —
 # the hosted HTTP server is the only viable path). Off by default.
 _GITHUB_MCP_URL = "https://api.githubcopilot.com/mcp/"
-# Context7's hosted MCP â€” documentation lookup (`resolve-library-id`, `query-docs`). Streamable
+# Context7's hosted MCP — documentation lookup (`resolve-library-id`, `query-docs`). Streamable
 # HTTP, no key or npx needed; verified reachable from the container. On by default.
 _CONTEXT7_MCP_URL = "https://mcp.context7.com/mcp"
-# codegraph (issue #582) â€” a local SQLite symbol-graph MCP (search/explore/callers/callees/
+# codegraph (issue #582) — a local SQLite symbol-graph MCP (search/explore/callers/callees/
 # impact) run as a **stdio** server *inside* the container against the read-only `/repo` mount.
 # Unlike Context7/GitHub (hosted HTTP, no runtime needed), codegraph is an npm CLI, so it needs
-# Node baked into the image (see Dockerfile.codegraph) â€” hence it's only attached when a job
+# Node baked into the image (see Dockerfile.codegraph) — hence it's only attached when a job
 # actually has a `/repo` reference mount to index; there's nothing for it to graph otherwise.
-# Targets the 412K-token/19min explore-and-report ceiling measured in CHAD_CODE_RESEARCH.md Â§1.
+# Targets the 412K-token/19min explore-and-report ceiling measured in CHAD_CODE_RESEARCH.md §1.
 _CODEGRAPH_COMMAND = "codegraph"
 _CODEGRAPH_ARGS = ["serve", "--mcp", "--path", "/repo", "--no-watch"]
 
@@ -93,7 +93,7 @@ def _looks_like_placeholder(val: Optional[str]) -> bool:
 def _resolve_secret(key: str) -> Optional[str]:
     """Best real value for a secret: prefer ConfigManager.get_secret, but if that returns a
     placeholder (stale secrets.yaml stub), fall back to the raw environment (.env). See the
-    GitHub-token shadowing bug â€” the real ghp_ token lives in .env while secrets.yaml has a stub."""
+    GitHub-token shadowing bug — the real ghp_ token lives in .env while secrets.yaml has a stub."""
     val = ConfigManager.get_secret(key, None)
     if _looks_like_placeholder(val):
         env_val = os.environ.get(key)
@@ -106,17 +106,17 @@ def _build_mcp_config(enable_github: bool = False, has_reference: bool = False) 
     """Assemble the OpenHands `mcp_config` handed to the container coder, from Chad's config.
 
     Sources, merged:
-      - ``tools.openhands_mcp_config`` â€” a raw ``{"mcpServers": {...}}`` passthrough (user-owned;
+      - ``tools.openhands_mcp_config`` — a raw ``{"mcpServers": {...}}`` passthrough (user-owned;
         add any HTTP/SSE MCP here).
-      - ``tools.openhands_context7_mcp`` (bool, default True) â€” Context7 hosted docs MCP. Only 2
-        tools, free/keyless â€” cheap to keep on for library/API doc lookups when debugging.
+      - ``tools.openhands_context7_mcp`` (bool, default True) — Context7 hosted docs MCP. Only 2
+        tools, free/keyless — cheap to keep on for library/API doc lookups when debugging.
       - **GitHub MCP (44 tools) is CONDITIONAL, off by default.** Injecting 44 tool schemas on every
         job is heavy context the vast majority of coding tasks don't need. It's attached only when
         this job opts in (``enable_github``, set by Chad for git/PR tasks) OR the global
         ``tools.openhands_github_mcp`` config flag is True. Skipped (with a log) unless a real PAT is
         present. The github-workflow skill guards against unrequested destructive actions.
       - **codegraph MCP (issue #582) is gated on ``has_reference``**, i.e. this job actually mounted
-        a codebase at ``/repo`` â€” a stdio server with nothing to index otherwise. Controlled by
+        a codebase at ``/repo`` — a stdio server with nothing to index otherwise. Controlled by
         ``tools.openhands_codegraph_mcp`` (default True); it only *attaches* when both that flag is
         on AND ``has_reference`` is True. See the module docstring above the constants.
 
@@ -137,11 +137,11 @@ def _build_mcp_config(enable_github: bool = False, has_reference: bool = False) 
         token = _resolve_secret("GITHUB_PERSONAL_ACCESS_TOKEN")
         if token:
             # The hosted GitHub MCP authenticates via an explicit `Authorization: Bearer` header
-            # (verified live â€” an `api_key` field 401s; the Bearer header loads all 44 tools).
+            # (verified live — an `api_key` field 401s; the Bearer header loads all 44 tools).
             servers["github"] = {"url": _GITHUB_MCP_URL, "headers": {"Authorization": f"Bearer {token}"}}
         else:
             logger.info("[ OH ] github MCP requested but no valid GITHUB_PERSONAL_ACCESS_TOKEN "
-                        "(placeholder/short in secrets.yaml and .env) â€” skipping GitHub MCP.")
+                        "(placeholder/short in secrets.yaml and .env) — skipping GitHub MCP.")
 
     return {"mcpServers": servers} if servers else None
 
@@ -210,7 +210,7 @@ def _save_job_workspace(job_id: str, ws_path: Path) -> None:
     try:
         rec.parent.mkdir(parents=True, exist_ok=True)
         rec.write_text(str(ws_path), encoding="utf-8")
-    except Exception as e:  # noqa: BLE001 â€” non-fatal bookkeeping
+    except Exception as e:  # noqa: BLE001 — non-fatal bookkeeping
         logger.debug(f"[ OH ] could not record job workspace: {e}")
 
 
@@ -226,7 +226,7 @@ def _load_job_workspace(job_id: str) -> Path:
 
 
 async def _run_docker(args: List[str], timeout: float = _DOCKER_TIMEOUT_S) -> tuple[int, str, str]:
-    """Run a docker command (exec form â€” no shell, safe quoting). Returns (rc, stdout, stderr)."""
+    """Run a docker command (exec form — no shell, safe quoting). Returns (rc, stdout, stderr)."""
     try:
         proc = await asyncio.create_subprocess_exec(
             "docker",
@@ -247,7 +247,7 @@ async def _run_docker(args: List[str], timeout: float = _DOCKER_TIMEOUT_S) -> tu
 async def _prune_old_job_containers() -> None:
     """Sweep stopped Chad Code job containers older than the TTL. Containers are kept (not
     ``--rm``) so ``check_coding_task`` can read logs after a run; this bounds that buildup.
-    Idempotent, best-effort, and safe â€” the label + ``prune`` semantics only ever touch
+    Idempotent, best-effort, and safe — the label + ``prune`` semantics only ever touch
     *stopped* ``chad-code`` containers, never a running job (issue #576)."""
     ttl_hours = _cfg("openhands_job_ttl_hours", _DEFAULT_JOB_TTL_HOURS)
     try:
@@ -260,13 +260,13 @@ async def _prune_old_job_containers() -> None:
             logger.info(f"[ OH ] pruned old job containers: {out.strip().splitlines()[-1]}")
         elif rc != 0:
             logger.debug(f"[ OH ] container prune non-fatal error: {err.strip() or out.strip()}")
-    except Exception as e:  # noqa: BLE001 â€” housekeeping must never block a dispatch
+    except Exception as e:  # noqa: BLE001 — housekeeping must never block a dispatch
         logger.debug(f"[ OH ] container prune failed (non-fatal): {e}")
 
 
 async def _ensure_coder_model(model: str) -> None:
     """Best-effort: make the coder model resident in LM Studio before dispatch. Chad's
-    unique value-add â€” OpenHands can't manage local VRAM. Non-fatal (worst case the model
+    unique value-add — OpenHands can't manage local VRAM. Non-fatal (worst case the model
     JIT-loads on the agent's first call)."""
     try:
         from src.core.intelligence.model_lifecycle import ensure_model_loaded
@@ -293,7 +293,7 @@ async def _model_downloaded(host_url: str, model: str) -> Optional[bool]:
                         continue
                     data = (await r.json()).get("data", [])
                     return any(m.get("id") == bare for m in data)
-        except Exception:  # noqa: BLE001 â€” try the next path / give up
+        except Exception:  # noqa: BLE001 — try the next path / give up
             continue
     return None
 
@@ -307,7 +307,7 @@ async def preflight(model: Optional[str] = None, image: Optional[str] = None) ->
     reference-mounted job, issue #582) instead of the default base image.
 
     Hard checks (block a dispatch): docker daemon, image present.
-    Soft checks (warn, don't block â€” the model JIT-loads / ensure step may still load it):
+    Soft checks (warn, don't block — the model JIT-loads / ensure step may still load it):
     LM Studio reachable, coder model downloaded."""
     model = model or _cfg("openhands_coder_model", _DEFAULT_MODEL)
     image = image or _cfg("openhands_image", _DEFAULT_IMAGE)
@@ -318,21 +318,21 @@ async def preflight(model: Optional[str] = None, image: Optional[str] = None) ->
     checks["docker"] = {
         "ok": rc == 0,
         "detail": "Docker daemon reachable" if rc == 0
-        else "Docker Desktop not running or docker not on PATH â€” start Docker Desktop.",
+        else "Docker Desktop not running or docker not on PATH — start Docker Desktop.",
     }
 
     if checks["docker"]["ok"]:
         rc, _, _ = await _run_docker(["image", "inspect", image], timeout=15)
-        # The codegraph image (#582) is built locally, not pullable â€” point at the build command
+        # The codegraph image (#582) is built locally, not pullable — point at the build command
         # instead of a bogus `docker pull` for it.
         is_codegraph_image = image == _cfg("openhands_codegraph_image", _DEFAULT_CODEGRAPH_IMAGE)
         if rc == 0:
             missing_detail = f"Image present: {image}"
         elif is_codegraph_image:
-            missing_detail = (f"Image missing â€” build it: docker build -f "
+            missing_detail = (f"Image missing — build it: docker build -f "
                               f"docker/openhands/Dockerfile.codegraph -t {image} docker/openhands")
         else:
-            missing_detail = f"Image missing â€” pull it: docker pull {image}"
+            missing_detail = f"Image missing — pull it: docker pull {image}"
         checks["image"] = {"ok": rc == 0, "detail": missing_detail}
     else:
         checks["image"] = {"ok": False, "detail": "Skipped (docker down)."}
@@ -340,7 +340,7 @@ async def preflight(model: Optional[str] = None, image: Optional[str] = None) ->
     downloaded = await _model_downloaded(host_url, model)
     if downloaded is None:
         checks["lmstudio"] = {"ok": False, "soft": True,
-                              "detail": f"LM Studio not reachable at {host_url} â€” start it."}
+                              "detail": f"LM Studio not reachable at {host_url} — start it."}
         checks["model"] = {"ok": False, "soft": True,
                            "detail": f"Can't verify model '{model}' (LM Studio unreachable)."}
     else:
@@ -348,7 +348,7 @@ async def preflight(model: Optional[str] = None, image: Optional[str] = None) ->
         checks["model"] = {
             "ok": bool(downloaded), "soft": True,
             "detail": f"Coder model downloaded: {model}" if downloaded
-            else f"Coder model '{model}' not downloaded in LM Studio â€” download it.",
+            else f"Coder model '{model}' not downloaded in LM Studio — download it.",
         }
 
     ready = all(c["ok"] for c in checks.values() if not c.get("soft"))
@@ -361,7 +361,7 @@ def _blocking_problems(report: Dict[str, Any]) -> List[str]:
 
 
 # Per-process allowlist additions, set by eval_clone_provisioner.provision_eval_clone (#596)
-# for the SHA-pinned clone it just created â€” avoids permanently editing config.yaml's
+# for the SHA-pinned clone it just created — avoids permanently editing config.yaml's
 # openhands_workspace_allowlist (which stays [] by default; epic non-goal is 'monorepo not
 # writable by default', #576) for a throwaway self-eval clone. Public (no leading underscore):
 # it's a real cross-module contract with eval_clone_provisioner, not an internal.
@@ -370,7 +370,7 @@ EXTRA_ALLOWLIST_ENV = "CHAD_CODE_EXTRA_ALLOWLIST"
 
 def _workspace_guard(ws_path: Path) -> Optional[str]:
     """Refuse a caller-supplied workspace that lives inside a git repo (e.g. the Chad monorepo)
-    unless it's under a configured allowlist root â€” the epic non-goal is 'monorepo not writable
+    unless it's under a configured allowlist root — the epic non-goal is 'monorepo not writable
     by default' (#576). Returns an error string if blocked, else None."""
     resolved = ws_path.resolve()
     allow = [Path(p).resolve() for p in (_cfg("openhands_workspace_allowlist", []) or [])]
@@ -428,7 +428,7 @@ class OpenHandsDispatchTool(BaseTool):
                     "reference": {
                         "type": "string",
                         "description": (
-                            "Optional host directory to mount READ-ONLY at /repo â€” a codebase to "
+                            "Optional host directory to mount READ-ONLY at /repo — a codebase to "
                             "explore/reference without modifying. The job writes output to the "
                             "separate writable /workspace."
                         ),
@@ -442,7 +442,7 @@ class OpenHandsDispatchTool(BaseTool):
                         "description": (
                             "Set True ONLY for tasks that need GitHub (read issues/PRs, open a PR, "
                             "search a repo's code). Adds the GitHub toolset. Leave False/omitted for "
-                            "ordinary coding â€” it keeps the coder focused and the context lean."
+                            "ordinary coding — it keeps the coder focused and the context lean."
                         ),
                     },
                 },
@@ -473,7 +473,7 @@ class OpenHandsDispatchTool(BaseTool):
         enable_github: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        # codegraph (issue #582) is only useful when a reference repo is mounted at /repo â€” gate
+        # codegraph (issue #582) is only useful when a reference repo is mounted at /repo — gate
         # both the MCP entry and which image to launch on that (default flag ON; it just won't
         # attach without a reference). Ordinary jobs with no reference keep the lighter base image.
         has_reference = bool(reference)
@@ -493,10 +493,10 @@ class OpenHandsDispatchTool(BaseTool):
         use_condenser = bool(_cfg("openhands_use_condenser", False))
         condenser_max_size = int(_cfg("openhands_condenser_max_size", 240))
         condenser_keep_first = int(_cfg("openhands_condenser_keep_first", 2))
-        # Production critic (EmptyPatchCritic) for ordinary jobs â€” distinct from the dev-only
+        # Production critic (EmptyPatchCritic) for ordinary jobs — distinct from the dev-only
         # eval critic below. OFF pending an A/B (issue #584).
         use_critic = bool(_cfg("openhands_use_critic", False))
-        # Eval critic (issue #358) â€” DEV-ONLY, and deliberately NOT a dispatch_coding_task
+        # Eval critic (issue #358) — DEV-ONLY, and deliberately NOT a dispatch_coding_task
         # parameter: it would add noise to the tool schema Chad sees for a capability no user
         # has. The autonomous loop driver sets these on the Brain process before dispatching.
         # Empty suite (the default) means no critic and no behaviour change.
@@ -518,7 +518,7 @@ class OpenHandsDispatchTool(BaseTool):
         report = await preflight(model, image=image)
         problems = _blocking_problems(report)
         if problems:
-            return {"success": False, "error": "Chad Code prerequisites not met â€” "
+            return {"success": False, "error": "Chad Code prerequisites not met — "
                     + "; ".join(problems), "preflight": report}
 
         # Housekeeping: sweep old stopped job containers before starting a new one (#576).
@@ -542,7 +542,7 @@ class OpenHandsDispatchTool(BaseTool):
         # Optional reference codebase for explore-and-report tasks. The host dir is ALWAYS mounted
         # read-only so it can't be clobbered. Without codegraph it's mounted straight at /repo.
         # With codegraph on, it's mounted at /repo_src:ro and the entrypoint copies it to a writable
-        # /repo and builds the codegraph index there â€” codegraph needs a writable `.codegraph/` dir
+        # /repo and builds the codegraph index there — codegraph needs a writable `.codegraph/` dir
         # (verified live #582: `serve` errors "not initialized" on a bare read-only mount), and the
         # copy keeps the host repo untouched while giving codegraph somewhere to write.
         ref_mount: List[str] = []
@@ -555,7 +555,7 @@ class OpenHandsDispatchTool(BaseTool):
 
         # Container entrypoint. With codegraph on, first materialize a writable /repo from the
         # read-only /repo_src mount and build the codegraph index into it before starting the agent
-        # (index build is ~5s per ~700 files). Both steps are non-fatal â€” a copy/index failure just
+        # (index build is ~5s per ~700 files). Both steps are non-fatal — a copy/index failure just
         # means the agent falls back to terminal exploration (the graceful MCP fallback in the
         # runner handles a codegraph server that then can't answer). The CHAD_CODEGRAPH_* markers
         # land in `docker logs` for the eval forensics.
@@ -643,6 +643,8 @@ class OpenHandsDispatchTool(BaseTool):
             image,
             "-c", entrypoint,
         ]
+        # Preserve the existing model preload before starting the coding process.
+        await _ensure_coder_model(model)
         rc, out, err = await _run_docker(args)
         if rc != 0:
             return {

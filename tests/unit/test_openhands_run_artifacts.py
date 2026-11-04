@@ -17,10 +17,12 @@ async def test_dispatch_mounts_job_artifacts_outside_workspace(tmp_path, monkeyp
     monkeypatch.setattr(bridge, "_prune_old_job_containers", AsyncMock())
     launch = AsyncMock(return_value=(0, "container-id", ""))
     monkeypatch.setattr(bridge, "_run_docker", launch)
-    monkeypatch.setattr(bridge, "_ensure_coder_model", AsyncMock())
+    resident = AsyncMock()
+    monkeypatch.setattr(bridge, "_ensure_coder_model", resident)
     result = await bridge.OpenHandsDispatchTool().execute(task="Build a fictional fixture")
     assert result["success"]
     job = result["result"]
+    resident.assert_awaited_once_with(job["model"])
     artifacts = Path(job["artifacts"])
     workspace = Path(job["workspace"])
     assert artifacts.is_dir()
