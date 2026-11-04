@@ -15,8 +15,9 @@ async def test_dispatch_mounts_job_artifacts_outside_workspace(tmp_path, monkeyp
     monkeypatch.setattr(bridge, "_search_env", lambda: [])
     monkeypatch.setattr(bridge, "preflight", AsyncMock(return_value={"checks": {}}))
     monkeypatch.setattr(bridge, "_prune_old_job_containers", AsyncMock())
-    launch = AsyncMock(return_value=None)
-    monkeypatch.setattr(bridge, "_start_coding_job", launch)
+    launch = AsyncMock(return_value=(0, "container-id", ""))
+    monkeypatch.setattr(bridge, "_run_docker", launch)
+    monkeypatch.setattr(bridge, "_ensure_coder_model", AsyncMock())
     result = await bridge.OpenHandsDispatchTool().execute(task="Build a fictional fixture")
     assert result["success"]
     job = result["result"]
@@ -43,8 +44,6 @@ async def test_status_returns_same_artifact_path(tmp_path, monkeypatch):
 async def test_exit_zero_without_verification_is_not_success(tmp_path, monkeypatch):
     monkeypatch.setattr(bridge, "_workspace_root", lambda: tmp_path)
     monkeypatch.setattr(bridge, "_run_docker", AsyncMock(side_effect=[(0, "exited|0", ""), (0, "CHAD_DISPATCH_DONE", "")]))
-    from src.core.intelligence import coding_residency
-    monkeypatch.setattr(coding_residency, "finish", AsyncMock())
     result = await bridge.CheckCodingTaskTool().execute(job_id="example")
     assert result['result']['status'] == 'failed'
     assert result['result']['verification_status'] == 'unverified'
@@ -63,8 +62,6 @@ async def test_status_invalidates_receipt_after_source_edit(tmp_path, monkeypatc
     (artifacts / 'completion.json').write_text(json.dumps({
         'status': 'passed', 'fingerprint': bridge._completion_module().fingerprint(ws),
         'contract_hash': hashlib.sha256(contract.read_bytes()).hexdigest()}))
-    from src.core.intelligence import coding_residency
-    monkeypatch.setattr(coding_residency, "finish", AsyncMock())
     async def status():
         monkeypatch.setattr(bridge, "_run_docker", AsyncMock(side_effect=[(0, "exited|0", ""), (0, "CHAD_DISPATCH_DONE", "")]))
         return (await bridge.CheckCodingTaskTool().execute(job_id='example'))['result']
