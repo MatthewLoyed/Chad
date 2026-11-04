@@ -47,9 +47,9 @@ Model downloads are separate from the installer. RAM, GPU memory, and response s
 quantization; see the release notes for configurations actually tested.
 No cloud API key or Supabase account is required for the local chat path.
 
-**Updates:** installer users download and run the next installer manually.
-Automatic updates are off. The in-app **Update Chad** action is intended for
-source checkouts with Git; it does not upgrade this packaged alpha.
+**Updates:** download and run the next installer manually. If your build has
+**Settings → System → Updates**, use its installer link. For earlier alphas,
+get the installer directly from [GitHub Releases](https://github.com/MatthewLoyed/Chad/releases).
 Reinstalling retains local data; back up important configuration and chats first.
 
 On first launch, choose your model backend, test the connection, select a model

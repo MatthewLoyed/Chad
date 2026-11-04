@@ -244,6 +244,7 @@ export default function ModelSelector() {
                 {isOpen && (
                     <motion.div
                         className="model-selector__dropdown"
+                        data-scrollable="true"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
@@ -287,7 +288,7 @@ export default function ModelSelector() {
                             </div>
                         </div>
 
-                        <div className="model-selector__list model-selector__list--local" data-scrollable="true">
+                        <div className="model-selector__list">
                             {isRefreshing ? (
                                 <div className="model-selector__scanning">
                                     <Loader2 size={16} className="spin" />
