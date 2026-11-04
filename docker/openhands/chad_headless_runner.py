@@ -6,11 +6,11 @@ startup race). Chad's `dispatch_coding_task` tool `docker run`s the OpenHands im
 with this script mounted at /chad and this file as the entrypoint.
 
 Config is passed via env (see dispatch tool):
-  CHAD_TASK           the task brief (required)
+  CHAD_TASK_FILE      mounted UTF-8 task brief (preferred); CHAD_TASK is a fallback
   CHAD_MODEL          LiteLLM model id, e.g. openai/qwen/qwen3.6-35b-a3b
   CHAD_LLM_BASE_URL   default http://host.docker.internal:1234/v1  (from the container)
   CHAD_LLM_API_KEY    default lmstudio
-  CHAD_MAX_ITER       default 30
+  CHAD_MAX_ITER       defaults to the SDK integer ceiling used by Chad
   CHAD_TEMPERATURE    default 0    (deterministic first pass — #582 research)
   CHAD_NUM_RETRIES    default 2    (cap LiteLLM's default 8 so a stuck model fails fast)
   CHAD_LLM_TIMEOUT_S default 900  (per request; long local file generations can exceed 300s)
@@ -33,10 +33,14 @@ setting before passing CHAD_NATIVE_TOOL_CALLING to this runner.
 
 import json
 import os
+import subprocess
 import sys
 import threading
 
 from chad_run_validation import IncompleteRunError, validate_conversation
+from chad_task_payload import read_task
+from chad_context_report import context_reporter
+from chad_workspace_brief import workspace_brief
 
 import openhands.tools  # noqa: F401 — registers the `terminal` + `file_editor` tools
 from openhands.sdk import (
@@ -138,19 +142,21 @@ def _arm_watchdog(timeout_s: int) -> None:
     t.start()
 
 
-def main() -> int:
-    task = (os.environ.get("CHAD_TASK") or "").strip()
+def main(trace=None) -> int:
+    task = read_task().strip()
     if not task:
         print(f"{_SENTINEL_ERR}: no CHAD_TASK provided")
         return 2
+
+    task = workspace_brief(task)
 
     model = os.environ.get("CHAD_MODEL", "openai/qwen/qwen3.6-35b-a3b")
     base_url = os.environ.get("CHAD_LLM_BASE_URL", "http://host.docker.internal:1234/v1")
     api_key = os.environ.get("CHAD_LLM_API_KEY", "lmstudio")
     try:
-        max_iter = int(os.environ.get("CHAD_MAX_ITER", "30"))
+        max_iter = int(os.environ.get("CHAD_MAX_ITER", "2147483647"))
     except ValueError:
-        max_iter = 30
+        max_iter = 2147483647
 
     # Dispatch passes the resolved per-model mode. False preserves the legacy
     # Qwen text parser; LFM's LM Studio endpoint uses structured native calls.
@@ -201,9 +207,9 @@ def main() -> int:
         eval_max_attempts = 3
 
     try:
-        timeout_s = int(os.environ.get("CHAD_TIMEOUT_S", "1800"))
+        timeout_s = int(os.environ.get("CHAD_TIMEOUT_S", "0"))
     except ValueError:
-        timeout_s = 1800
+        timeout_s = 0
     _arm_watchdog(timeout_s)
 
     # Model tuning (issue #582 research → adopt). Deterministic first pass: temperature 0 is the
@@ -261,7 +267,9 @@ def main() -> int:
         print(f"CHAD_LLM tuning fields rejected, falling back to base LLM "
               f"(non-fatal): {type(exc).__name__}: {exc}")
         llm = LLM(**_base_llm_kwargs)
-    tools = [Tool(name="terminal"), Tool(name="file_editor")]
+    tools = [Tool(name="terminal")]
+    if os.environ.get("CHAD_TERMINAL_ONLY") != "1":
+        tools.append(Tool(name="file_editor"))
     if use_tracker:
         tools.append(Tool(name="task_tracker"))
     if use_subagents:
@@ -280,6 +288,7 @@ def main() -> int:
     # It needs its own LLM handle so condensation tokens are accounted separately from the
     # agent's. Any failure here degrades to no condenser rather than failing the job.
     condenser = None
+    context_models = {"coder": llm}
     if use_condenser:
         try:
             from openhands.sdk.context.condenser import LLMSummarizingCondenser
@@ -290,6 +299,7 @@ def main() -> int:
                 max_size=condenser_max_size,
                 keep_first=condenser_keep_first,
             )
+            context_models["condenser"] = condenser_llm
             print(f"CHAD_CONDENSER enabled max_size={condenser_max_size} "
                   f"keep_first={condenser_keep_first}")
         except Exception as exc:  # noqa: BLE001
@@ -354,11 +364,29 @@ def main() -> int:
                   f"(non-fatal): {type(exc).__name__}: {exc}")
             critic = None
 
+    report_context = context_reporter(base_url, model, context_models)
+    completion = None
+    if contract_path := os.environ.get("CHAD_COMPLETION_CONTRACT"):
+        from chad_completion import CompletionGate
+
+        if os.environ.get("CHAD_LOCAL_ACCEPTANCE") in {"1", "checkpoint"}:
+            raise IncompleteRunError("completion_configuration: use the completion contract instead of legacy acceptance mode")
+        completion = CompletionGate("/workspace", contract_path, os.environ["CHAD_RUN_ARTIFACTS"])
+        baseline = completion.verify("baseline")
+        if trace is not None:
+            trace.record("verification_baseline", verdict=baseline)
+        if baseline["status"] == "infra_error":
+            raise IncompleteRunError("completion_infrastructure: " + baseline.get("error", ""))
+
     def _build_and_run(use_mcp: bool) -> None:
         """Build the agent + conversation and run the task once. Raises on failure so the caller
         can decide whether to retry without MCP. AgentContext carries the skills (persistent
         system-prompt augmentation); mcp_config adds the MCP toolsets."""
         agent_kwargs = {"llm": llm, "tools": tools}
+        if native_tc and model.rsplit("/", 1)[-1] == "gpt-oss-20b":
+            # LM Studio can reject a generation near task completion with the
+            # SDK's default tools advertised. A plain final message is supported.
+            agent_kwargs["include_default_tools"] = []
         if condenser is not None:
             agent_kwargs["condenser"] = condenser
         if critic is not None:
@@ -380,22 +408,121 @@ def main() -> int:
             "workspace": LocalWorkspace(working_dir="/workspace"),
             "max_iteration_per_run": max_iter,
         }
+        conv_kwargs["callbacks"] = [report_context]
+        if completion is not None:
+            from openhands.sdk.hooks import HookConfig, HookDefinition, HookMatcher
+            import shlex
+
+            command = " ".join(shlex.quote(str(x)) for x in (
+                sys.executable, "/chad/chad_completion.py", "/workspace",
+                completion.contract, completion.artifacts))
+            conv_kwargs["hook_config"] = HookConfig(stop=[HookMatcher(hooks=[
+                HookDefinition(command=command, timeout=completion.hook_timeout())])])
+        if trace is not None:
+            trace.record("conversation_start", model=model)
+            conv_kwargs["callbacks"].append(trace)
+        checkpoint_mode = os.environ.get("CHAD_LOCAL_ACCEPTANCE") == "checkpoint"
+        if checkpoint_mode:
+            from chad_local_acceptance import LocalAcceptance
+
+            acceptance = LocalAcceptance("/workspace", "/chad-acceptance/verify", llm_timeout_s)
+            checkpoint_requested = False
+
+            def checkpoint_callback(event):
+                nonlocal checkpoint_requested
+                if acceptance.should_checkpoint(event):
+                    checkpoint_requested = True
+                    conv.pause()
+
+            conv_kwargs["callbacks"].append(checkpoint_callback)
         if stream_events:
-            conv_kwargs["callbacks"] = [_make_event_streamer()]
+            conv_kwargs["callbacks"].append(_make_event_streamer())
         try:
             conv = Conversation(**conv_kwargs)
         except Exception as exc:  # noqa: BLE001 — streaming callback must not block the job
+            if checkpoint_mode or trace is not None or completion is not None:
+                raise
             print(f"CHAD_CONV callback wiring failed, falling back (non-fatal): "
                   f"{type(exc).__name__}: {exc}")
             conv = Conversation(agent=agent, workspace=LocalWorkspace(working_dir="/workspace"),
                                 max_iteration_per_run=max_iter)
+
+        if checkpoint_mode:
+            conv.send_message(task)
+            final_failures = 0
+            while True:
+                checkpoint_requested = False
+                conv.run()
+                if not checkpoint_requested:
+                    validate_conversation(conv)
+                passed, feedback = acceptance.verify()
+                if passed:
+                    print("CHAD_ACCEPTANCE_PASSED", flush=True)
+                    return
+                if not checkpoint_requested:
+                    final_failures += 1
+                    if final_failures >= eval_max_attempts:
+                        raise IncompleteRunError("local_acceptance: verifier rejected the delivered workspace")
+                    # Recover from premature completion with the full brief and
+                    # compact evidence, keeping the same delivered source files.
+                    conv = Conversation(**conv_kwargs)
+                    feedback = task + "\n\nContinue from the current workspace.\n" + feedback
+                conv.send_message(feedback)
 
         try:
             conv.send_message(task)
         except Exception:
             conv.send_message(Message(role="user", content=[TextContent(text=task)]))
         conv.run()
+        status = conv.state.execution_status
+        if getattr(status, "value", status) == "stuck":
+            print("CHAD_NUDGE: OpenHands detected repeated actions without progress.", flush=True)
+            conv.send_message(
+                "Your recent actions are repeating without progress. Review the last tool "
+                "result, then take a different concrete action. If implementation is already "
+                "in place, run the relevant checks and fix the first failure. If blocked, "
+                "report the specific blocker."
+            )
+            conv.run()
         validate_conversation(conv)
+        # Never trust a hook's allow result: crashes/timeouts can fail open in SDK.
+        while completion is not None:
+            verdict = completion.verify("outer")
+            if trace is not None:
+                trace.record("completion_verdict", verdict=verdict)
+            if verdict["status"] == "passed":
+                print("CHAD_VERIFIED_COMPLETE", flush=True)
+                break
+            if verdict["status"] == "infra_error":
+                raise IncompleteRunError("completion_infrastructure: " + verdict.get("error", ""))
+            conv = Conversation(**conv_kwargs)
+            conv.send_message(task + "\n\n" + completion.feedback(verdict))
+            conv.run()
+            validate_conversation(conv)
+
+        # Dev evals can mount a trusted verifier outside the editable workspace.
+        verifier = "/chad-acceptance/verify"
+        if os.environ.get("CHAD_LOCAL_ACCEPTANCE") == "1":
+            for attempt in range(eval_max_attempts):
+                result = subprocess.run(
+                    [verifier], cwd="/workspace", capture_output=True, text=True,
+                    errors="replace", timeout=llm_timeout_s, check=False,
+                )
+                if result.returncode == 0:
+                    print("CHAD_ACCEPTANCE_PASSED", flush=True)
+                    break
+                if result.returncode != 1 or attempt + 1 == eval_max_attempts:
+                    print("CHAD_ACCEPTANCE_FAILED", flush=True)
+                    raise IncompleteRunError("local_acceptance: verifier rejected the delivered workspace")
+                feedback = (result.stdout + result.stderr)[-4000:]
+                conv.send_message(
+                    "Independent acceptance checks failed. Fix the delivered workspace "
+                    "and rerun your checks. Verifier output:\n" + feedback
+                )
+                conv.run()
+                validate_conversation(conv)
+            else:
+                raise IncompleteRunError("local_acceptance: no verification attempts configured")
 
     # Run with MCP if configured. If ANYTHING in the MCP-enabled path fails, degrade to the proven
     # base agent (terminal + file_editor) instead of crashing the whole job — an MCP tool whose
@@ -408,7 +535,9 @@ def main() -> int:
         # Retrying an incomplete task without MCP could repeat side effects.
         raise
     except Exception as exc:  # noqa: BLE001
-        if not mcp_config:
+        if "expected peg-native format" in str(exc):
+            raise IncompleteRunError("native_tool_format: LM Studio rejected the model response") from exc
+        if not mcp_config or os.environ.get("CHAD_LOCAL_ACCEPTANCE") in {"1", "checkpoint"}:
             raise
         print(f"CHAD_MCP run failed, retrying WITHOUT MCP (graceful fallback): "
               f"{type(exc).__name__}: {exc}")
@@ -420,8 +549,19 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    trace = None
     try:
-        sys.exit(main())
+        if directory := os.environ.get("CHAD_RUN_ARTIFACTS"):
+            from chad_run_trace import RunTrace
+
+            trace = RunTrace(directory)
+            trace.record("run_start")
+        result = main(trace)
+        if trace is not None:
+            trace.record("run_finished", exit_code=result)
+        sys.exit(result)
     except Exception as exc:  # noqa: BLE001 — surface any crash to the transcript
+        if trace is not None:
+            trace.record("run_failed", error_type=type(exc).__name__, error=str(exc))
         print(f"{_SENTINEL_ERR}: {type(exc).__name__}: {exc}")
         sys.exit(1)

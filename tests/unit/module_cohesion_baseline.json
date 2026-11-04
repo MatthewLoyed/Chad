@@ -79,7 +79,7 @@
   "func:src/tools/visual/generate_image.py:execute": 189,
   "func:src/remote/endpoints.py:perform_self_update": 184,
   "func:src/core/tools/tool_executor.py:execute_tool_call": 178,
-  "func:src/tools/dev/openhands_dispatch.py:execute": 178,
+  "func:src/tools/dev/openhands_dispatch.py:execute": 174,
   "func:src/core/intelligence/ingestion/google_workspace.py:ingest": 177,
   "func:src/core/orchestration/conversation_orchestrator.py:_process_request_locked": 172,
   "func:src/remote/telegram/telegram_response_router.py:_handle_turn_completed": 171,
