@@ -59,12 +59,19 @@ async def test_status_invalidates_receipt_after_source_edit(tmp_path, monkeypatc
     artifacts = bridge._run_artifacts('example'); artifacts.mkdir(parents=True)
     contract = artifacts.parent / 'contract.json'; contract.write_text('{"commands":[]}')
     import hashlib
-    (artifacts / 'completion.json').write_text(json.dumps({
-        'status': 'passed', 'fingerprint': bridge._completion_module().fingerprint(ws),
-        'contract_hash': hashlib.sha256(contract.read_bytes()).hexdigest()}))
+    receipt = artifacts / 'completion.json'
+    verdict = {
+        'phase': 'baseline', 'status': 'passed',
+        'fingerprint': bridge._completion_module().fingerprint(ws),
+        'contract_hash': hashlib.sha256(contract.read_bytes()).hexdigest(),
+    }
+    receipt.write_text(json.dumps(verdict))
     async def status():
         monkeypatch.setattr(bridge, "_run_docker", AsyncMock(side_effect=[(0, "exited|0", ""), (0, "CHAD_DISPATCH_DONE", "")]))
         return (await bridge.CheckCodingTaskTool().execute(job_id='example'))['result']
+    assert (await status())['verification_status'] == 'unverified'
+    verdict['phase'] = 'outer'
+    receipt.write_text(json.dumps(verdict))
     assert (await status())['verification_status'] == 'verified_complete'
     source.write_text('changed after check')
     assert (await status())['status'] == 'failed'

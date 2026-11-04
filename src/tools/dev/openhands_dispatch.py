@@ -730,7 +730,7 @@ class CheckCodingTaskTool(BaseTool):
                     verdict = json.loads(receipt.read_text(encoding="utf-8"))
                     import hashlib
                     contract = _run_artifacts(job_id).parent / "contract.json"
-                    if (verdict.get("status") == "passed" and
+                    if (verdict.get("phase") == "outer" and verdict.get("status") == "passed" and
                             verdict.get("contract_hash") == hashlib.sha256(contract.read_bytes()).hexdigest() and
                             verdict.get("fingerprint") == _completion_module().fingerprint(_load_job_workspace(job_id))):
                         status = "finished"
