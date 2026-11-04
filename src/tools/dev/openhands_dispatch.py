@@ -186,6 +186,18 @@ def _workspace_for(job_id: str) -> Path:
     return _workspace_root() / job_id
 
 
+def _run_artifacts(job_id: str) -> Path:
+    return _workspace_root() / ".jobs" / job_id / "artifacts"
+
+
+def _completion_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("chad_completion", _runner_dir() / "chad_completion.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _job_record(job_id: str) -> Path:
     return _workspace_root() / ".jobs" / f"{job_id}.path"
 
@@ -374,6 +386,51 @@ def _workspace_guard(ws_path: Path) -> Optional[str]:
     return None
 
 
+def _coding_entrypoint(use_codegraph, ws_path):
+    # Container entrypoint. With codegraph on, first materialize a writable /repo from the
+    # read-only /repo_src mount and build the codegraph index into it before starting the agent
+    # (index build is ~5s per ~700 files). Both steps are non-fatal — a copy/index failure just
+    # means the agent falls back to terminal exploration (the graceful MCP fallback in the
+    # runner handles a codegraph server that then can't answer). The CHAD_CODEGRAPH_* markers
+    # land in `docker logs` for the eval forensics.
+    if use_codegraph:
+        entrypoint = (
+            "mkdir -p /repo && cp -a /repo_src/. /repo/ 2>/dev/null; "
+            "(codegraph init /repo > /tmp/cg_init.log 2>&1 "
+            "&& echo CHAD_CODEGRAPH_INDEXED || echo CHAD_CODEGRAPH_INIT_FAILED); "
+            "cd /workspace && python /chad/chad_headless_runner.py"
+        )
+    else:
+        entrypoint = "cd /workspace && python /chad/chad_headless_runner.py"
+
+    dependency_mount = []
+    if _cfg("openhands_npm_ci_linux", False) and (ws_path / "package-lock.json").is_file():
+        dependency_mount = ["--tmpfs", "/workspace/node_modules:exec"]
+        entrypoint = "cd /workspace && npm ci --no-audit --no-fund && " + entrypoint
+
+    return entrypoint, dependency_mount
+
+
+def _prepare_verification(job_id, ws_path):
+    artifacts = _run_artifacts(job_id)
+    artifacts.mkdir(parents=True, exist_ok=True)
+    contract = artifacts.parent / "contract.json"
+    completion_module = _completion_module()
+    specification = completion_module.contract_for(
+        ws_path, _cfg("openhands_acceptance_commands", None),
+        _cfg("openhands_acceptance_timeout_s", completion_module.DEFAULT_CHECK_TIMEOUT_S),
+    )
+    acceptance_mount = []
+    if verifier_dir := _cfg("openhands_acceptance_verifier_dir", None):
+        from src.core.tools.failure import failure, CONFIG
+        if not (Path(verifier_dir) / "verify").is_file():
+            return None, None, None, failure("Configured acceptance verifier is missing", failure_class=CONFIG)
+        acceptance_mount = ["-v", f"{_win_mount(Path(verifier_dir))}:/chad-acceptance:ro"]
+        specification["commands"].append(["/chad-acceptance/verify"])
+    contract.write_text(json.dumps(specification), encoding="utf-8")
+    return artifacts, contract, acceptance_mount, None
+
+
 class OpenHandsDispatchTool(BaseTool):
     """Dispatch a coding task to a headless OpenHands container running a local model."""
 
@@ -541,39 +598,32 @@ class OpenHandsDispatchTool(BaseTool):
             ref_target = "/repo_src" if use_codegraph else "/repo"
             ref_mount = ["-v", f"{_win_mount(ref_path)}:{ref_target}:ro"]
 
-        # Container entrypoint. With codegraph on, first materialize a writable /repo from the
-        # read-only /repo_src mount and build the codegraph index into it before starting the agent
-        # (index build is ~5s per ~700 files). Both steps are non-fatal — a copy/index failure just
-        # means the agent falls back to terminal exploration (the graceful MCP fallback in the
-        # runner handles a codegraph server that then can't answer). The CHAD_CODEGRAPH_* markers
-        # land in `docker logs` for the eval forensics.
-        if use_codegraph:
-            entrypoint = (
-                "mkdir -p /repo && cp -a /repo_src/. /repo/ 2>/dev/null; "
-                "(codegraph init /repo > /tmp/cg_init.log 2>&1 "
-                "&& echo CHAD_CODEGRAPH_INDEXED || echo CHAD_CODEGRAPH_INIT_FAILED); "
-                "cd /workspace && python /chad/chad_headless_runner.py"
-            )
-        else:
-            entrypoint = "cd /workspace && python /chad/chad_headless_runner.py"
-
-        # Ensure the coder model is resident (best-effort, Chad's value-add).
-        await _ensure_coder_model(model)
+        entrypoint, dependency_mount = _coding_entrypoint(use_codegraph, ws_path)
 
         # Launch a detached container running the headless runner. Env is passed in exec
         # form (no shell) so arbitrary/multiline task text needs no escaping.
+        artifacts, contract, acceptance_mount, error = _prepare_verification(job_id, ws_path)
+        if error is not None:
+            return error
         args = [
             "run", "-d", "--name", container,
             "--label", f"{_CONTAINER_LABEL}=1",
             "--label", f"{_CONTAINER_LABEL}-job={job_id}",
             "-v", f"{_win_mount(ws_path)}:/workspace",
             "-v", f"{_win_mount(_runner_dir())}:/chad:ro",
+            "-v", f"{_win_mount(artifacts)}:/chad-run",
+            "-e", "CHAD_RUN_ARTIFACTS=/chad-run",
+            "-v", f"{_win_mount(contract)}:/chad-contract.json:ro",
+            "-e", "CHAD_COMPLETION_CONTRACT=/chad-contract.json",
+            *acceptance_mount,
             *ref_mount,
+            *dependency_mount,
             "-e", f"CHAD_TASK={task}",
             "-e", f"CHAD_MODEL={model}",
             "-e", f"CHAD_LLM_BASE_URL={container_lm_url}",
             "-e", f"CHAD_LLM_API_KEY={api_key}",
             "-e", f"CHAD_MAX_ITER={max_iter}",
+            "-e", f'CHAD_TERMINAL_ONLY={int(bool(_cfg("openhands_terminal_only", False)))}',
             "-e", f"CHAD_NATIVE_TOOL_CALLING={'1' if native_tc else '0'}",
             "-e", f"CHAD_USE_TASK_TRACKER={'1' if use_tracker else '0'}",
             "-e", f"CHAD_USE_SUBAGENTS={'1' if use_subagents else '0'}",
@@ -606,6 +656,8 @@ class OpenHandsDispatchTool(BaseTool):
             image,
             "-c", entrypoint,
         ]
+        # Preserve the existing model preload before starting the coding process.
+        await _ensure_coder_model(model)
         rc, out, err = await _run_docker(args)
         if rc != 0:
             return {
@@ -618,6 +670,7 @@ class OpenHandsDispatchTool(BaseTool):
             "job_id": job_id,
             "container": container,
             "workspace": str(ws_path),
+            "artifacts": str(artifacts),
             "model": model,
             "status": "running",
         }
@@ -685,7 +738,19 @@ class CheckCodingTaskTool(BaseTool):
         if state == "running":
             status = "running"
         elif done and not failed and exit_code == "0":
-            status = "finished"
+            status = "failed"
+            receipt = _run_artifacts(job_id) / "completion.json"
+            if receipt.is_file():
+                try:
+                    verdict = json.loads(receipt.read_text(encoding="utf-8"))
+                    import hashlib
+                    contract = _run_artifacts(job_id).parent / "contract.json"
+                    if (verdict.get("phase") == "outer" and verdict.get("status") == "passed" and
+                            verdict.get("contract_hash") == hashlib.sha256(contract.read_bytes()).hexdigest() and
+                            verdict.get("fingerprint") == _completion_module().fingerprint(_load_job_workspace(job_id))):
+                        status = "finished"
+                except (OSError, ValueError):
+                    pass
         else:
             status = "failed"
 
@@ -696,8 +761,10 @@ class CheckCodingTaskTool(BaseTool):
             "result": {
                 "job_id": job_id,
                 "status": status,
+                "verification_status": "verified_complete" if status == "finished" else "unverified",
                 "exit_code": exit_code,
                 "workspace": str(ws),
+                "artifacts": str(_run_artifacts(job_id)),
                 "files": files,
                 "transcript_tail": transcript,
             },

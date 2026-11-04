@@ -321,3 +321,107 @@ sub-issues:
    patch for the `exposed_urls` race, to restore live steering.
 4. **Housekeeping** — job-container lifecycle/pruning; surface model + `native_tool_calling`
    as config; confirm the `qwen3.6-35b-a3b` vs `qwen3-coder-30b` default.
+
+### Workspace orientation
+
+The headless runner prepends observed workspace facts to the original request.
+It reports the mounted project root, root manifests and directories, available
+executables, and declared package.json check scripts. It reads metadata without
+executing repository code or installing tools. Missing commands remain missing
+and check declarations do not establish successful verification.
+
+The original request follows the facts verbatim. This orientation applies to
+direct runner launches as well as dispatched jobs. It reduces repeated discovery
+and makes unsupported tool assumptions visible before the first model call.
+
+### Coding execution traces and helpers
+
+Dispatch mounts a persistent per-job artifact folder at `/chad-run` and returns
+its host path as `artifacts` in dispatch/check results. The host location is
+`<chad_code_workspace_root>/.jobs/<job_id>/artifacts` (the workspace root defaults
+to the system temp directory's `chad-code` folder). Container deletion leaves
+these files intact; remove old artifacts manually when no longer needed.
+Direct runner launches enable the same capture by setting `CHAD_RUN_ARTIFACTS`
+to a writable mounted directory.
+
+`events.jsonl` records UTC timestamps, elapsed time, SDK event kinds, action and
+observation payloads, tool-call/action IDs, public message text, state updates
+and errors. CLI runs
+also record run start, finish or exception. Callback registration failure stops
+a traced run instead of silently disabling capture. SDK observations may already
+be truncated; this is an execution trace, not a raw model token stream. It does
+not explicitly capture model reasoning. A killed container may have no final
+event. Logs can contain source code, command arguments and private tool output:
+keep them local and inspect/redact before sharing.
+
+The workspace brief advertises two helpers available through the terminal:
+
+```bash
+python /chad/chad_coder_tools.py run -- npm test
+python /chad/chad_coder_tools.py run --shell 'npm test 2>&1 | tee /tmp/test.log'
+python /chad/chad_coder_tools.py replace src/example.ts --old-file /tmp/old.txt --new-file /tmp/new.txt
+```
+
+The command helper preserves argv, uses bash `pipefail` for explicit shell
+commands, and returns the process exit status (shell convention for signals).
+It writes a running receipt before execution, then exit status, duration and the
+full merged output log; the terminal sees metadata and an eight-line preview.
+Read the referenced log for omitted output. No helper execution deadline or
+retry loop is imposed. Normal SDK terminal pause behavior still applies.
+
+The UTF-8 edit helper requires exactly one nonempty match, rejects symlinks,
+preserves line endings and file permissions, replaces the file atomically, and
+prints a unified diff. Missing or ambiguous matches leave the original intact.
+These helpers supplement the SDK tools; they neither constrain all commands nor
+provide sandbox/security isolation. Effectiveness on model tasks still requires
+a fresh independent evaluation.
+
+### Mandatory dispatch completion gate
+
+New dispatches mount a controller-written contract read-only at
+`/chad-contract.json`. `tools.openhands_acceptance_commands` supplies an explicit
+list of argv lists (for example `[["python", "-m", "pytest"]]`). When unset,
+dispatch captures existing npm scripts named lint, typecheck, build, test and
+test:e2e, in that order. Captured script bodies are pinned; replacing a test
+script with a no-op invalidates verification. New projects or other languages
+need configured commands: an empty contract produces an infrastructure error,
+never success. Checks must be noninteractive, terminating commands.
+
+Optionally set `tools.openhands_acceptance_verifier_dir` to a host directory
+containing executable `verify`. Dispatch mounts it read-only at
+`/chad-acceptance` and adds `/chad-acceptance/verify` to the required commands.
+This keeps independent requirements and tests outside the editable workspace.
+Repository tests remain editable for legitimate coding work; their integrity is
+not established by passing alone. Use independent checks for task behavior and
+scope. The contract is not a proof of requirements it does not check.
+
+The runner records a baseline before coding without automatically exempting any
+baseline failure. An OpenHands synchronous Stop hook then runs all required
+checks and denies completion on red or stale results, returning failure excerpts
+to the coder. Logs capture actual process exits without shell pipelines. A final
+outer check runs after SDK termination because hook crashes/timeouts can fail
+open. Check infrastructure errors stop with an unverified result. Each command
+has a deadline configured by `tools.openhands_acceptance_timeout_s` (default 600
+seconds). On Linux, a timed-out check's process group is killed, its partial log
+is retained, and its receipt records `timed_out`. Hook execution gets enough time
+for the full check list. The deadline applies to verification commands only.
+Checks receive `PLAYWRIGHT_HTML_OPEN=never` and closed stdin. Auto-discovered
+`test:e2e` scripts whose body is `playwright test` receive a suite timeout 30
+seconds below the command deadline when the deadline exceeds 30 seconds.
+Explicit Playwright commands can set `--global-timeout` in their argv.
+
+`completion.json` records the current verdict, source fingerprint, contract
+hash, exact argv, exit codes, durations and log paths. `completion-history.jsonl`
+retains baseline and finish attempts. Source changes during checking invalidate
+the verdict. Job status retains `finished` for compatibility only when a passing
+receipt still matches source and contract, with
+`verification_status=verified_complete`. An otherwise clean process exit without
+that evidence reports `failed` and `verification_status=unverified`.
+
+The legacy CHAD_LOCAL_ACCEPTANCE modes cannot be combined with this contract.
+Direct runner experiments must mount/set CHAD_COMPLETION_CONTRACT to use the
+gate. Existing containers do not acquire it retroactively. The coder and checks
+share a user/process environment: this is a correctness gate, not tamper-proof
+security isolation. Generated/dependency directories excluded by
+`chad_completion.py` are outside the source fingerprint. No live-model quality
+improvement is claimed until a fresh gated evaluation passes.

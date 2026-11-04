@@ -66,7 +66,31 @@ This repo is public. See [`docs/guides/PRIVATE_DATA.md`](docs/guides/PRIVATE_DAT
   Use placeholders (`the user`, `Alex Example`, `your-app.onrender.com`).
 - Tests and fixtures use **fictional** data only.
 
-If you find a real name/email/token in a tracked file, that's a bug — fix it.
+Install the local pre-push gate once with `git config --local core.hooksPath .githooks`.
+If you already use Git hooks, chain the privacy hook from your existing pre-push hook.
+Before every push and PR review, inspect the full outgoing diff and each commit,
+including author metadata, names and contacts, financial figures and institutions,
+private project details, credentials, local paths, filenames, binaries, and new
+files. Treat output copied from a real run as private. Review release downloads
+separately before uploading them. Run the scanner with the actual revision range:
+
+```powershell
+python scripts/dev/review_public_push.py review origin/dev..HEAD
+# After reviewing and resolving candidates:
+python scripts/dev/review_public_push.py review origin/dev..HEAD --confirm-reviewed
+```
+
+The hook checks outgoing branches and tags and requires a local receipt for
+each new commit and annotated tag. Pass `--tag <name>` to review a tag message
+and its metadata along with the revision range. Rebases or edits create new
+commits that need review. The scan
+reports categories and counts without printing the values. It can miss personal
+data, so manual review is required. An optional regular expression in
+`private-push-patterns` under `git rev-parse --git-common-dir` blocks known private
+identifiers. Keep this file and the review receipts local. Record only that the
+review was run in the PR. If a candidate may be personal, ask privately before
+publishing. If material has already been pushed, review history, PR refs,
+release assets and caches as part of [private data cleanup](docs/guides/PRIVATE_DATA.md).
 
 ## AI coding tools (optional)
 
