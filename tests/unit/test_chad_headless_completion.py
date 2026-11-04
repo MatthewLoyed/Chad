@@ -80,7 +80,8 @@ class TestRunnerCompletion(unittest.TestCase):
 
     def test_outer_gate_recovers_even_when_hook_allows_failure(self):
         from unittest.mock import Mock
-        gate = NS(contract="/contract", artifacts="/artifacts", feedback=lambda state: "Fix test failure")
+        gate = NS(contract="/contract", artifacts="/artifacts", feedback=lambda state: "Fix test failure",
+                  hook_timeout=lambda: 630)
         gate.verify = Mock(side_effect=[{"status": "passed"}, {"status": "failed"}, {"status": "passed"}])
         hooks = NS(**{name: lambda **kw: NS(**kw) for name in ("HookConfig", "HookDefinition", "HookMatcher")})
         with patch.dict(sys.modules, {"chad_completion": NS(CompletionGate=lambda *args: gate),

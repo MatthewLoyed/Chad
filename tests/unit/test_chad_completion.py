@@ -67,3 +67,15 @@ def test_all_checks_recorded_without_shell_masking(tmp_path):
     state = checker.verify()
     assert state['status'] == 'failed'
     assert [x['exit_code'] for x in state['checks']] == [3, 0]
+
+
+def test_hung_check_preserves_output_and_cannot_pass(tmp_path):
+    checker = gate(tmp_path, [[sys.executable, '-c',
+        'import os, time; print(os.environ["PLAYWRIGHT_HTML_OPEN"], flush=True); time.sleep(60)']])
+    spec = json.loads(checker.contract.read_text())
+    spec['timeout_s'] = 1
+    checker.contract.write_text(json.dumps(spec))
+    result = checker.verify()
+    assert result['status'] == 'infra_error'
+    assert result['checks'][0]['status'] == 'timed_out'
+    assert Path(result['checks'][0]['log']).read_text().strip() == 'never'

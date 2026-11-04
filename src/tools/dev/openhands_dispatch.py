@@ -579,7 +579,11 @@ class OpenHandsDispatchTool(BaseTool):
         artifacts = _run_artifacts(job_id)
         artifacts.mkdir(parents=True, exist_ok=True)
         contract = artifacts.parent / "contract.json"
-        specification = _completion_module().contract_for(ws_path, _cfg("openhands_acceptance_commands", None))
+        completion_module = _completion_module()
+        specification = completion_module.contract_for(
+            ws_path, _cfg("openhands_acceptance_commands", None),
+            _cfg("openhands_acceptance_timeout_s", completion_module.DEFAULT_CHECK_TIMEOUT_S),
+        )
         acceptance_mount = []
         if verifier_dir := _cfg("openhands_acceptance_verifier_dir", None):
             from src.core.tools.failure import failure, CONFIG

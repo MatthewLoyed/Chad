@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import time
@@ -13,6 +14,27 @@ import uuid
 
 GENERATED = {'.git', 'node_modules', 'dist', 'build', 'target', '__pycache__',
              '.pytest_cache', '.vite', 'coverage', 'test-results', 'playwright-report'}
+DEFAULT_CHECK_TIMEOUT_S = 600
+PLAYWRIGHT_REPORT_GRACE_S = 30
+
+
+def run_check(argv, workspace, output, deadline):
+    env = {**os.environ, 'PLAYWRIGHT_HTML_OPEN': 'never'}
+    with subprocess.Popen(argv, cwd=workspace, stdin=subprocess.DEVNULL, stdout=output,
+                          stderr=subprocess.STDOUT, env=env,
+                          start_new_session=os.name == 'posix') as process:
+        try:
+            return process.wait(timeout=deadline)
+        except subprocess.TimeoutExpired:
+            if os.name == 'posix':
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            else:
+                process.kill()
+            process.wait()
+            raise
 
 
 def fingerprint(root):
@@ -26,7 +48,7 @@ def fingerprint(root):
     return digest.hexdigest()
 
 
-def contract_for(workspace, commands=None):
+def contract_for(workspace, commands=None, timeout_s=DEFAULT_CHECK_TIMEOUT_S):
     scripts = {}
     if commands is None:
         manifest = Path(workspace) / 'package.json'
@@ -34,12 +56,16 @@ def contract_for(workspace, commands=None):
             declared = json.loads(manifest.read_text(encoding='utf-8-sig')).get('scripts', {})
             scripts = {k: declared[k] for k in ('lint', 'typecheck', 'build', 'test', 'test:e2e') if k in declared}
         commands = [['npm', 'run', name] for name in scripts]
+        if scripts.get('test:e2e', '').strip() == 'playwright test' and timeout_s > PLAYWRIGHT_REPORT_GRACE_S:
+            commands[-1] += ['--', '--global-timeout', str((timeout_s - PLAYWRIGHT_REPORT_GRACE_S) * 1000)]
     if not isinstance(commands, list) or any(
         not isinstance(argv, list) or not argv or any(not isinstance(arg, str) or not arg for arg in argv)
         for argv in commands
     ):
         raise ValueError('Acceptance commands must be a list of nonempty argv lists')
-    return {'commands': commands, 'scripts': scripts}
+    if type(timeout_s) is not int or timeout_s <= 0:
+        raise ValueError('Verification timeout must be a positive integer in seconds')
+    return {'commands': commands, 'scripts': scripts, 'timeout_s': timeout_s}
 
 
 class CompletionGate:
@@ -49,6 +75,10 @@ class CompletionGate:
         self.artifacts = Path(artifacts)
         self.artifacts.mkdir(parents=True, exist_ok=True)
         self.receipt = self.artifacts / 'completion.json'
+
+    def hook_timeout(self):
+        spec = json.loads(self.contract.read_text(encoding='utf-8'))
+        return len(spec['commands']) * spec.get('timeout_s', DEFAULT_CHECK_TIMEOUT_S) + PLAYWRIGHT_REPORT_GRACE_S
 
     def verify(self, phase='stop'):
         spec = json.loads(self.contract.read_text(encoding='utf-8'))
@@ -66,6 +96,7 @@ class CompletionGate:
 
         persist()
         try:
+            deadline = spec.get('timeout_s', DEFAULT_CHECK_TIMEOUT_S)
             if not spec['commands']:
                 raise ValueError('No acceptance commands configured; completion is unverified')
             current = {}
@@ -79,12 +110,15 @@ class CompletionGate:
                 entry = {'argv': argv, 'status': 'running', 'log': str(log)}
                 records.append(entry); persist()
                 started = time.monotonic()
-                with log.open('wb') as output:
-                    result = subprocess.run(argv, cwd=self.workspace, stdout=output,
-                                            stderr=subprocess.STDOUT, check=False)
-                entry.update(status='passed' if result.returncode == 0 else 'failed',
-                             exit_code=result.returncode, duration_s=time.monotonic()-started)
-                if result.returncode:
+                try:
+                    with log.open('wb') as output:
+                        code = run_check(argv, self.workspace, output, deadline)
+                except subprocess.TimeoutExpired:
+                    entry.update(status='timed_out', timeout_s=deadline, duration_s=time.monotonic()-started)
+                    raise
+                entry.update(status='passed' if code == 0 else 'failed',
+                             exit_code=code, duration_s=time.monotonic()-started)
+                if code:
                     entry['excerpt'] = log.read_text(encoding='utf-8', errors='replace')[-2000:]
                 persist()
             if fingerprint(self.workspace) != before:

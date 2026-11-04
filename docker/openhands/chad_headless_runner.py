@@ -417,7 +417,7 @@ def main(trace=None) -> int:
                 sys.executable, "/chad/chad_completion.py", "/workspace",
                 completion.contract, completion.artifacts))
             conv_kwargs["hook_config"] = HookConfig(stop=[HookMatcher(hooks=[
-                HookDefinition(command=command, timeout=llm_timeout_s)])])
+                HookDefinition(command=command, timeout=completion.hook_timeout())])])
         if trace is not None:
             trace.record("conversation_start", model=model)
             conv_kwargs["callbacks"].append(trace)

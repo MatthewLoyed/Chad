@@ -400,9 +400,15 @@ baseline failure. An OpenHands synchronous Stop hook then runs all required
 checks and denies completion on red or stale results, returning failure excerpts
 to the coder. Logs capture actual process exits without shell pipelines. A final
 outer check runs after SDK termination because hook crashes/timeouts can fail
-open. Check infrastructure errors stop with an unverified result. Hook execution
-uses the existing LLM request timeout; outer checks impose no execution deadline.
-No new task turn/time cap or completion retry count is introduced.
+open. Check infrastructure errors stop with an unverified result. Each command
+has a deadline configured by `tools.openhands_acceptance_timeout_s` (default 600
+seconds). On Linux, a timed-out check's process group is killed, its partial log
+is retained, and its receipt records `timed_out`. Hook execution gets enough time
+for the full check list. The deadline applies to verification commands only.
+Checks receive `PLAYWRIGHT_HTML_OPEN=never` and closed stdin. Auto-discovered
+`test:e2e` scripts whose body is `playwright test` receive a suite timeout 30
+seconds below the command deadline when the deadline exceeds 30 seconds.
+Explicit Playwright commands can set `--global-timeout` in their argv.
 
 `completion.json` records the current verdict, source fingerprint, contract
 hash, exact argv, exit codes, durations and log paths. `completion-history.jsonl`
