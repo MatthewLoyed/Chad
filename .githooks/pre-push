@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+if [ -x .venv/Scripts/python.exe ]; then
+    exec .venv/Scripts/python.exe scripts/dev/review_public_push.py pre-push "$2"
+fi
+if command -v python >/dev/null 2>&1; then
+    exec python scripts/dev/review_public_push.py pre-push "$2"
+fi
+exec python3 scripts/dev/review_public_push.py pre-push "$2"
