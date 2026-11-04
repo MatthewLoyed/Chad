@@ -15,8 +15,10 @@ config-template bootstrap.
 from __future__ import annotations
 
 import shutil
+import os
 import sys
 import threading
+from pathlib import Path
 from typing import Any, Dict
 
 from src.shared.logger import setup_logger
@@ -57,6 +59,23 @@ def bootstrap_config_if_needed() -> list[str]:
     return copied
 
 
+def _uses_existing_dev_profile() -> bool:
+    """Legacy installed preferences count as setup only when explicitly shared in dev.
+
+    A normal clean install still needs an explicit model choice. Merely setting
+    CHAD_MAIN_ROOT must not hide onboarding in an unrelated/fresh checkout.
+    """
+    main = os.environ.get("CHAD_MAIN_ROOT")
+    if os.environ.get("CHAD_DEV_WORKTREE") != "1" or not main:
+        return False
+    try:
+        return (get_project_root() / "config/preferences.yaml").samefile(
+            Path(main) / "config/preferences.yaml"
+        )
+    except OSError:
+        return False
+
+
 def get_setup_status() -> Dict[str, Any]:
     """Return whether the first-run wizard should be shown, and current LM Studio state."""
     bootstrap_config_if_needed()
@@ -65,7 +84,7 @@ def get_setup_status() -> Dict[str, Any]:
     selected = ConfigManager.get_local_model_config()
     # Older installers copied a sample LM Studio model into preferences. That
     # alone is not a user choice. Modern picker writes both model aliases.
-    explicit_lmstudio = bool(ConfigManager.get("setup.model_selected", False)) or isinstance(
+    explicit_lmstudio = _uses_existing_dev_profile() or bool(ConfigManager.get("setup.model_selected", False)) or isinstance(
         ConfigManager.get("local_models.supervisor"), dict
     )
     if ((selected.get("provider") in {"static", "ollama"}

@@ -7,7 +7,9 @@ $ErrorActionPreference = "Continue"
 . (Join-Path $PSScriptRoot "_chad_paths.ps1")
 $SelfRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $MainRoot = Get-ChadMainRepoRoot -FromPath $SelfRoot
-$DevRoot  = Get-ChadDevRepoRoot -MainRoot $MainRoot
+$DevRoot = if ($env:CHAD_DEV_WORKTREE -eq "1" -and $SelfRoot -ne $MainRoot) {
+    $SelfRoot
+} else { Get-ChadDevRepoRoot -MainRoot $MainRoot }
 $PidFile  = Join-Path $DevRoot "data\dev_logs\dev_stack.pids"
 
 # Legacy pid file location (pre-worktree)
@@ -37,9 +39,9 @@ foreach ($port in @(5173, 8788)) {
 # which looks like a broken branch switch. Kill any GUI whose command line
 # points at the dev worktree so a fresh launch is always the only dev window.
 # never touched.
-$devRootLeaf = Split-Path $DevRoot -Leaf
+$devGuiPath = Join-Path $DevRoot "main_gui.py"
 Get-CimInstance Win32_Process -Filter "Name='pythonw.exe' OR Name='python.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -and $_.CommandLine -like "*$devRootLeaf*main_gui.py*" } |
+    Where-Object { $_.CommandLine -and $_.CommandLine.Contains($devGuiPath) } |
     ForEach-Object { taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
 
 # Stop any orphan ngrok tunnels pointing at the dev port (8788)
