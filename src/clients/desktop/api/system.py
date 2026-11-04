@@ -311,6 +311,12 @@ class SystemAPIMixin(StatusAPIMixin):
 
     def get_system_settings(self) -> dict:
         """Fetch the Brain's deployed version + auto-update settings (for Settings → System)."""
+        from src.clients.desktop.api.packaged_updates import packaged_version, release_status
+
+        installed = packaged_version()
+        if installed is not None:
+            return {"success": True, "packaged_update": release_status(installed)}
+
         import httpx
         from src.shared.config_manager import ConfigManager
         http_url = self.get_server_url()
