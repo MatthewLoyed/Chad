@@ -186,6 +186,18 @@ def _workspace_for(job_id: str) -> Path:
     return _workspace_root() / job_id
 
 
+def _run_artifacts(job_id: str) -> Path:
+    return _workspace_root() / ".jobs" / job_id / "artifacts"
+
+
+def _completion_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("chad_completion", _runner_dir() / "chad_completion.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _job_record(job_id: str) -> Path:
     return _workspace_root() / ".jobs" / f"{job_id}.path"
 
@@ -557,23 +569,44 @@ class OpenHandsDispatchTool(BaseTool):
         else:
             entrypoint = "cd /workspace && python /chad/chad_headless_runner.py"
 
-        # Ensure the coder model is resident (best-effort, Chad's value-add).
-        await _ensure_coder_model(model)
+        dependency_mount = []
+        if _cfg("openhands_npm_ci_linux", False) and (ws_path / "package-lock.json").is_file():
+            dependency_mount = ["--tmpfs", "/workspace/node_modules:exec"]
+            entrypoint = "cd /workspace && npm ci --no-audit --no-fund && " + entrypoint
 
         # Launch a detached container running the headless runner. Env is passed in exec
         # form (no shell) so arbitrary/multiline task text needs no escaping.
+        artifacts = _run_artifacts(job_id)
+        artifacts.mkdir(parents=True, exist_ok=True)
+        contract = artifacts.parent / "contract.json"
+        specification = _completion_module().contract_for(ws_path, _cfg("openhands_acceptance_commands", None))
+        acceptance_mount = []
+        if verifier_dir := _cfg("openhands_acceptance_verifier_dir", None):
+            from src.core.tools.failure import failure, CONFIG
+            if not (Path(verifier_dir) / "verify").is_file():
+                return failure("Configured acceptance verifier is missing", failure_class=CONFIG)
+            acceptance_mount = ["-v", f"{_win_mount(Path(verifier_dir))}:/chad-acceptance:ro"]
+            specification["commands"].append(["/chad-acceptance/verify"])
+        contract.write_text(json.dumps(specification), encoding="utf-8")
         args = [
             "run", "-d", "--name", container,
             "--label", f"{_CONTAINER_LABEL}=1",
             "--label", f"{_CONTAINER_LABEL}-job={job_id}",
             "-v", f"{_win_mount(ws_path)}:/workspace",
             "-v", f"{_win_mount(_runner_dir())}:/chad:ro",
+            "-v", f"{_win_mount(artifacts)}:/chad-run",
+            "-e", "CHAD_RUN_ARTIFACTS=/chad-run",
+            "-v", f"{_win_mount(contract)}:/chad-contract.json:ro",
+            "-e", "CHAD_COMPLETION_CONTRACT=/chad-contract.json",
+            *acceptance_mount,
             *ref_mount,
-            "-e", f"CHAD_TASK={task}",
+            *dependency_mount,
+            *_task_arguments(task, ws_path, job_id),
             "-e", f"CHAD_MODEL={model}",
             "-e", f"CHAD_LLM_BASE_URL={container_lm_url}",
             "-e", f"CHAD_LLM_API_KEY={api_key}",
             "-e", f"CHAD_MAX_ITER={max_iter}",
+            "-e", f'CHAD_TERMINAL_ONLY={int(bool(_cfg("openhands_terminal_only", False)))}',
             "-e", f"CHAD_NATIVE_TOOL_CALLING={'1' if native_tc else '0'}",
             "-e", f"CHAD_USE_TASK_TRACKER={'1' if use_tracker else '0'}",
             "-e", f"CHAD_USE_SUBAGENTS={'1' if use_subagents else '0'}",
@@ -606,18 +639,14 @@ class OpenHandsDispatchTool(BaseTool):
             image,
             "-c", entrypoint,
         ]
-        rc, out, err = await _run_docker(args)
-        if rc != 0:
-            return {
-                "success": False,
-                "error": f"Failed to launch OpenHands container: {err.strip() or out.strip()}",
-            }
+        if blocked := await _start_coding_job(args, job_id, model): return blocked
 
         _save_job_workspace(job_id, ws_path)
         result = {
             "job_id": job_id,
             "container": container,
             "workspace": str(ws_path),
+            "artifacts": str(artifacts),
             "model": model,
             "status": "running",
         }
@@ -685,7 +714,19 @@ class CheckCodingTaskTool(BaseTool):
         if state == "running":
             status = "running"
         elif done and not failed and exit_code == "0":
-            status = "finished"
+            status = "failed"
+            receipt = _run_artifacts(job_id) / "completion.json"
+            if receipt.is_file():
+                try:
+                    verdict = json.loads(receipt.read_text(encoding="utf-8"))
+                    import hashlib
+                    contract = _run_artifacts(job_id).parent / "contract.json"
+                    if (verdict.get("status") == "passed" and
+                            verdict.get("contract_hash") == hashlib.sha256(contract.read_bytes()).hexdigest() and
+                            verdict.get("fingerprint") == _completion_module().fingerprint(_load_job_workspace(job_id))):
+                        status = "finished"
+                except (OSError, ValueError):
+                    pass
         else:
             status = "failed"
 
@@ -696,8 +737,10 @@ class CheckCodingTaskTool(BaseTool):
             "result": {
                 "job_id": job_id,
                 "status": status,
+                "verification_status": "verified_complete" if status == "finished" else "unverified",
                 "exit_code": exit_code,
                 "workspace": str(ws),
+                "artifacts": str(_run_artifacts(job_id)),
                 "files": files,
                 "transcript_tail": transcript,
             },

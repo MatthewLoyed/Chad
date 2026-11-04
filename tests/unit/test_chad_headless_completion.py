@@ -57,6 +57,7 @@ class TestRunnerCompletion(unittest.TestCase):
             env["CHAD_MCP_CONFIG"] = '{"mcpServers":{"example":{"url":"http://invalid"}}}'
         self.output = io.StringIO()
         with patch.dict(os.environ, env, clear=True), patch.object(self.runner, "_load_skills", lambda p: []), \
+             patch.object(self.runner, "workspace_brief", lambda task: task), \
              contextlib.redirect_stdout(self.output):
             return self.runner.main()
 
@@ -76,6 +77,18 @@ class TestRunnerCompletion(unittest.TestCase):
     def test_completed_report_still_succeeds(self):
         self.assertEqual(self.execute(), 0)
         self.assertIn("CHAD_DISPATCH_DONE", self.output.getvalue())
+
+    def test_outer_gate_recovers_even_when_hook_allows_failure(self):
+        from unittest.mock import Mock
+        gate = NS(contract="/contract", artifacts="/artifacts", feedback=lambda state: "Fix test failure")
+        gate.verify = Mock(side_effect=[{"status": "passed"}, {"status": "failed"}, {"status": "passed"}])
+        hooks = NS(**{name: lambda **kw: NS(**kw) for name in ("HookConfig", "HookDefinition", "HookMatcher")})
+        with patch.dict(sys.modules, {"chad_completion": NS(CompletionGate=lambda *args: gate),
+                                      "openhands.sdk.hooks": hooks}):
+            self.assertEqual(self.execute(extra_env={"CHAD_COMPLETION_CONTRACT": "/contract",
+                                                     "CHAD_RUN_ARTIFACTS": "/artifacts"}), 0)
+        self.assertEqual(FakeConversation.runs, 2)
+        self.assertIn("CHAD_VERIFIED_COMPLETE", self.output.getvalue())
 
     def test_local_generation_timeout_reaches_llm(self):
         llm = self.runner.LLM
