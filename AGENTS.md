@@ -15,6 +15,9 @@ Locate the existing implementation before proposing a new one.
   Update the owning guide instead of duplicating instructions or ideas.
 - Keep secrets and personal data local; use fictional fixtures. See
   [private data](docs/guides/PRIVATE_DATA.md).
+- Before every public push or PR review, audit the full outgoing commit range
+  and record the [local privacy review](CONTRIBUTING.md#never-commit-private-data).
+  Flag ambiguous personal material privately and pause publication until resolved.
 - Follow [module cohesion](docs/architecture/MODULE_COHESION.md); use composition
   and the existing EventBus. Python commands need `PYTHONPATH=.`.
 - Use the [shared failure and limits policy](docs/architecture/FAILURE_AND_LIMITS.md)
