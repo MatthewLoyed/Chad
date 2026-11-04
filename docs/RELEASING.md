@@ -76,10 +76,11 @@ remain the acceptance authority. No video or additional features are required.
 
 ### Updates
 
-Installer upgrades are manual: download the next installer from this repository's
-Releases tab and run it. Automatic updates default off. The existing in-app
-Update action fetches `origin/master` from a source checkout; the packaged payload
-contains no `.git` directory and this action does not upgrade an installed alpha.
+Installer upgrades are manual. Builds with **Settings → System → Updates**
+show the installed version and can check the published alpha channel. Use the
+installer link, close Chad, and run the newer installer over the existing
+installation. For earlier alphas, go directly to this repository's Releases tab.
+The source-checkout update action fetches `origin/master` and defaults to manual.
 There is no embedded legacy repository remote to migrate in that installer.
 Do not advertise automatic packaged updates. Source contributors clone this
 repository; its `master` branch is created only during approved promotion.

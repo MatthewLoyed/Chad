@@ -171,6 +171,11 @@ export default function SettingsView({ onClose, initialServerId, initialCategory
         stale?: { brain?: boolean; gui?: boolean };
     };
     const [sysVersion, setSysVersion] = useState<VersionSnapshot | null>(() => readCache<VersionSnapshot>('system_version'));
+    type PackagedUpdate = { installed: string; latest?: string; installer_url?: string; releases_url: string };
+    const [packagedUpdate, setPackagedUpdate] = useState<PackagedUpdate>();
+    const [systemLoaded, setSystemLoaded] = useState(false);
+    const [updateCheck, setUpdateCheck] = useState(0);
+    const [checkingRelease, setCheckingRelease] = useState(false);
     const [autoUpdate, setAutoUpdate] = useState<boolean | null>(() => readCache<boolean>('system_auto_update'));
     const [isDevStack, setIsDevStack] = useState(false);
     const [remoteBranches, setRemoteBranches] = useState<string[]>([]);
@@ -220,6 +225,7 @@ export default function SettingsView({ onClose, initialServerId, initialCategory
         const api = window.pywebview?.api;
         if (!api?.get_system_settings) return;
         setSystemLoadError(null);
+        setCheckingRelease(true);
         (async () => {
             try {
                 const r = (await api.get_system_settings()) as {
@@ -228,12 +234,17 @@ export default function SettingsView({ onClose, initialServerId, initialCategory
                     auto_update?: boolean;
                     dev_stack?: boolean;
                     dev_worktree?: boolean;
+                    packaged_update?: PackagedUpdate;
                     error?: string;
                 };
                 if (!r?.success) {
                     setSystemLoadError(r?.error ?? 'Could not load system settings');
                     return;
                 }
+
+                setPackagedUpdate(r.packaged_update);
+                setSystemLoaded(true);
+                if (r.packaged_update) return;
 
                 const dev = r.dev_stack === true;
                 setIsDevStack(dev);
@@ -264,9 +275,11 @@ export default function SettingsView({ onClose, initialServerId, initialCategory
                 }
             } catch (e) {
                 setSystemLoadError(String(e));
+            } finally {
+                setCheckingRelease(false);
             }
         })();
-    }, [category]);
+    }, [category, updateCheck]);
 
     const loadServicesHealth = async () => {
         const api = window.pywebview?.api;
@@ -948,7 +961,30 @@ export default function SettingsView({ onClose, initialServerId, initialCategory
 
                             <PairPhoneCard />
 
-                            {isDevStack ? (
+                            {!systemLoaded ? (
+                                !systemLoadError && <p className="settings-hint" role="status">Loading update settings…</p>
+                            ) : packagedUpdate ? (
+                                <section aria-label="Updates">
+                                    <h3 className="form-label">Updates</h3>
+                                    <p className="settings-hint">Installed version <strong>{packagedUpdate.installed}</strong></p>
+                                    <p className="settings-hint" role="status">
+                                        {checkingRelease ? 'Checking for updates…' : packagedUpdate.latest
+                                            ? `Latest alpha ${packagedUpdate.latest} · ${packagedUpdate.installer_url ? 'Update available' : 'Chad is up to date'}`
+                                            : 'Could not check the latest alpha. Try again or browse releases.'}
+                                    </p>
+                                    <p className="settings-hint">To update, close Chad and run the newer installer over your existing installation.</p>
+                                    <div className="settings-branch-actions">
+                                        <button type="button" className="settings-update-btn"
+                                            disabled={checkingRelease} onClick={() => setUpdateCheck(count => count + 1)}>
+                                            Check for updates
+                                        </button>
+                                        <button type="button" className="settings-update-btn settings-update-btn--secondary"
+                                            onClick={() => window.pywebview?.api?.open_external_url(packagedUpdate.installer_url ?? packagedUpdate.releases_url)}>
+                                            {packagedUpdate.installer_url ? 'Download installer' : 'Browse releases'}
+                                        </button>
+                                    </div>
+                                </section>
+                            ) : isDevStack ? (
                                 <div className="settings-dev-panel">
                                     <p className="settings-dev-badge">Chad Dev - separate copy from prod</p>
                                     <p className="settings-hint">

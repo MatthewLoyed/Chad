@@ -87,6 +87,10 @@ Section "Chad (required)" SecCore
   FileWrite $0 "$INSTDIR"
   FileClose $0
 
+  FileOpen $0 "$INSTDIR\Chad\chad_version.txt" w
+  FileWrite $0 "${VERSION}"
+  FileClose $0
+
   ; Shortcuts
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\Chad\Chad.exe" "" "$INSTDIR\Chad\Chad.exe"
