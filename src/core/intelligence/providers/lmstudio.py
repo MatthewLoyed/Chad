@@ -111,6 +111,19 @@ class LMStudioLifecycle(ProviderLifecycle):
         """
         return self._resident_keys(await self._native_models(timeout) or [])
 
+    async def resolve_model_id(self, model_id: str) -> str:
+        """Resolve inference names against native keys before stripping routing prefixes."""
+        entries = await self._native_models()
+        if entries is None:
+            # Preserve a potentially native publisher rather than selecting a
+            # different GGUF via a bare alias when inventory is unavailable.
+            return model_id
+        keys = {entry["key"] for entry in entries}
+        instances = {instance["id"] for entry in entries for instance in entry["loaded_instances"]}
+        if model_id in keys or model_id in instances:
+            return model_id
+        return clean_model_id(model_id)
+
     @staticmethod
     def _resident_keys(entries: List[Dict[str, Any]]) -> List[str]:
         """Ids of entries with at least one loaded instance."""
@@ -208,7 +221,12 @@ class LMStudioLifecycle(ProviderLifecycle):
             return True
 
         root = api_root(self.base_url)
-        clean_id = clean_model_id(model_id)
+        # `openai/` can be LM Studio's native publisher (GPT-OSS), as well as
+        # a LiteLLM routing prefix. Prefer the catalog's exact key before
+        # stripping: the bare alias can select a different installed GGUF that
+        # the native listing does not track, defeating our residency guard.
+        catalog_keys = {str(entry.get("key")) for entry in entries if entry.get("key")}
+        clean_id = model_id if model_id in catalog_keys else clean_model_id(model_id)
         # If no explicit context_length was threaded through (many call sites — swap-back,
         # preload — historically forgot to), fall back to the configured value for THIS model.
         # Otherwise LM Studio JIT-loads the main model at its tiny UI default (~25k), which

@@ -392,6 +392,17 @@ The **ModelSelector** in the Chad GUI provides a unified view of all available m
 
 ## Technical Details
 
+LM Studio's native publisher is part of the inference ID. Preloading
+`openai/gpt-oss-20b` and sending LiteLLM `openai/gpt-oss-20b` used to address
+different models: LiteLLM consumes the first `openai/` as its routing prefix,
+then sends `gpt-oss-20b`, triggering a second JIT load. Inference now resolves
+the configured name against native catalog/instance IDs and adds a separate
+routing prefix. The native wire ID remains `openai/gpt-oss-20b`.
+`tests/manual/verify_lmstudio_model_identity.py --live --lms <lms-executable>`
+reproduces the old two-instance sequence and checks two fixed adapter requests
+leave only the chosen instance. Stop dev work first; this acceptance check
+unloads the two GPT-OSS instances and uses only a fictional prompt.
+
 The chat router establishes LM Studio residency through the shared model
 coordinator before constructing an inference client. The OpenAI-compatible model catalogue
 includes downloaded models and cannot establish residency. The lifecycle provider
