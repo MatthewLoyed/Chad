@@ -386,6 +386,51 @@ def _workspace_guard(ws_path: Path) -> Optional[str]:
     return None
 
 
+def _coding_entrypoint(use_codegraph, ws_path):
+    # Container entrypoint. With codegraph on, first materialize a writable /repo from the
+    # read-only /repo_src mount and build the codegraph index into it before starting the agent
+    # (index build is ~5s per ~700 files). Both steps are non-fatal — a copy/index failure just
+    # means the agent falls back to terminal exploration (the graceful MCP fallback in the
+    # runner handles a codegraph server that then can't answer). The CHAD_CODEGRAPH_* markers
+    # land in `docker logs` for the eval forensics.
+    if use_codegraph:
+        entrypoint = (
+            "mkdir -p /repo && cp -a /repo_src/. /repo/ 2>/dev/null; "
+            "(codegraph init /repo > /tmp/cg_init.log 2>&1 "
+            "&& echo CHAD_CODEGRAPH_INDEXED || echo CHAD_CODEGRAPH_INIT_FAILED); "
+            "cd /workspace && python /chad/chad_headless_runner.py"
+        )
+    else:
+        entrypoint = "cd /workspace && python /chad/chad_headless_runner.py"
+
+    dependency_mount = []
+    if _cfg("openhands_npm_ci_linux", False) and (ws_path / "package-lock.json").is_file():
+        dependency_mount = ["--tmpfs", "/workspace/node_modules:exec"]
+        entrypoint = "cd /workspace && npm ci --no-audit --no-fund && " + entrypoint
+
+    return entrypoint, dependency_mount
+
+
+def _prepare_verification(job_id, ws_path):
+    artifacts = _run_artifacts(job_id)
+    artifacts.mkdir(parents=True, exist_ok=True)
+    contract = artifacts.parent / "contract.json"
+    completion_module = _completion_module()
+    specification = completion_module.contract_for(
+        ws_path, _cfg("openhands_acceptance_commands", None),
+        _cfg("openhands_acceptance_timeout_s", completion_module.DEFAULT_CHECK_TIMEOUT_S),
+    )
+    acceptance_mount = []
+    if verifier_dir := _cfg("openhands_acceptance_verifier_dir", None):
+        from src.core.tools.failure import failure, CONFIG
+        if not (Path(verifier_dir) / "verify").is_file():
+            return None, None, None, failure("Configured acceptance verifier is missing", failure_class=CONFIG)
+        acceptance_mount = ["-v", f"{_win_mount(Path(verifier_dir))}:/chad-acceptance:ro"]
+        specification["commands"].append(["/chad-acceptance/verify"])
+    contract.write_text(json.dumps(specification), encoding="utf-8")
+    return artifacts, contract, acceptance_mount, None
+
+
 class OpenHandsDispatchTool(BaseTool):
     """Dispatch a coding task to a headless OpenHands container running a local model."""
 
@@ -553,45 +598,13 @@ class OpenHandsDispatchTool(BaseTool):
             ref_target = "/repo_src" if use_codegraph else "/repo"
             ref_mount = ["-v", f"{_win_mount(ref_path)}:{ref_target}:ro"]
 
-        # Container entrypoint. With codegraph on, first materialize a writable /repo from the
-        # read-only /repo_src mount and build the codegraph index into it before starting the agent
-        # (index build is ~5s per ~700 files). Both steps are non-fatal — a copy/index failure just
-        # means the agent falls back to terminal exploration (the graceful MCP fallback in the
-        # runner handles a codegraph server that then can't answer). The CHAD_CODEGRAPH_* markers
-        # land in `docker logs` for the eval forensics.
-        if use_codegraph:
-            entrypoint = (
-                "mkdir -p /repo && cp -a /repo_src/. /repo/ 2>/dev/null; "
-                "(codegraph init /repo > /tmp/cg_init.log 2>&1 "
-                "&& echo CHAD_CODEGRAPH_INDEXED || echo CHAD_CODEGRAPH_INIT_FAILED); "
-                "cd /workspace && python /chad/chad_headless_runner.py"
-            )
-        else:
-            entrypoint = "cd /workspace && python /chad/chad_headless_runner.py"
-
-        dependency_mount = []
-        if _cfg("openhands_npm_ci_linux", False) and (ws_path / "package-lock.json").is_file():
-            dependency_mount = ["--tmpfs", "/workspace/node_modules:exec"]
-            entrypoint = "cd /workspace && npm ci --no-audit --no-fund && " + entrypoint
+        entrypoint, dependency_mount = _coding_entrypoint(use_codegraph, ws_path)
 
         # Launch a detached container running the headless runner. Env is passed in exec
         # form (no shell) so arbitrary/multiline task text needs no escaping.
-        artifacts = _run_artifacts(job_id)
-        artifacts.mkdir(parents=True, exist_ok=True)
-        contract = artifacts.parent / "contract.json"
-        completion_module = _completion_module()
-        specification = completion_module.contract_for(
-            ws_path, _cfg("openhands_acceptance_commands", None),
-            _cfg("openhands_acceptance_timeout_s", completion_module.DEFAULT_CHECK_TIMEOUT_S),
-        )
-        acceptance_mount = []
-        if verifier_dir := _cfg("openhands_acceptance_verifier_dir", None):
-            from src.core.tools.failure import failure, CONFIG
-            if not (Path(verifier_dir) / "verify").is_file():
-                return failure("Configured acceptance verifier is missing", failure_class=CONFIG)
-            acceptance_mount = ["-v", f"{_win_mount(Path(verifier_dir))}:/chad-acceptance:ro"]
-            specification["commands"].append(["/chad-acceptance/verify"])
-        contract.write_text(json.dumps(specification), encoding="utf-8")
+        artifacts, contract, acceptance_mount, error = _prepare_verification(job_id, ws_path)
+        if error is not None:
+            return error
         args = [
             "run", "-d", "--name", container,
             "--label", f"{_CONTAINER_LABEL}=1",
