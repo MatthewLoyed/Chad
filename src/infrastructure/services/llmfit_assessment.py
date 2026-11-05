@@ -20,7 +20,7 @@ def executable():
 def _run(exe, args, env):
     result = subprocess.run([str(exe), *args, "--no-cluster", "--no-dashboard"],
                             env=env, capture_output=True, text=True, encoding="utf-8",
-                            errors="replace", timeout=limit("model_assessment_timeout"),
+                            errors="replace", timeout=limit("hardware_probe_timeout"),
                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         raise ValueError("llmfit did not finish assessment")
@@ -51,8 +51,9 @@ def assess(hardware, context):
         # Isolate caches/configuration from the user's own llmfit installation.
         with tempfile.TemporaryDirectory(prefix="chad-assessment-") as temp:
             env = {**os.environ, "LLMFIT_CUSTOM_MODELS": str(Path(temp) / "models.json"),
-                   "XDG_DATA_HOME": temp, "XDG_CONFIG_HOME": temp, "APPDATA": temp,
+                   "XDG_DATA_HOME": temp, "XDG_CONFIG_HOME": temp, "APPDATA": temp, "LOCALAPPDATA": temp,
                    "LLMFIT_BENCH_STORE": str(Path(temp) / "benchmarks")}
+            env["PATH"] = os.pathsep.join([env.get("PATH", ""), str(Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32")])
             Path(env["LLMFIT_CUSTOM_MODELS"]).write_text(json.dumps(entries()), encoding="utf-8")
             version = subprocess.run([str(exe), "--version"], capture_output=True, text=True,
                                      timeout=limit("hardware_probe_timeout"),

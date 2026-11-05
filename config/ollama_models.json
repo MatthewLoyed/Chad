@@ -1,0 +1,6 @@
+{
+  "models": [
+    {"id": "qwen3.5-9b", "model": "qwen3.5:9b", "name": "Qwen3.5-9B", "digest": "sha256:56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90", "size_bytes": 6550825373, "source": "https://ollama.com/library/qwen3.5:9b"},
+    {"id": "qwen3.5-4b", "model": "qwen3.5:4b", "name": "Qwen3.5-4B", "digest": "sha256:d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04", "size_bytes": 3324173757, "source": "https://ollama.com/library/qwen3.5:4b"}
+  ]
+}

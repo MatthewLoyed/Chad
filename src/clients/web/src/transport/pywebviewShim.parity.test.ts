@@ -120,6 +120,9 @@ describe('browser shim / UI parity', () => {
         // 16 -> 17: the first-run wizard now explicitly tests a chat model before
         // saving. App.tsx still excludes this wizard on browser transport; this
         // is not a newly exposed browser pane or a general-purpose generation API.
-        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(19);
+        // 19 -> 24: setup discovery, curated profiles, Ollama assessment and
+        // saved-connection list/restore extend that same desktop-only flow.
+        // Selected credentials must never become an HTTP/browser API.
+        expect(Object.keys(DESKTOP_ONLY).length).toBeLessThanOrEqual(24);
     });
 });
