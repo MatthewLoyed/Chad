@@ -1,5 +1,38 @@
 # 🤖 Local AI Models Integration
 
+## Provider onboarding delivery milestones (issue #5)
+
+Status: implementation in progress on the provider-onboarding branch. These
+acceptance gates distinguish delivered behavior from remaining verification.
+
+1. **Assessment engine.** Pin llmfit, verify its downloaded executable, preserve
+   its license, package it with the desktop app and call bounded JSON commands.
+   Done when the real pinned Windows binary runs, malformed/missing/timed-out
+   results fall back without blocking setup, and fixture tests cover the adapter.
+2. **Curated models and settings.** Keep the exact Chad artifact catalog and
+   aggregate role budgets authoritative. Prefer Bonsai Q1 supervisor on eligible
+   16 GB cards and Qwen9B on 12 GB cards, subject to actual available resources.
+   Done when 12/16 GB, busy/unknown memory, installed/missing artifacts and context
+   changes have regression coverage; profiles distinguish suggestions from
+   effective settings, preserve overrides and leave unsupported MTP unknown/off.
+3. **Provider setup and recovery.** Detect known local servers without generation,
+   keep manual/cloud setup, distinguish empty/auth/unreachable states, and retain
+   complete connection identity. Done when model-list and harmless chat tests,
+   restart/switch behavior, missing-model guidance and credential isolation pass.
+   Ollama acquisition must use explicit provider artifact mappings; custom server
+   installation stays operator-managed. No silent cloud fallback or paid tests.
+4. **Desktop acceptance.** Exercise discovery, recommendations, settings and retry
+   in the rendered UI at desktop/narrow widths and verify the normal desktop
+   launch opens the existing workspace on development port 8788. Done when
+   focused backend/frontend tests, build, cohesion, documentation and relevant
+   contract checks pass, the final diff is reviewed, and remaining live-provider
+   or clean-machine limitations are recorded honestly.
+
+Implementation owners are the assessment/setup services, desktop setup bridge,
+React setup components, artifact catalog and packaging scripts linked below.
+Native Anthropic/Gemini/Responses provisioning and a full upstream-catalog model
+browser are follow-up scope; first-run recommendations remain curated.
+
 Chad supports a high-performance local AI orchestration layer that allows the assistant to run entirely offline or in a hybrid "Local Brain" configuration using **LM Studio**, **Ollama**, or any raw OpenAI-compatible endpoint (**llama.cpp `server`**, **vLLM**).
 
 ## Overview
