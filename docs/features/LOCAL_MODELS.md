@@ -87,6 +87,26 @@ credentials or prompts; changed/unknown settings cannot reuse old verification.
 No paid or remote-host benchmark runs automatically. Existing helper/specialist
 overrides remain explicit and are managed separately from the main Chat connection.
 
+### Low-quota release checks
+
+CI's installer smoke test verifies silent install/reinstall, synthetic-data
+retention, required assets and the bundled llmfit executable's pinned version.
+It does not need a model or interactive agent. Before publishing the draft,
+manually open it, connect a model, close/reopen and confirm the saved connection.
+
+For live local Ollama acquisition without inference or desktop automation:
+
+```powershell
+$env:PYTHONPATH="."
+python scripts/setup/accept_ollama.py --download --report .tools/ollama-acceptance.json
+```
+
+This uses the smallest curated native model, checks acquisition/manifest identity
+and a second transfer-free reuse. Omit `--download` to require an already installed
+exact model. A stopped server or missing model without download permission reports
+`not_run` and exits nonzero; it is never recorded as a pass. No model is loaded,
+no inference tokens are generated and nothing is uploaded. Keep reports local.
+
 Chad supports a high-performance local AI orchestration layer that allows the assistant to run entirely offline or in a hybrid "Local Brain" configuration using **LM Studio**, **Ollama**, or any raw OpenAI-compatible endpoint (**llama.cpp `server`**, **vLLM**).
 
 ## Overview
