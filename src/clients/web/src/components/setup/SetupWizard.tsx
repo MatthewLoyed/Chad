@@ -30,7 +30,7 @@ const DEFAULT_URLS: Record<Provider, string> = {
     lmstudio: 'http://localhost:1234/v1', ollama: 'http://localhost:11434/v1', custom: 'http://localhost:8000/v1', cloud: 'https://openrouter.ai/api/v1',
 };
 
-export default function SetupWizard({ onComplete }: { onComplete: () => void }) {
+export default function SetupWizard({ onComplete, onCancel }: { onComplete: () => void; onCancel?: () => void }) {
     const [step, setStep] = useState<Step>('welcome');
     const [baseUrl, setBaseUrl] = useState(DEFAULT_URLS.lmstudio);
     const [apiKey, setApiKey] = useState('');
@@ -299,6 +299,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 {error && <p role="alert" style={styles.errText}>{error}</p>}
                 </div>
                 <div className="setup-footer">
+                    {onCancel && <button style={styles.secondaryBtn} onClick={onCancel}>Return to Settings</button>}
                     {step !== 'welcome' && step !== 'later' && <button style={styles.secondaryBtn} onClick={() => navigate(step === 'backend-choice' ? 'welcome' : step === 'lmstudio-connect' ? 'lmstudio' : step === 'lmstudio' ? 'lmstudio-install' : 'backend-choice')}>Back</button>}
                     {step !== 'later' && <button style={styles.secondaryBtn} onClick={() => navigate('later')}>Finish later</button>}
                 </div>
