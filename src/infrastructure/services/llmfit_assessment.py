@@ -37,7 +37,8 @@ def entries():
              "context_length": m["max_context"], "use_case": "Chat",
              "num_hidden_layers": m["layers"], "num_key_value_heads": m["kv_heads"],
              "head_dim": m["head_dim"], "format": "gguf"}
-            for m in catalog() if not m.get("speed_unverified")]
+            for m in catalog() if not m.get("speed_unverified")
+            and m["quantization"] in {"Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0"}]
 
 
 def assess(hardware, context):

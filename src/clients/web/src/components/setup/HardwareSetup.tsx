@@ -9,7 +9,7 @@ interface Candidate {
     id: string; name: string; quantization: string; weights_gb: number; kv_gb: number;
     required_gb: number; fits: boolean; reasons: string[]; mode: string; source: string;
     speed: { kind: string; low: number | null; high: number | null; note: string };
-    settings: { context_length?: number; top_k?: number | null; gpu_offload: string; temperature: number; top_p: number; thinking: string; advanced: string };
+    settings: { context_length?: number; top_k?: number | null; gpu_offload: string; temperature: number; top_p: number; thinking: string; advanced: string; mtp?: string };
 }
 export interface ModelBundle {
     id: string; primary: string; secondary: string; selector: string | null; context: number;
@@ -145,7 +145,8 @@ export default function HardwareSetup({ baseUrl, apiKey, modelId, onContinue }: 
                 <p style={styles.hint}>{bundle.runtime_note} No optional vision or speculative-draft download is included.</p>
             </div></details>}
             <details><summary>Suggested LM Studio settings</summary><div className="setup-details">
-                <p style={styles.hint}>Use these when loading this model in LM Studio. Chad does not apply them automatically.</p>
+                  <p style={styles.hint}>Suggested settings for this exact model file. Apply load settings in LM Studio, then test; Chad preserves your saved overrides.</p>
+                  <p style={styles.hint}>MTP / speculative decoding: off in this profile. Enabling it requires a verified model/runtime and draft configuration, extra memory assessment and a new speed test. Configured and effective settings may differ from these suggestions.</p>
                 {bundle && <p style={styles.hint}>For the bundle budget: parallel predictions 1, evaluation batch size at most 512. Main/secondary context {bundle.context}; selector context 8192. Model tests check loaded settings.</p>}
                 <p style={styles.hint}>Context: {candidate.settings.context_length || context} tokens · GPU offload: {candidate.settings.gpu_offload}<br />Temperature: {candidate.settings.temperature} · Top-p: {candidate.settings.top_p}<br />Thinking: {candidate.settings.thinking}</p>
                 <p style={styles.hint}>{candidate.settings.advanced}</p>
