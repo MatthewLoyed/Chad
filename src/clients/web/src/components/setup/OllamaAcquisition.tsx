@@ -23,7 +23,9 @@ export default function OllamaAcquisition({ baseUrl, apiKey, onReady }: { baseUr
         }, 1500);
         return () => { active = false; window.clearInterval(timer); };
     }, [api, running, onReady]);
-    if (!api?.assess_ollama_hardware) return null;
+    let local = false;
+    try { local = ['localhost', '127.0.0.1', '[::1]'].includes(new URL(baseUrl).hostname); } catch { /* address edited */ }
+    if (!api?.assess_ollama_hardware || !local) return null;
     const scan = async () => {
         setBusy(true); setNote('');
         try {

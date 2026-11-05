@@ -46,6 +46,11 @@ def pull(options, cancelled, update):
         root = root_url(options.get("base_url", ""))
         headers = {"Authorization": "Bearer " + options["api_key"]} if options.get("api_key") else {}
         with httpx.Client(timeout=limit("setup_network_timeout"), trust_env=False) as client:
+            existing = client.get(root + "/api/tags", headers=headers)
+            existing.raise_for_status()
+            if any(m.get("name") == model["model"] and m.get("digest") == model["digest"]
+                   for m in existing.json().get("models", [])):
+                return {"success": True, "note": "The exact curated Ollama manifest is already installed. No download needed; test Chat before saving."}
             # Check upstream identity before asking the daemon to pull a mutable tag.
             tag = model["model"].split(":", 1)
             manifest = client.get(f"https://registry.ollama.ai/v2/library/{tag[0]}/manifests/{tag[1]}",

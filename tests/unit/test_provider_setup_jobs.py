@@ -12,26 +12,41 @@ def test_ollama_manifest_checked_before_pull_and_verified_after(monkeypatch):
     digest = "sha256:" + hashlib.sha256(body).hexdigest()
     monkeypatch.setattr(ollama_setup, "catalog", lambda: [{"model": "fictional:4b", "digest": digest}])
     seen = []
+    listed = [0]
     def handler(request):
         seen.append(request.url.path)
         if "/manifests/" in request.url.path:
             return httpx.Response(200, content=body)
         if request.url.path == "/api/tags":
-            return httpx.Response(200, json={"models": [{"name": "fictional:4b", "digest": digest}]})
+            listed[0] += 1
+            return httpx.Response(200, json={"models": [] if listed[0] == 1 else [{"name": "fictional:4b", "digest": digest}]})
         return httpx.Response(200, content=b'{"status":"success"}\n')
     client = httpx.Client(transport=httpx.MockTransport(handler))
     monkeypatch.setattr(ollama_setup.httpx, "Client", lambda **kwargs: client)
     result = ollama_setup.pull({"model_id": "fictional:4b", "base_url": "http://localhost:11434/v1"}, threading.Event(), lambda **kw: None)
-    assert result["success"] and seen[-1] == "/api/tags"
+    assert result["success"] and seen[-1] == "/api/tags" and "/api/pull" in seen
 
 
 def test_changed_registry_manifest_never_starts_pull(monkeypatch):
     monkeypatch.setattr(ollama_setup, "catalog", lambda: [{"model": "fictional:4b", "digest": "sha256:old"}])
     calls = []
-    client = httpx.Client(transport=httpx.MockTransport(lambda request: calls.append(request.method) or httpx.Response(200, content=b'changed')))
+    def handler(request):
+        calls.append(request.url.path)
+        return httpx.Response(200, json={"models": []}) if request.url.path == "/api/tags" else httpx.Response(200, content=b'changed')
+    client = httpx.Client(transport=httpx.MockTransport(handler))
     monkeypatch.setattr(ollama_setup.httpx, "Client", lambda **kw: client)
     assert not ollama_setup.pull({"model_id": "fictional:4b", "base_url": "http://localhost:11434/v1"}, threading.Event(), lambda **kw: None)["success"]
-    assert calls == ["GET"]
+    assert calls == ["/api/tags", "/v2/library/fictional/manifests/4b"]
+
+
+def test_installed_ollama_artifact_reused_offline(monkeypatch):
+    monkeypatch.setattr(ollama_setup, "catalog", lambda: [{"model": "fictional:4b", "digest": "sha256:known"}])
+    def handler(request):
+        assert request.url.path == "/api/tags" and request.url.host == "localhost"
+        return httpx.Response(200, json={"models": [{"name": "fictional:4b", "digest": "sha256:known"}]})
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    monkeypatch.setattr(ollama_setup.httpx, "Client", lambda **kw: client)
+    assert ollama_setup.pull({"model_id": "fictional:4b", "base_url": "http://localhost:11434/v1"}, threading.Event(), lambda **kw: None)["success"]
 
 
 def test_ollama_decode_speed_uses_native_duration(monkeypatch):

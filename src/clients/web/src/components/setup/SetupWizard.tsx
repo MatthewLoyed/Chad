@@ -189,6 +189,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     }} />
                     <SavedConnections onChoose={connection => {
                         setBundle(undefined); setBaseUrl(connection.base_url); setApiKey(connection.api_key || '');
+                        setCloudService(['https://openrouter.ai/api/v1', 'https://api.deepseek.com/v1'].includes(connection.base_url) ? connection.base_url : '');
                         navigate(connection.hosting === 'cloud' ? 'cloud' : connection.provider === 'lmstudio' ? 'lmstudio-connect' : connection.provider === 'ollama' ? 'ollama' : 'custom');
                         setSelected(connection.name);
                         setMessage('Saved connection restored. Send a new short test before saving.');

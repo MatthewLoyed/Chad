@@ -13,6 +13,16 @@ from src.application.commands import (
 class SetupAPIMixin:
     """Relay setup commands and refresh the desktop cache after a saved choice."""
 
+    def _setup_brain_is_local(self):
+        import os
+        from urllib.parse import urlsplit
+        resolver = getattr(self, "get_server_url", None)
+        address = resolver() if resolver else os.environ.get("CHAD_SERVER_URL", "ws://localhost:8767/ws")
+        try:
+            return urlsplit(address).hostname in {"localhost", "127.0.0.1", "::1"}
+        except ValueError:
+            return False
+
     def discover_setup_servers(self):
         """Known loopback addresses on the Brain host, listing only; never generate."""
         from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +42,9 @@ class SetupAPIMixin:
         return profile(model_id, context, provider=provider)
 
     def assess_ollama_hardware(self):
+        if not self._setup_brain_is_local():
+            from src.core.tools.failure import failure, BAD_INPUT
+            return failure("The Brain runs on another computer. Assess and download Ollama models on that inference host; this desktop scan cannot qualify it.", failure_class=BAD_INPUT)
         from src.infrastructure.services.ollama_setup import assess
         return assess()
 
@@ -70,6 +83,8 @@ class SetupAPIMixin:
         from src.application.commands import CheckSetupBundleCommand
         from src.core.tools.failure import failure, BAD_INPUT, UNAVAILABLE
         from src.core.tools.limits import get as limit
+        if not self._setup_brain_is_local():
+            return failure("The Brain is remote. Use manual Chat setup; this desktop bundle assessment cannot verify the remote host.", failure_class=BAD_INPUT)
         plan = getattr(self, "_setup_plans", {}).get(bundle_id)
         if not plan or not plan["fits"]:
             return failure("Rescan and choose a compatible model bundle first.", failure_class=BAD_INPUT)
@@ -108,7 +123,9 @@ class SetupAPIMixin:
 
     def start_model_setup_job(self, operation, options, confirmed=False):
         from src.infrastructure.services.setup_assets import start
-
+        if operation in {"provider-benchmark", "ollama-pull"} and not self._setup_brain_is_local():
+            from src.core.tools.failure import failure, BAD_INPUT
+            return failure("The Brain is remote. Run model acquisition and speed tests on its inference computer; localhost here describes this desktop.", failure_class=BAD_INPUT)
         return start(operation, options, confirmed)
 
     def get_model_setup_job(self):

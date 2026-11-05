@@ -268,7 +268,7 @@ class LocalModelDiscovery:
         """
         async with self._lock:
             now = time.monotonic()
-            if use_cache and self._cache and (now - self._cache_ts) < self.CACHE_TTL:
+            if use_cache and not verify_tools and self._cache and (now - self._cache_ts) < self.CACHE_TTL:
                 logger.debug("[ DISCOVERY ] Returning cached model list")
                 return list(self._cache)
 

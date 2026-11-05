@@ -17,7 +17,8 @@ export default function SavedConnections({ onChoose }: { onChoose: (connection: 
     if (!saved.length) return null;
     const choose = async (id: string) => {
         try {
-            const result = await setupRequest(api?.get_setup_connection?.(id)) as SavedConnection;
+            if (!api?.get_setup_connection) throw new Error();
+            const result = await setupRequest(api.get_setup_connection(id)) as SavedConnection;
             if (!result?.name || !result.base_url) throw new Error();
             onChoose(result);
         } catch { setError('Saved connection unavailable. Enter it manually.'); }

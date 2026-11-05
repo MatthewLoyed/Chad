@@ -52,3 +52,24 @@ def test_switch_and_return_preserves_exact_identity_and_user_settings(monkeypatc
     restored = saved["local_models"]["active_model"]
     assert restored["context_length"] == 16384 and restored["api_key"] == "fictional-a"
     assert len(saved["local_models"]["connections"]) == 2
+
+
+def test_remote_brain_cannot_benchmark_or_pull_on_the_desktop():
+    from src.clients.desktop.api.setup import SetupAPIMixin
+    bridge = SetupAPIMixin()
+    bridge.get_server_url = lambda: "https://brain.example.test"
+    assert not bridge.assess_ollama_hardware()["success"]
+    assert not bridge.start_model_setup_job("ollama-pull", {}, True)["success"]
+    assert not bridge.start_model_setup_job("provider-benchmark", {}, True)["success"]
+
+
+def test_saved_connection_list_omits_credentials(monkeypatch):
+    from src.clients.desktop.api.setup import SetupAPIMixin
+    from src.shared.config_manager import ConfigManager
+    monkeypatch.setattr(ConfigManager, "_loaded", True)
+    monkeypatch.setattr(ConfigManager, "_config", {"local_models": {"connections": {
+        "example": {"name": "chat", "provider": "static", "base_url": "https://api.example.test", "api_key": "fictional-secret"}}}})
+    bridge = SetupAPIMixin()
+    assert "fictional-secret" not in str(bridge.list_setup_connections())
+    assert bridge.get_setup_connection("example")["api_key"] == "fictional-secret"
+    assert not bridge.get_setup_connection("missing")["success"]
