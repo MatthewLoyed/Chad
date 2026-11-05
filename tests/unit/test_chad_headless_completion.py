@@ -57,6 +57,7 @@ class TestRunnerCompletion(unittest.TestCase):
             env["CHAD_MCP_CONFIG"] = '{"mcpServers":{"example":{"url":"http://invalid"}}}'
         self.output = io.StringIO()
         with patch.dict(os.environ, env, clear=True), patch.object(self.runner, "_load_skills", lambda p: []), \
+             patch.object(self.runner, "context_reporter", lambda *args: lambda event=None: None), \
              patch.object(self.runner, "workspace_brief", lambda task: task), \
              contextlib.redirect_stdout(self.output):
             return self.runner.main()
