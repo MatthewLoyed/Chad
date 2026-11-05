@@ -21,6 +21,11 @@ const SHIM = path.join(SRC, 'transport', 'pywebviewShim.ts');
  * name here is a claim that the UI degrades gracefully without it.
  */
 const DESKTOP_ONLY: Record<string, string> = {
+    discover_setup_servers: 'desktop first-run provider discovery; manual choices remain available without it',
+    get_model_settings_profile: 'desktop curated suggestions; model server defaults remain available without it',
+    assess_ollama_hardware: 'desktop hardware remains local; Ollama manual download guidance remains available',
+    list_setup_connections: 'desktop local connection metadata; manual entry remains available',
+    get_setup_connection: 'desktop selected local connection; credentials are not exposed through HTTP',
     assess_model_hardware: 'desktop-only local hardware; never upload to a remote Brain',
     start_model_setup_job: 'explicit local setup operations; no browser execution surface',
     get_model_setup_job: 'desktop setup job progress',

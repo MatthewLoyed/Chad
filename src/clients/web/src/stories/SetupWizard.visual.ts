@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test';
 
 for (const width of [1280, 390]) {
+    test(`detected providers connect without entering addresses at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto('/iframe.html?id=setup-first-conversation--detected&viewMode=story');
+        await page.getByRole('button', { name: 'Get started' }).click();
+        await expect(page.getByRole('button', { name: /LM Studio found/ })).toBeVisible();
+        await page.getByRole('button', { name: /Ollama found/ }).click();
+        await expect(page.getByRole('option', { name: 'Example Chat 9B' })).toBeAttached();
+        await page.getByRole('button', { name: 'Send a short test message' }).click();
+        await expect(page.getByText('Your model answered')).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+}
+
+for (const width of [1280, 390]) {
     test(`guided setup stays readable at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto('/iframe.html?id=setup-first-conversation--guided-setup&viewMode=story');
