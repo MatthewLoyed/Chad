@@ -28,6 +28,11 @@ def assess(storage_path="", context=8192, manual=None):
         hardware["manual"] = bool(manual)
         if manual:
             hardware["warnings"].append("Manual values replace detected capacity; they do not add memory. Rescan without overrides to restore detection.")
-        return bundles(hardware, context, installed_assets(storage_path))
+        from src.infrastructure.services.llmfit_assessment import enrich
+        result = bundles(hardware, context, installed_assets(storage_path))
+        from src.infrastructure.services.model_settings import suggested_settings
+        result["models"] = [suggested_settings(m) for m in result["models"]]
+        # Manual capacity is a simulation; local runtime detection cannot certify it.
+        return enrich(result) if not manual else result
     except (TypeError, ValueError):
         return failure("Check manual RAM/VRAM/storage values and choose a supported context length.", failure_class=BAD_INPUT)

@@ -31,7 +31,9 @@ def _run(args: list[str]) -> str:
 
 
 def _nvidia() -> list[dict]:
-    output = _run(["nvidia-smi", "--query-gpu=name,memory.total,memory.free",
+    native = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32/nvidia-smi.exe"
+    command = str(native) if platform.system() == "Windows" and native.is_file() else "nvidia-smi"
+    output = _run([command, "--query-gpu=name,memory.total,memory.free",
                    "--format=csv,noheader,nounits"])
     devices = []
     for row in csv.reader(output.splitlines()):

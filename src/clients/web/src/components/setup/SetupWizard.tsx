@@ -8,6 +8,11 @@ import { useAppStore } from '../../store';
 import { setupRequest } from './setupRequest';
 import { styles } from './SetupWizard.styles';
 import HardwareSetup, { type ModelBundle } from './HardwareSetup';
+import DetectedServers from './DetectedServers';
+import OllamaAcquisition from './OllamaAcquisition';
+import ProviderSettings from './ProviderSettings';
+import ProviderSpeedTest from './ProviderSpeedTest';
+import SavedConnections from './SavedConnections';
 import './SetupWizard.css';
 
 type Step = 'welcome' | 'backend-choice' | 'lmstudio-install' | 'lmstudio' | 'lmstudio-connect' | 'ollama' | 'custom' | 'cloud' | 'later';
@@ -25,7 +30,7 @@ const DEFAULT_URLS: Record<Provider, string> = {
     lmstudio: 'http://localhost:1234/v1', ollama: 'http://localhost:11434/v1', custom: 'http://localhost:8000/v1', cloud: 'https://openrouter.ai/api/v1',
 };
 
-export default function SetupWizard({ onComplete }: { onComplete: () => void }) {
+export default function SetupWizard({ onComplete, onCancel }: { onComplete: () => void; onCancel?: () => void }) {
     const [step, setStep] = useState<Step>('welcome');
     const [baseUrl, setBaseUrl] = useState(DEFAULT_URLS.lmstudio);
     const [apiKey, setApiKey] = useState('');
@@ -176,6 +181,19 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 {step === 'backend-choice' && <>
                     <h1 ref={heading} tabIndex={-1} style={styles.title}>Where should your AI run?</h1>
                     <p style={styles.hint}>Use this computer for local chat, or bring an API key for a cloud service.</p>
+                    <DetectedServers onChoose={server => {
+                        setBundle(undefined); setBaseUrl(server.base_url); setApiKey('');
+                        navigate(server.provider === 'lmstudio' ? 'lmstudio-connect' : 'ollama');
+                        setProbe(server); setSelected(server.models[0]?.id || '');
+                        setMessage(server.detail || (server.models.length ? 'Choose a model, then send a short test message.' : 'Server found. Download a chat model in your model app, then find available models again.'));
+                    }} />
+                    <SavedConnections onChoose={connection => {
+                        setBundle(undefined); setBaseUrl(connection.base_url); setApiKey(connection.api_key || '');
+                        setCloudService(['https://openrouter.ai/api/v1', 'https://api.deepseek.com/v1'].includes(connection.base_url) ? connection.base_url : '');
+                        navigate(connection.hosting === 'cloud' ? 'cloud' : connection.provider === 'lmstudio' ? 'lmstudio-connect' : connection.provider === 'ollama' ? 'ollama' : 'custom');
+                        setSelected(connection.name);
+                        setMessage('Saved connection restored. Send a new short test before saving.');
+                    }} />
                     <div style={styles.backendGrid}>
                         <button style={styles.backendCard} onClick={() => choose('lmstudio')}>
                             <span style={styles.backendCardTitle}>LM Studio <span style={styles.recommendedBadge}>Recommended</span></span>
@@ -217,6 +235,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                         {!hasModels && <ol className="setup-checklist"><li>Load your downloaded chat model in LM Studio.</li><li>Open <strong>Model Server</strong> (or <strong>Developer</strong>) and turn on the <strong>Local Server</strong>.</li><li>Return here and check the connection.</li></ol>}
                     </> : <p style={styles.hint}>{step === 'cloud' ? 'Choose a provider and bring its API key. No local model download is needed.' : 'Start your model app’s server, then enter its connection details below.'}</p>}
                     {step === 'ollama' && <button style={styles.secondaryBtn} onClick={() => void openDownload('https://ollama.com/download')}>Download Ollama</button>}
+                    {step === 'ollama' && <OllamaAcquisition baseUrl={baseUrl} apiKey={apiKey} onReady={() => void check()} />}
                     {step === 'cloud' && <div className="setup-stack">
                         <p style={styles.hint}>Your messages go to this provider and usage may cost money. API billing can be separate from a chat subscription.</p>
                         <label style={styles.fieldLabel} htmlFor="setup-cloud-service">Cloud service</label>
@@ -255,6 +274,8 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                     </>}
                     {bundle && <div className="setup-note setup-stack"><strong>Recommended model roles selected</strong><p style={styles.hint}>Main, fast secondary and tool selection will be checked separately. Subagents inherit your main/secondary models.</p><button style={styles.secondaryBtn} onClick={() => { setBundle(undefined); invalidateTest(); }}>Use manual Chat setup instead</button></div>}
                     {selected && <>
+                        {!bundle && <ProviderSettings modelId={selected} provider={provider} />}
+                        <ProviderSpeedTest key={`${provider}:${baseUrl}:${apiKey}:${selected}`} provider={provider} baseUrl={baseUrl} apiKey={apiKey} modelId={selected} />
                         {!testReply ? <>
                             <p style={styles.hint}>{bundle ? 'Check the main, secondary and tool-selector roles. Models may load or be evicted. The selector checks a fictional tool list; no real tools run.' : 'Try one short greeting with this model. It may load a local model; a hosted service may charge for this request. No tools will run.'}</p>
                             <button style={styles.primaryBtn} disabled={busy || !baseUrl.trim()} onClick={() => void testChat()}>{busy ? 'Testing…' : bundle ? 'Test recommended setup' : 'Send a short test message'}</button>
@@ -278,6 +299,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                 {error && <p role="alert" style={styles.errText}>{error}</p>}
                 </div>
                 <div className="setup-footer">
+                    {onCancel && <button style={styles.secondaryBtn} onClick={onCancel}>Return to Settings</button>}
                     {step !== 'welcome' && step !== 'later' && <button style={styles.secondaryBtn} onClick={() => navigate(step === 'backend-choice' ? 'welcome' : step === 'lmstudio-connect' ? 'lmstudio' : step === 'lmstudio' ? 'lmstudio-install' : 'backend-choice')}>Back</button>}
                     {step !== 'later' && <button style={styles.secondaryBtn} onClick={() => navigate('later')}>Finish later</button>}
                 </div>

@@ -9,6 +9,10 @@ const meta = {
     decorators: [(Story, context) => {
         const bundled = context.name === 'Recommended bundles';
         window.pywebview = { api: {
+            discover_setup_servers: async () => ({ scope: 'brain_host', servers: context.name === 'Detected servers' ? [
+                { provider: 'ollama', label: 'Ollama', base_url: 'http://localhost:11434/v1', reachable: true, models: [{ id: 'example:9b', display_name: 'Example Chat 9B' }] },
+                { provider: 'lmstudio', label: 'LM Studio', base_url: 'http://localhost:1234/v1', reachable: true, models: [] },
+            ] : [] }),
             assess_model_hardware: async () => bundled ? bundleFixture : ({
                 success: true, recommended_id: 'example-chat', target_met: true,
                 hardware: { cpu: 'Example CPU', physical_cores: 8, ram_gb: 32,
@@ -40,3 +44,4 @@ type Story = StoryObj<typeof meta>;
 export const GuidedSetup: Story = {};
 
 export const RecommendedBundles: Story = { name: 'Recommended bundles' };
+export const Detected: Story = { name: 'Detected servers' };

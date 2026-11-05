@@ -160,16 +160,15 @@ class LocalModelDiscovery:
             )
 
             # 1. Check cache first (only source of verified negatives)
-            if model_id in self._capability_cache:
-                info.supports_tools = self._capability_cache[model_id]
-                info.tools_verified = True
+            cache_key = self._capability_key(base_url, model_id)
+            if cache_key in self._capability_cache and not verify_tools:
+                info.supports_tools = self._capability_cache[cache_key]
+                info.tools_verified = False
                 logger.debug(f"[ DISCOVERY ] Using cached capability for '{model_id}': {info.supports_tools}")
-            elif self._has_heuristic_tool_support(model_id):
+            elif self._has_heuristic_tool_support(model_id) and not verify_tools:
                 # 2. Heuristic check (reliable for known models)
                 info.supports_tools = True
                 info.tools_verified = False
-                self._capability_cache[model_id] = True
-                self._save_capability_cache()
                 logger.debug(f"[ DISCOVERY ] Heuristic: '{model_id}' supports tools")
             elif verify_tools:
                 # 3. ONLY run active test if explicitly requested
@@ -182,7 +181,7 @@ class LocalModelDiscovery:
                 if result is not None:
                     info.supports_tools = result
                     info.tools_verified = True
-                    self._capability_cache[model_id] = result
+                    self._capability_cache[cache_key] = result
                     self._save_capability_cache()
             else:
                 # Unknown models: assume capable — listing must stay cheap (no probe-load).
@@ -228,14 +227,13 @@ class LocalModelDiscovery:
                 size_hint=_parse_size_hint(model_id),
             )
 
-            if model_id in self._capability_cache:
-                info.supports_tools = self._capability_cache[model_id]
-                info.tools_verified = True
-            elif self._has_heuristic_tool_support(model_id):
+            cache_key = self._capability_key(base_url, model_id)
+            if cache_key in self._capability_cache and not verify_tools:
+                info.supports_tools = self._capability_cache[cache_key]
+                info.tools_verified = False
+            elif self._has_heuristic_tool_support(model_id) and not verify_tools:
                 info.supports_tools = True
                 info.tools_verified = False
-                self._capability_cache[model_id] = True
-                self._save_capability_cache()
             elif verify_tools:
                 adapter = OpenAIAdapter(
                     base_url=base_url,
@@ -246,7 +244,7 @@ class LocalModelDiscovery:
                 if result is not None:
                     info.supports_tools = result
                     info.tools_verified = True
-                    self._capability_cache[model_id] = result
+                    self._capability_cache[cache_key] = result
                     self._save_capability_cache()
             else:
                 info.supports_tools = True
@@ -270,7 +268,7 @@ class LocalModelDiscovery:
         """
         async with self._lock:
             now = time.monotonic()
-            if use_cache and self._cache and (now - self._cache_ts) < self.CACHE_TTL:
+            if use_cache and not verify_tools and self._cache and (now - self._cache_ts) < self.CACHE_TTL:
                 logger.debug("[ DISCOVERY ] Returning cached model list")
                 return list(self._cache)
 
@@ -322,6 +320,11 @@ class LocalModelDiscovery:
         """Force next discover_all() to re-query servers."""
         self._cache = []
         self._cache_ts = 0.0
+
+    @staticmethod
+    def _capability_key(base_url: str, model_id: str) -> str:
+        import hashlib
+        return "endpoint-v2:" + hashlib.sha256((base_url.rstrip("/") + "\n" + model_id).encode()).hexdigest()
 
 
 # Module-level singleton so the cache is shared across components

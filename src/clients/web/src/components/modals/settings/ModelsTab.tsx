@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Cloud, Cpu, Loader2, RefreshCw, TriangleAlert, Check } from 'lucide-react';
 import { useAppStore } from '../../../store';
 import type { ActiveModelInfo, LocalModelInfo } from '../../../store';
 import { useApiReady } from '../../../store';
 import './ModelsTab.css';
 import ToolSelectorSettings from './ToolSelectorSettings';
+const SetupWizard = lazy(() => import('../../setup/SetupWizard'));
 
 const DISCOVERY_TIMEOUT_MS = 12000;
 
@@ -36,6 +37,7 @@ export default function ModelsTab() {
     const [switchError, setSwitchError] = useState('');
     const [switching, setSwitching] = useState(false);
     const [bootstrapped, setBootstrapped] = useState(false);
+    const [showSetup, setShowSetup] = useState(false);
 
     const api = apiReady ? window.pywebview?.api : undefined;
 
@@ -141,6 +143,8 @@ export default function ModelsTab() {
 
     return (
         <div className="models-tab">
+            {api?.discover_setup_servers && <button type="button" className="models-tab__refresh" onClick={() => setShowSetup(true)}>Connect or set up a model</button>}
+            {showSetup && <Suspense fallback={<p role="status">Opening model setup…</p>}><SetupWizard onCancel={() => setShowSetup(false)} onComplete={() => { setShowSetup(false); void refreshLocal(); }} /></Suspense>}
             {switchError && <p role="alert">{switchError}</p>}
             {activeModel && (
                 <div className={`models-tab__active ${activeModel.mode}`}>

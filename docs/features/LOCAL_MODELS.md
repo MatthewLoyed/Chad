@@ -1,5 +1,112 @@
 # 🤖 Local AI Models Integration
 
+## Provider onboarding delivery milestones (issue #5)
+
+Status: implemented on the provider-onboarding branch. These acceptance gates
+distinguish automated/development evidence from release acceptance.
+
+1. **Assessment engine.** Pin llmfit, verify its downloaded executable, preserve
+   its license, package it with the desktop app and call bounded JSON commands.
+   Done when the real pinned Windows binary runs, malformed/missing/timed-out
+   results fall back without blocking setup, and fixture tests cover the adapter.
+2. **Curated models and settings.** Keep the exact Chad artifact catalog and
+   aggregate role budgets authoritative. Prefer Bonsai Q1 supervisor on eligible
+   16 GB cards and Qwen9B on 12 GB cards, subject to actual available resources.
+   Done when 12/16 GB, busy/unknown memory, installed/missing artifacts and context
+   changes have regression coverage; profiles distinguish suggestions from
+   effective settings, preserve overrides and leave unsupported MTP unknown/off.
+3. **Provider setup and recovery.** Detect known local servers without generation,
+   keep manual/cloud setup, distinguish empty/auth/unreachable states, and retain
+   complete connection identity. Done when model-list and harmless chat tests,
+   restart/switch behavior, missing-model guidance and credential isolation pass.
+   Ollama acquisition must use explicit provider artifact mappings; custom server
+   installation stays operator-managed. No silent cloud fallback or paid tests.
+4. **Desktop acceptance.** Exercise discovery, recommendations, settings and retry
+   in the rendered UI at desktop/narrow widths and verify the normal desktop
+   launch opens the existing workspace on development port 8788. Done when
+   focused backend/frontend tests, build, cohesion, documentation and relevant
+   contract checks pass, the final diff is reviewed, and remaining live-provider
+   or clean-machine limitations are recorded honestly.
+
+Implementation owners are the assessment/setup services, desktop setup bridge,
+React setup components, artifact catalog and packaging scripts linked below.
+Native Anthropic/Gemini/Responses provisioning and a full upstream-catalog model
+browser are follow-up scope; first-run recommendations remain curated.
+
+### Delivery evidence and remaining release acceptance
+
+- Milestone 1: the pinned signed Windows binary was staged, archive-verified and
+  exercised against fixed artifact/context plans. Missing/invalid/timed-out helper
+  tests and staging checksum tests pass. The GUI spec bundles the helper, notice
+  and manifests; a new full installer build/clean Windows VM remains a release gate.
+- Milestone 2: 12/16 GB preference, aggregate budget, context, artifact reuse and
+  settings-profile tests pass. Bonsai Q1 stays under Chad's exact-file policy;
+  unsupported low-bit speed is unknown. Suggestions do not rewrite runtime defaults.
+- Milestone 3: detection, empty/auth states, exact connection restoration,
+  credential isolation, remote-host guards, confirmed native acquisition and
+  timing/history contracts have fixture coverage. Registry manifests were checked
+  read-only. New live Ollama pulls, paid APIs and full tool/vision certification
+  were not exercised by this change.
+- Milestone 4: the complete Python suite passed (2,817 tests, two skips, plus 39
+  subtests); the complete frontend suite passed (340 tests), followed by additional
+  focused confirmation/cache/staging tests. Eight browser journeys passed at
+  1280/390 px. The native development GUI opened the existing profile on port 8788.
+  Frontend build, cohesion, prompt audit, tool contract and docs checks passed.
+
+### Assessment, catalog and settings ownership
+
+[`config/llmfit.json`](../../config/llmfit.json) pins the assessment helper.
+`scripts/setup/prepare_llmfit.py` stages its checksum-verified release before a
+GUI build. Source checkouts can run that script explicitly; absent/failed helpers
+fall back to Chad's conservative scanner/ranker. The adapter asks llmfit for an
+explicit quantization and context: its ordinary fit ranking may select a different
+quantization and cannot establish performance of our chosen download. Only matching
+execution paths contribute speed evidence. Hardware data is not uploaded or shared.
+
+[`config/hardware_models.json`](../../config/hardware_models.json) owns LM Studio
+artifact identity and Chad role policy; [`config/ollama_models.json`](../../config/ollama_models.json)
+owns separate native Ollama manifests. Installed exact artifacts are reused. Missing
+files require confirmation, then integrity verification and a chat/role test.
+Ollama tags are checked against pinned registry manifests before pulling and after
+installation; tag drift asks for a catalog update rather than silently certifying
+new files. Ollama controls its storage location; remote/custom servers remain
+operator-managed. An upstream llmfit catalog entry is not automatically a supported
+Chad download, a tested tool model or permission to install it.
+
+`model_settings.py` owns curated suggestions and setting fingerprints. Context is
+bounded by the role budget; sampling defaults come from the curated artifact.
+MTP/speculative decoding remains off in curated suggestions pending an exact
+compatible runtime/draft profile and memory/speed checks. Unknown models retain
+server settings. Suggested, configured and observed effective values are separate;
+the chat greeting does not verify context, sampling, thinking, MTP or tools.
+
+Opt-in local speed tests use native timing for LM Studio/Ollama. Compatible servers
+without standardized decode timing report full-request throughput instead. Local
+history stores safe statistics and a server/model/settings fingerprint, without
+credentials or prompts; changed/unknown settings cannot reuse old verification.
+No paid or remote-host benchmark runs automatically. Existing helper/specialist
+overrides remain explicit and are managed separately from the main Chat connection.
+
+### Low-quota release checks
+
+CI's installer smoke test verifies silent install/reinstall, synthetic-data
+retention, required assets and the bundled llmfit executable's pinned version.
+It does not need a model or interactive agent. Before publishing the draft,
+manually open it, connect a model, close/reopen and confirm the saved connection.
+
+For live local Ollama acquisition without inference or desktop automation:
+
+```powershell
+$env:PYTHONPATH="."
+python scripts/setup/accept_ollama.py --download --report .tools/ollama-acceptance.json
+```
+
+This uses the smallest curated native model, checks acquisition/manifest identity
+and a second transfer-free reuse. Omit `--download` to require an already installed
+exact model. A stopped server or missing model without download permission reports
+`not_run` and exits nonzero; it is never recorded as a pass. No model is loaded,
+no inference tokens are generated and nothing is uploaded. Keep reports local.
+
 Chad supports a high-performance local AI orchestration layer that allows the assistant to run entirely offline or in a hybrid "Local Brain" configuration using **LM Studio**, **Ollama**, or any raw OpenAI-compatible endpoint (**llama.cpp `server`**, **vLLM**).
 
 ## Overview

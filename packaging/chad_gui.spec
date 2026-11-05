@@ -43,6 +43,12 @@ _COLLECT = [
 
 datas = []
 binaries = []
+_llmfit = os.path.join(ROOT, ".tools", "llmfit", "llmfit.exe")
+if not os.path.isfile(_llmfit):
+    raise RuntimeError("Run python scripts/setup/prepare_llmfit.py before packaging the GUI")
+binaries += [(_llmfit, ".tools/llmfit")]
+datas += [(os.path.join(ROOT, "config", "llmfit.json"), "config"),
+          (os.path.join(ROOT, "licenses", "llmfit-MIT.txt"), ".tools/llmfit")]
 hiddenimports = []
 
 for _pkg in _COLLECT:
@@ -81,6 +87,7 @@ hiddenimports += collect_submodules("src")
 # Bundle the production React build inside the app (loaded when frozen).
 datas += [(os.path.join(ROOT, "src", "clients", "web", "dist"), "web/dist")]
 datas += [(os.path.join(ROOT, "config", "hardware_models.json"), "config")]
+datas += [(os.path.join(ROOT, "config", "ollama_models.json"), "config")]
 
 a = Analysis(
     [os.path.join(ROOT, "main_gui.py")],
