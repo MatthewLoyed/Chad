@@ -43,6 +43,12 @@ _COLLECT = [
 
 datas = []
 binaries = []
+_llmfit = os.path.join(ROOT, ".tools", "llmfit", "llmfit.exe")
+if not os.path.isfile(_llmfit):
+    raise RuntimeError("Run python scripts/setup/prepare_llmfit.py before packaging the GUI")
+binaries += [(_llmfit, ".tools/llmfit")]
+datas += [(os.path.join(ROOT, "config", "llmfit.json"), "config"),
+          (os.path.join(ROOT, "licenses", "llmfit-MIT.txt"), ".tools/llmfit")]
 hiddenimports = []
 
 for _pkg in _COLLECT:

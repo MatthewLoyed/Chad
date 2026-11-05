@@ -104,6 +104,8 @@ if ($Gui) {
     }
     if (-not (Test-Path $WebDist)) { throw "Web build missing: $WebDist" }
 
+    & $Python (Join-Path $RepoRoot "scripts\setup\prepare_llmfit.py")
+    if ($LASTEXITCODE -ne 0) { throw "Pinned llmfit staging failed" }
     Build-PyInstaller "chad_gui.spec"
     $GuiAppDir = Join-Path $DistRoot "Chad"
     $GuiExe = Join-Path $GuiAppDir "Chad.exe"
