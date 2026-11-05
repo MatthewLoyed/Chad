@@ -224,22 +224,6 @@ async def probe_local_backend(provider: str, base_url: str, api_key: str = "") -
     provider = (provider or "custom").strip().lower()
     base_url = (base_url or "").strip().rstrip("/") or _OLLAMA_DEFAULT_BASE_URL
 
-    if provider == "ollama":
-        from src.core.intelligence.local_model_discovery import get_local_model_discovery
-
-        discovery = get_local_model_discovery()
-        models = await discovery.discover_ollama(
-            base_url=base_url, api_key=api_key or "ollama", verify_tools=False
-        )
-        return {
-            "reachable": bool(models),
-            "models": [
-                {"id": m.name, "display_name": m.display_name, "supports_tools": m.supports_tools}
-                for m in models
-            ],
-            "download_url": _OLLAMA_DOWNLOAD_URL,
-        }
-
     import httpx
     from src.core.tools.failure import failure, AUTH, UNAVAILABLE
     from src.core.tools.limits import get as limit
@@ -259,7 +243,8 @@ async def probe_local_backend(provider: str, base_url: str, api_key: str = "") -
              "tools_verified": False}
             for entry in entries if isinstance(entry, dict) and isinstance(entry.get("id"), str)
             and not any(term in entry["id"].lower() for term in NON_CHAT_MODEL_TERMS)
-        ], "download_url": None}
+        ], "download_url": _OLLAMA_DOWNLOAD_URL if provider == "ollama" else None,
+            "settings_note": "Model listing does not verify tools, context, thinking or MTP. Keep server settings unless using a curated profile."}
     except Exception:
         return {"reachable": False, "models": [], **failure("Model discovery could not finish. Check the address, server and account, or enter a model ID to test directly.", failure_class=UNAVAILABLE)}
 
@@ -295,6 +280,9 @@ def save_provider_choice(
         "supports_tools": supports_tools,
         "tools_verified": False,
     }
+    preferences = config_repo.load("preferences", use_cache=False)
+    from src.infrastructure.services.setup_connections import remember
+    active_model = remember(preferences, active_model)
     update = {"setup": {"model_selected": True, "share_main_model": True},
               "tools": {"llm_selector_model": model_id, "llm_selector_context_length": 8192},
               "intent_router": {"enabled": False},
@@ -304,7 +292,7 @@ def save_provider_choice(
     }}
     if extra_updates:
         ConfigManager._recursive_update(update, extra_updates)
-    preferences = config_repo.load("preferences", use_cache=False)
+    update["local_models"]["connections"] = preferences["local_models"]["connections"]
     ConfigManager._recursive_update(preferences, update)
     if not config_repo.save("preferences", preferences, update_cache=True):
         return {"success": False, "error": "Your model choice could not be saved. Check that Chad can write its settings, then try again."}
@@ -316,5 +304,5 @@ def save_provider_choice(
         update,
     )
 
-    logger.info(f"[ SETUP ] Backend chosen: {provider_key} / '{model_id}' at {base_url}")
+    logger.info("[ SETUP ] Model connection saved")
     return {"success": True}

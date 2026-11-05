@@ -115,14 +115,16 @@ function Ensure-EnvLocalDbPath($EnvPath, $DbPath) {
     }
     $lines = @(Get-Content -LiteralPath $EnvPath)
     $desired = "CHAD_LOCAL_DB_PATH=$DbPath"
+    # Check before constructing a pipeline. Returning from inside a collecting
+    # foreach can emit already-produced .env lines to the caller.
+    if (@($lines | Where-Object { $_.Trim() -eq $desired }).Count -gt 0) {
+        Write-Host "OK CHAD_LOCAL_DB_PATH already set in .env" -ForegroundColor DarkGray
+        return
+    }
     $found = $false
     $out = foreach ($line in $lines) {
         if ($line -match '^\s*CHAD_LOCAL_DB_PATH\s*=') {
             $found = $true
-            if ($line.Trim() -eq $desired) {
-                Write-Host "OK CHAD_LOCAL_DB_PATH already set in .env" -ForegroundColor DarkGray
-                return
-            }
             $desired
         } else {
             $line

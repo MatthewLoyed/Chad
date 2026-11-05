@@ -46,7 +46,7 @@ def cancel() -> dict:
 def start(operation: str, options: dict, confirmed: bool = False) -> dict:
     if confirmed is not True:
         return failure("Explicit confirmation is required before downloads or benchmark generation.", failure_class=BAD_INPUT)
-    if operation not in {"bundle", "download", "embedding", "estimate", "benchmark"} or not isinstance(options, dict):
+    if operation not in {"bundle", "download", "embedding", "estimate", "benchmark", "ollama-pull", "provider-benchmark"} or not isinstance(options, dict):
         return failure("Unknown setup operation.", failure_class=BAD_INPUT)
     with _lock:
         if _state["running"]:
@@ -60,7 +60,16 @@ def start(operation: str, options: dict, confirmed: bool = False) -> dict:
 
 def _execute(operation: str, options: dict) -> None:
     try:
-        if operation == "bundle":
+        if operation == "provider-benchmark":
+            from src.infrastructure.services.provider_benchmark import benchmark
+            result = benchmark(options)
+            if result.get("success"):
+                from src.infrastructure.services.setup_speed_history import remember
+                result = remember(options, result)
+        elif operation == "ollama-pull":
+            from src.infrastructure.services.ollama_setup import pull
+            result = pull(options, _cancel, _update)
+        elif operation == "bundle":
             result = _bundle(options)
         elif operation == "download":
             result = _download(options)

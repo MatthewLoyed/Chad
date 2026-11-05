@@ -203,7 +203,12 @@ optional/advanced features; several now have local sqlite fallbacks via
    Supabase variables in `.env.example` can stay as placeholders — Chad boots
    without them (see above). Fill them in only for the optional Supabase upgrade.
 3. **Model connection** — desktop setup shows four stages: Welcome, Connection,
-   Choose a model, and Start chatting. **Use a cloud API** connects a hosted
+   Choose a model, and Start chatting.
+   The connection chooser lists running LM Studio/Ollama servers on the Brain's
+   computer without loading models. Saved connections can be restored and tested
+   again. Existing desktop users can reopen the same flow from **Settings → Models
+   → Connect or set up a model**, then return without changing their selection.
+   **Use a cloud API** connects a hosted
    compatible endpoint with an API key and an explicit, possibly billable chat
    test; it skips local model installation and scanning. For local chat, choose
    LM Studio and follow the guided path:
