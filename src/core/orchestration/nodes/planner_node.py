@@ -119,13 +119,20 @@ def _serialize_tool_result(result: Any) -> str:
 
 def _build_review_scout_tool(can_follow_up: bool) -> StructuredTool:
     async def _review(decision: str, reason: str, brief: str = "") -> Dict[str, Any]:
-        if not reason.strip() or decision not in {"proceed", "follow_up"}:
-            return {"success": False, "error": "Choose proceed or follow_up and explain coverage of the requested facts and remaining gaps."}
+        reason_clean = (reason or "").strip() or "Proceeding with current scout findings and gaps."
         if decision == "follow_up":
-            if not can_follow_up or not brief.strip():
+            if not can_follow_up:
+                # Graceful degradation: no further scout rounds remain.
+                # Mark scout coverage complete so the planner unlocks planning_tools (propose_plan).
+                return {
+                    "success": True,
+                    "_scout_coverage": True,
+                    "reason": f"No further scout rounds available. Proceeding with known facts and explicit gaps: {reason_clean}",
+                }
+            if not brief.strip():
                 return {"success": False, "error": "Follow-up requires a targeted nonempty brief and an available Scout round. Otherwise proceed with explicit gaps or clarify after review."}
             return {"success": True, "_dispatch_scout": True, "brief": brief.strip()}
-        return {"success": True, "_scout_coverage": True, "reason": reason.strip()}
+        return {"success": True, "_scout_coverage": True, "reason": reason_clean}
     return StructuredTool.from_function(coroutine=_review, name="review_scout",
         description="Compare Scout findings against the gather brief. Proceed with an explicit assessment of facts/gaps, or request one targeted follow-up for unresolved items. Do not restart completed research.")
 
@@ -357,8 +364,16 @@ async def _run_planner_tool_loop(
 
     # Runtime data only — doctrine lives in prompts/persona/planner.md
     prompt = planning_base
+    import getpass
+    import os
+    import platform
     prompt += (
-        f"\n\n### RUNTIME\n"
+        f"\n\n### HOST ENVIRONMENT\n"
+        f"- OS: {platform.system()} {platform.release()}\n"
+        f"- Current User: {getpass.getuser()}\n"
+        f"- Home: {os.path.expanduser('~')}\n"
+        f"- Note: Always use Windows paths and tools for local tasks unless user requests otherwise.\n"
+        f"\n### RUNTIME\n"
         f"- scout_decision_required={decision_required}\n"
         f"- scout_coverage_required={coverage_required}\n"
         f"- allow_ask={allow_ask and not decision_required}\n"

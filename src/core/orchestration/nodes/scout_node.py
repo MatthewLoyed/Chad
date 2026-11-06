@@ -526,8 +526,21 @@ def make_scout_node(
 
         from src.shared.config_manager import ConfigManager
 
+        import getpass
+        import os
+        import platform
+
+        host_env = (
+            f"### HOST ENVIRONMENT\n"
+            f"- OS: {platform.system()} {platform.release()} ({platform.platform()})\n"
+            f"- Current User: {getpass.getuser()}\n"
+            f"- Home Directory: {os.path.expanduser('~')}\n"
+            f"- Target Platform: Local lookups must use paths and tools native to {platform.system()} (do not search for macOS or Linux unless explicitly asked).\n\n"
+        )
+
         system_content = (
             f"{scout_instructions}\n\n"
+            f"{host_env}"
             f"{gather_focus}"
             f"### REGISTERED RETRIEVAL CAPABILITIES\n{capability_summary}\n\n"
             f"### LOADED TOOLS\n{menu_block}\n\n"
