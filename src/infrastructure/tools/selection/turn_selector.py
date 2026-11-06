@@ -417,7 +417,8 @@ class TurnToolSelector:
 
     def _selector_catalog(self, query: str, history: Optional[List[Any]],
                           selection_meta: Dict[str, Any],
-                          knowledge_context: Optional[str] = None) -> Dict[str, Any]:
+                          knowledge_context: Optional[str] = None,
+                          category: Optional[str] = None) -> Dict[str, Any]:
         """The tool dict handed to the 9B selector.
 
         Hybrid ON  → a generous, recall-oriented RAG shortlist (narrows the catalog without
@@ -427,9 +428,10 @@ class TurnToolSelector:
         Falls back to the full catalog if RAG yields nothing (e.g. Supabase unreachable).
         """
         from src.infrastructure.tools.delegate_routing import is_supervisor_delegate_only
+        planning_turn = (category == "planning")
         candidate_pool = {
             n: t for n, t in self._tools.items()
-            if not is_supervisor_delegate_only(n, self._categories, self._tool_sources)
+            if (planning_turn or not is_supervisor_delegate_only(n, self._categories, self._tool_sources))
             and n not in self._core_tool_names
         }
 
@@ -654,7 +656,7 @@ class TurnToolSelector:
 
         if llm_available:
             catalog = self._selector_catalog(
-                query, history, selection_meta, knowledge_context=knowledge_context
+                query, history, selection_meta, knowledge_context=knowledge_context, category=category
             )
             llm_names = self._llm_selector.select(
                 query,

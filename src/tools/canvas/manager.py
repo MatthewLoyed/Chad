@@ -325,7 +325,7 @@ class CanvasManager:
     def resolve_course_id(self, course_identifier: Any) -> Tuple[Optional[int], Optional[str], Optional[str]]:
         """
         Resolve a course ID from either an integer/string ID or a course title/code keyword.
-        Supports fuzzy and partial matching (e.g. 'Software Project' -> 'CSE-6223 Manage Software Project').
+        Supports fuzzy and partial matching (e.g. 'Intro to CS' -> 'CS-101 Introduction to Computer Science').
         
         Returns:
             (course_id, course_name, error_message)

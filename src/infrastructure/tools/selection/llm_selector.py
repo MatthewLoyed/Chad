@@ -23,7 +23,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, Iterable, Set
 
 from src.core.intelligence.model_lifecycle import (
     ensure_resident_sync, release_sync, current_priority, active_use_sync,
@@ -397,7 +397,7 @@ class LLMToolSelector:
                     f"consumed the whole budget. Raising max_tokens further may help."
                 )
 
-            selected = self._parse(raw, set(tools.keys()))
+            selected = self._parse(raw, set(tools.keys()), core_tools=core_tools)
             if selected is None:
                 reason = "parse_failed" if finish_reason != "length" else "truncated_by_max_tokens"
                 self._unavailable_reason = reason
@@ -735,7 +735,21 @@ class LLMToolSelector:
                 break
         return (out or desc)[:cls._DESC_CHAR_CAP].rstrip()
 
-    def _parse(self, raw: str, valid_names: set) -> Optional[List[str]]:
+    _SPECIALIST_HANDOFFS: frozenset[str] = frozenset({
+        "delegate_to_browser_agent",
+        "delegate_to_code_agent",
+        "delegate_to_research_agent",
+        "delegate_to_canvas_agent",
+        "delegate_to_traversal_agent",
+        "delegate_to_deep_research_agent",
+    })
+
+    def _parse(
+        self,
+        raw: str,
+        valid_names: set,
+        core_tools: Optional[Iterable[str]] = None,
+    ) -> Optional[List[str]]:
         """Strip any wrapping, parse JSON array, validate names."""
         raw = self._strip_thinking(raw)
         raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw).strip()
@@ -758,8 +772,13 @@ class LLMToolSelector:
             logger.warning(f"[ LLM_SELECTOR ] Expected list, got {type(result)}")
             return None
 
+        known_already_bound = self._SPECIALIST_HANDOFFS | set(core_tools or [])
         valid = [str(t) for t in result if str(t) in valid_names]
-        hallucinated = [str(t) for t in result if str(t) not in valid_names]
+        already_bound = [str(t) for t in result if str(t) in known_already_bound and str(t) not in valid_names]
+        hallucinated = [str(t) for t in result if str(t) not in valid_names and str(t) not in known_already_bound]
+
+        if already_bound:
+            logger.info(f"[ LLM_SELECTOR ] Selector picked already-bound tool/specialist: {already_bound}")
         if hallucinated:
             logger.warning(f"[ LLM_SELECTOR ] Dropped unknown tool names: {hallucinated}")
 

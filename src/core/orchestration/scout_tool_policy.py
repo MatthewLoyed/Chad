@@ -8,6 +8,7 @@ READ_TOOLS = frozenset({
     "manage_user_memory", "search_contacts", "search_gmail", "read_gmail", "get_gmail_history",
     "google_drive_search", "google_drive_list_folder", "google_drive_read_file",
     "get_calendar_events", "read_outlook_emails", "search_outlook_emails",
+    "get_canvas_assignments", "get_assignment_submission", "get_course_grades", "get_canvas_dashboard_todos",
     "get_datetime", "fuzzy_find_local", "find_project", "search_session_history",
     "search_browser_history", "ui_find", "ui_read", "browser_snapshot",
 })
