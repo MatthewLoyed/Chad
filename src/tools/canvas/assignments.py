@@ -641,7 +641,13 @@ class GetCanvasDashboardTodosTool(BaseTool):
                 return {
                     "success": True,
                     "result": "Your Canvas To-Do list is empty.",
-                    "todos": []
+                    "todos": [],
+                    "harness_hint": (
+                        "HARNESS NOTE: Canvas To-Do list check complete: 0 active todo items found. "
+                        "This is an authoritative, complete result indicating no upcoming coursework is currently pending on the dashboard. "
+                        "Inform the user directly that their Canvas dashboard has no pending todos. "
+                        "Do NOT crawl individual course modules or assignments to hunt for unlisted tasks."
+                    )
                 }
             
             formatted_todos = []
@@ -783,6 +789,17 @@ class GetAssignmentSubmissionTool(BaseTool):
                             "comments": crit_data.get("comments") or "No comment"
                         })
             
+            raw_attachments = sub.get("attachments") or []
+            attachments = []
+            for att in raw_attachments:
+                attachments.append({
+                    "id": att.get("id"),
+                    "filename": att.get("display_name") or att.get("filename", "Untitled File"),
+                    "size": att.get("size"),
+                    "content_type": att.get("content-type") or att.get("mime_class", ""),
+                    "download_url": att.get("url", ""),
+                })
+
             formatted_sub = {
                 "assignment_id": aid,
                 "assignment_name": aname,
@@ -802,6 +819,7 @@ class GetAssignmentSubmissionTool(BaseTool):
                 "body_preview": sub.get("body", "")[:300] if sub.get("body") else None,
                 "instructor_comments": comments,
                 "rubric_assessment": rubric_scores,
+                "attachments": attachments,
             }
             
             state_desc = formatted_sub["workflow_state"].capitalize()

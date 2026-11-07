@@ -100,9 +100,11 @@ class ToolEventWrapper:
                             # When Supabase isn't configured the insert routes through the
                             # LocalPostgrestShim (issue #470) — register the backing table first
                             # so the same write path persists outcomes locally with zero setup.
-                            if not supabase.enabled:
-                                from src.core.orchestration.oats_refiner import ensure_local_oats_tables
-                                ensure_local_oats_tables()
+                            # Ensure backing table is registered on the LocalPostgrestShim (issue #470)
+                            # so that if Supabase is disabled OR fails (e.g. 401/network error),
+                            # the local SQLite fallback write succeeds smoothly.
+                            from src.core.orchestration.oats_refiner import ensure_local_oats_tables
+                            ensure_local_oats_tables()
 
                             async def _insert_and_increment():
                                 insert_data = {

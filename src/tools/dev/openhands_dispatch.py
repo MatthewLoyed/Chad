@@ -436,9 +436,9 @@ class OpenHandsDispatchTool(BaseTool):
 
     name = "dispatch_coding_task"
     description = (
-        "Delegate a real coding task (build/edit/test files in a workspace) to the OpenHands "
-        "coding harness running a local model, as a background job. Returns a job id to check "
-        "later with check_coding_task. Use for actual software work, not quick code snippets."
+        "Delegate a software engineering, codebase, or repository task to Chad Code (OpenHands). "
+        "Use this for real software work: inspecting repository architecture/classes, analyzing code, "
+        "building, editing, refactoring, or running tests across a codebase. Returns a job id."
     )
     category = "dev"
     is_side_effecting = True
@@ -455,8 +455,8 @@ class OpenHandsDispatchTool(BaseTool):
                     "task": {
                         "type": "string",
                         "description": (
-                            "The coding task as a clear, self-contained brief (what to "
-                            "build/change, constraints, how to verify)."
+                            "The coding or codebase inquiry as a clear, self-contained brief "
+                            "(what to inspect/analyze, build/change, constraints, how to verify)."
                         ),
                     },
                     "title": {

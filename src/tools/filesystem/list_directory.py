@@ -106,7 +106,7 @@ class ListDirectoryTool(BaseTool):
                         "description": "Whether to respect .gitignore rules. Default is true."
                     }
                 },
-                "required": ["path"]
+                "required": []
             }
         }
 
@@ -161,13 +161,19 @@ class ListDirectoryTool(BaseTool):
 
     async def execute(
         self,
-        path: str,
+        path: Optional[str] = ".",
         depth: int = 1,
         include_hidden: bool = False,
         pattern: Optional[str] = None,
         respect_gitignore: bool = True,
         **kwargs
     ) -> Dict[str, Any]:
+        if not path:
+            path = "."
+        if include_hidden is None:
+            include_hidden = False
+        if respect_gitignore is None:
+            respect_gitignore = True
         # Coerce/fallback depth if None or invalid type
         if depth is None:
             depth = 1

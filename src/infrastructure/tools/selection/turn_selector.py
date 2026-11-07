@@ -441,7 +441,7 @@ class TurnToolSelector:
             return candidate_pool
         from src.shared.config_manager import ConfigManager
         import time as _time
-        k = int(ConfigManager.get("tools.hybrid_shortlist_k", 20))
+        k = int(ConfigManager.get("tools.hybrid_shortlist_k", 25))
         _t0 = _time.perf_counter()
         shortlist_query = self._enrich_query_with_knowledge(query, knowledge_context)
         shortlist = self._selector.retrieve_shortlist(
@@ -472,6 +472,14 @@ class TurnToolSelector:
         ):
             if "youtube_toolkit" in candidate_pool and "youtube_toolkit" not in sub_catalog:
                 sub_catalog["youtube_toolkit"] = candidate_pool["youtube_toolkit"]
+        # Experimental: Filesystem / File Read Safety Net
+        file_extensions = (".py", ".json", ".txt", ".toml", ".yaml", ".yml", ".md", ".csv", ".log", ".ini", ".conf", ".ts", ".js", ".html", ".css")
+        has_file_path = any(ext in q_lower for ext in file_extensions) or "/" in query or "\\" in query
+        has_file_read_intent = any(t in q_lower for t in ("read the", "read file", "contents of", "look inside", "inspect file", "check the code"))
+        if has_file_path or has_file_read_intent:
+            for tool_name in ("read_file", "fuzzy_find_local", "list_directory"):
+                if tool_name in candidate_pool and tool_name not in sub_catalog:
+                    sub_catalog[tool_name] = candidate_pool[tool_name]
         selection_meta["selector_catalog"] = "hybrid_shortlist"
         selection_meta["shortlist_size"] = len(sub_catalog)
         selection_meta["shortlist"] = shortlist

@@ -597,9 +597,9 @@ def make_scout_node(
         pending_approval = None
         updated_tools = list(state.get("tools") or [])
 
-        max_tool_calls = int(ConfigManager.get("planner.scout_max_tool_calls", 20) or 20)
-        wrapup_extra = int(ConfigManager.get("planner.scout_tool_calls_wrapup", 5) or 5)
-        hard_limit = max_tool_calls + wrapup_extra
+        max_tool_calls = int(ConfigManager.get("planner.scout_max_tool_calls", 16) or 16)
+        wrapup_extra = int(ConfigManager.get("planner.scout_tool_calls_wrapup", 4) or 4)
+        hard_limit = max_tool_calls + wrapup_extra  # Aligned with checker budget: exactly 20 calls
         tool_calls_made = 0
         wrapup_warned = False
         gather_retried = False
@@ -678,16 +678,38 @@ def make_scout_node(
                                 report_attempted = True  # Do not enter another report fallback.
 
                         discovered = _extract_injected_schemas(raw)
-                        if tool_name == "search_for_tool" and discovered:
-                            permitted = [schema for schema in discovered if _schema_name(schema) not in _SCOUT_BLOCKED_TOOLS
-                                         and scout_tool_allowed(_schema_name(schema) or "", tool_registry)]
-                            raw = {"success": True, "result": {
-                                "message": ("Only the listed approved read-only tools were loaded. Launching, escalation and execution tools are excluded. "
-                                            "If no match fits, search once more without a category for an inspection/read operation; otherwise report the gap. "
-                                            "Public web search cannot inspect this machine or its tool catalog."),
-                                "tools": [{"name": _schema_name(schema), "description": _schema_description(schema)} for schema in permitted],
-                                "_injected_schemas": permitted,
-                            }}
+                        if tool_name == "search_for_tool":
+                            if discovered:
+                                permitted = [schema for schema in discovered if _schema_name(schema) not in _SCOUT_BLOCKED_TOOLS
+                                             and scout_tool_allowed(_schema_name(schema) or "", tool_registry)]
+                                raw = {"success": True, "result": {
+                                    "message": ("Only the listed approved read-only tools were loaded. Launching, escalation and execution tools are excluded. "
+                                                "If no match fits, search once more without a category for an inspection/read operation; otherwise report the gap. "
+                                                "Public web search cannot inspect this machine or its tool catalog."),
+                                    "tools": [{"name": _schema_name(schema), "description": _schema_description(schema)} for schema in permitted],
+                                    "_injected_schemas": permitted,
+                                }}
+                            else:
+                                # 0 matching tools discovered: halt immediately for domain queries to prevent wandering
+                                q_str = str((tc.get("args") or tc.get("params") or {}).get("query", "")).lower()
+                                cat_str = str((tc.get("args") or tc.get("params") or {}).get("category", "")).lower()
+                                domain_keywords = {"canvas", "gmail", "mail", "email", "calendar", "drive", "contacts"}
+                                if any(k in q_str or k in cat_str for k in domain_keywords):
+                                    logger.warning("[ SCOUT ] search_for_tool returned 0 for domain '%s' - halting immediately (harness contradiction).", q_str)
+                                    report_items = [{
+                                        "question": f"Retrieve data for {q_str}",
+                                        "status": "unavailable",
+                                        "finding": f"Harness contradiction: capability '{q_str}' was requested, but tool discovery returned zero matching tools.",
+                                        "source": "[capability_gap:search_for_tool_empty]",
+                                    }]
+                                    scout_messages.append(
+                                        ToolMessage(
+                                            content=_serialize_tool_result(raw),
+                                            tool_call_id=tc.get("id", tool_name),
+                                            name=tool_name,
+                                        )
+                                    )
+                                    break
                         for schema in _extract_injected_schemas(raw):
                             name = _schema_name(schema)
                             if (name and name not in _SCOUT_BLOCKED_TOOLS

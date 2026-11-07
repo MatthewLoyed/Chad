@@ -35,7 +35,7 @@ _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
-_TIMEOUT_MS = 25_000
+_TIMEOUT_MS = 12_000
 # Domains where Tier-1 repeatedly fails — skip straight to Playwright next time.
 _playwright_preferred: set[str] = set()
 
@@ -134,7 +134,7 @@ async def _ensure_browser_on_worker() -> bool:
         try:
             _playwright = await async_playwright().start()
             _browser = await _playwright.chromium.launch(headless=True)
-            _semaphore = asyncio.Semaphore(2)
+            _semaphore = asyncio.Semaphore(4)
             logger.info("[ PLAYWRIGHT ] Tier-2 fetch browser ready")
             return True
         except Exception as exc:
@@ -174,7 +174,7 @@ async def _fetch_on_worker(url: str) -> tuple[Optional[str], Optional[str]]:
                 return None, f"playwright HTTP {resp.status}"
             # Give lazy SPAs a beat to hydrate text modules.
             try:
-                await page.wait_for_load_state("networkidle", timeout=8_000)
+                await page.wait_for_load_state("networkidle", timeout=2_500)
             except Exception:
                 pass
             html = await page.content()

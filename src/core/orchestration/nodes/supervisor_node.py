@@ -269,6 +269,33 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
         iteration = state.get("iteration_count", 0) + 1  # 👈 track it
         plan = state.get("active_plan") or []
         
+        # Conditional RepetitionGuard auto-resolution:
+        # If the latest tool message shows a tool from the active step was blocked
+        # by RepetitionGuard because it ALREADY SUCCEEDED (positive evidence exists),
+        # advance the active step so the agent is not deadlocked.
+        if plan and messages:
+            last_msg = messages[-1]
+            if isinstance(last_msg, ToolMessage):
+                content_str = str(last_msg.content or "")
+                if "already succeeded" in content_str and "time(s) in this conversation" in content_str:
+                    tool_name = getattr(last_msg, "name", None)
+                    active_step = next(
+                        (s for s in plan if s.get("status") in ["pending", "running"]), None
+                    )
+                    if active_step and (not tool_name or tool_name in (active_step.get("tools") or [])):
+                        logger.warning(
+                            f"[ SUPERVISOR ] RepetitionGuard blocked '{tool_name}' with verified prior success. "
+                            f"Auto-completing step '{active_step.get('id')}' to clear execution deadlock."
+                        )
+                        active_step["status"] = "completed"
+                        active_step["summary"] = (
+                            f"Step completed via verified prior successful execution of '{tool_name}'."
+                        )
+                        next_step = next((s for s in plan if s.get("status") in ["pending", "running"]), None)
+                        if next_step:
+                            state["plan_step"] = next_step.get("id")
+                        PlanService.emit_snapshot(state, plan)
+
         # --- DYNAMIC BREADTH INJECTION ---
         # Get tool schemas found by RAG for this turn
         rag_schemas = state.get("tools") or []
@@ -304,18 +331,17 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
                 logger.warning(f"[ SUPERVISOR ] DROP: Tool '{name}' missing from local registry (offline MCP server or stale database entry).")
                 offline_tools.append(name)
 
-        # Always bind tools explicitly assigned to the active plan step
+        # Always bind tools explicitly assigned to the active plan step and immediate successor (least-privilege lookahead)
         if plan and not is_fixed_lane:
-            active_step_obj = next(
-                (s for s in plan if s.get("status") in ["pending", "failed", "running"]), None
-            )
-            if active_step_obj:
-                for step_tool in (active_step_obj.get("tools") or []):
+            pending_steps = [s for s in plan if s.get("status") in ["pending", "failed", "running"]]
+            steps_to_bind = pending_steps[:2]  # active step + next step for fluid transition under least-privilege
+            for s in steps_to_bind:
+                for step_tool in (s.get("tools") or []):
                     if not any(t.name == step_tool for t in direct_tools):
                         t = tool_registry.get_langchain_tool_by_name(step_tool)
                         if t:
                             direct_tools.append(t)
-                            logger.info(f"[ SUPERVISOR ] Bound explicit plan-step tool: {step_tool}")
+                            logger.info(f"[ SUPERVISOR ] Bound plan-step tool ({s.get('id')}): {step_tool}")
         
         # Always inject step-management tools when a plan is active (not on Telegram pocket remote)
         step_mgmt_tools = []
@@ -727,6 +753,35 @@ def make_supervisor_node(model: Any, sub_agents_dict: dict, tool_registry: Any, 
         
         # Mark the active step as running when the model calls a tool (but hasn't completed it yet)
         if plan and response.tool_calls:
+            called_tool_names = {tc.get("name") for tc in response.tool_calls if isinstance(tc, dict) and tc.get("name")}
+
+            # Auto-advance on next-step tool invocation:
+            # If the model emitted a tool call explicitly assigned to a subsequent plan step,
+            # mark prior pending/running steps as completed by observed action.
+            active_step_id = state.get("plan_step")
+            active_step_idx = None
+            for idx, s in enumerate(plan):
+                if s.get("id") == active_step_id or (active_step_id is None and s.get("status") in ["pending", "running"]):
+                    active_step_idx = idx
+                    break
+
+            target_step_idx = None
+            for idx, s in enumerate(plan):
+                if s.get("status") in ["pending", "running"] and any(t in called_tool_names for t in (s.get("tools") or [])):
+                    target_step_idx = idx
+                    break
+
+            if target_step_idx is not None and active_step_idx is not None and target_step_idx > active_step_idx:
+                for prev_step in plan[active_step_idx:target_step_idx]:
+                    if prev_step.get("status") in ["pending", "running"]:
+                        logger.info(
+                            f"[ SUPERVISOR ] Auto-advancing step '{prev_step.get('id')}' -> completed "
+                            f"(observed next-step tool call: {called_tool_names})"
+                        )
+                        prev_step["status"] = "completed"
+                        prev_step["summary"] = f"Completed via observed execution of next-step tool: {called_tool_names}"
+                state["plan_step"] = plan[target_step_idx].get("id")
+
             active_step_id = state.get("plan_step")
             active_step = next(
                 (s for s in plan if s.get("id") == active_step_id and s.get("status") in ["pending", "running"]),

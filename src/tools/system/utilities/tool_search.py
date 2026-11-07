@@ -58,6 +58,9 @@ class ToolSearchTool(BaseTool):
         try:
             # Use semantic search from the registry with optional category filter
             new_schemas = self.registry.search_tools(query, limit=5, category=category)
+            if not new_schemas and category:
+                # Fallback to searching across all categories before giving up
+                new_schemas = self.registry.search_tools(query, limit=5, category=None)
             
             results = []
             for schema in new_schemas:
