@@ -432,6 +432,7 @@ class TurnToolSelector:
         candidate_pool = {
             n: t for n, t in self._tools.items()
             if (planning_turn or not is_supervisor_delegate_only(n, self._categories, self._tool_sources))
+            and (not planning_turn or self._tool_sources.get(n) != "mcp")
             and n not in self._core_tool_names
         }
 
@@ -658,14 +659,8 @@ class TurnToolSelector:
             catalog = self._selector_catalog(
                 query, history, selection_meta, knowledge_context=knowledge_context, category=category
             )
-            llm_names = self._llm_selector.select(
-                query,
-                catalog,
-                history=history,
-                on_completions_start=on_completions_start,
-                knowledge_context=knowledge_context,
-                core_tools=list(self._core_tool_names),
-            )
+            from .needs_selector import choose_tools
+            llm_names = choose_tools(self, query, catalog, history, on_completions_start, knowledge_context)
             if self._registry._event_bus:
                 from src.application.events.events import StatusUpdate
                 from src.core.orchestration.turn.status_labels import FORMULATING_LABELS
@@ -726,6 +721,9 @@ class TurnToolSelector:
         for name in candidate_names:
             if name in seen_names:
                 continue
+
+            if planning_turn and self._tool_sources.get(name) == "mcp":
+                continue  # Planning uses only approved, namespaced read-index aliases.
 
             # MCP: expose directly when the selector picked it for this query
             if self._tool_sources.get(name) == 'mcp':

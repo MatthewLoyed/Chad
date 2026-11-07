@@ -11,6 +11,20 @@ from src.infrastructure.connectors.policy import (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolate_local_secrets(monkeypatch):
+    from src.shared.config_manager import ConfigManager
+    monkeypatch.setattr(ConfigManager, "get_secret", lambda key, default=None: default)
+
+
+def test_stored_secret_resolves_placeholder_without_environment(monkeypatch):
+    from src.shared.config_manager import ConfigManager
+    from src.infrastructure.connectors.policy import resolve_env_value
+    monkeypatch.delenv("GITHUB_PERSONAL_ACCESS_TOKEN", raising=False)
+    monkeypatch.setattr(ConfigManager, "get_secret", lambda key, default=None: "fixture-token")
+    assert resolve_env_value("%GITHUB_PERSONAL_ACCESS_TOKEN%") == "fixture-token"
+
+
 def test_keyless_mcp_always_satisfied():
     ok, missing = mcp_credentials_satisfied({"env": {}})
     assert ok is True

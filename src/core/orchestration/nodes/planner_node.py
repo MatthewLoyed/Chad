@@ -149,17 +149,48 @@ def _build_skip_scout_tool() -> StructuredTool:
     )
 
 
-def _build_dispatch_scout_tool() -> StructuredTool:
+def _build_dispatch_scout_tool(tool_registry=None, menu=None) -> StructuredTool:
     native = DispatchScoutTool()
 
-    async def _run(brief: str) -> Dict[str, Any]:
-        return await native.execute(brief=brief)
+    async def _run(brief: str, tools: List[str]) -> Dict[str, Any]:
+        from src.core.orchestration.scout_tool_policy import scout_tool_allowed
+        from src.infrastructure.tools.mcp_read_index import read_index, MCPReadTool, binding_failure
+        requested = list(dict.fromkeys(tools or []))
+        confirmed = {e.get("name") for e in menu or []}
+        for name in requested:
+            if name not in confirmed or not scout_tool_allowed(name, tool_registry):
+                result = binding_failure(name, "not in the confirmed Scout read menu")
+                result["available_tools"] = sorted(n for n in confirmed if scout_tool_allowed(n, tool_registry))
+                return result
+            raw_tool = getattr(tool_registry, "_tools", {}).get(name)
+            if isinstance(raw_tool, MCPReadTool):
+                invalid = await read_index(tool_registry).validate_binding(name)
+                if invalid:
+                    return invalid
+            try:
+                bound = tool_registry.get_langchain_tool_by_name(name)
+            except Exception as exc:
+                return binding_failure(name, "schema binding failed: " + type(exc).__name__)
+            if bound is None:
+                return binding_failure(name, "schema could not be bound")
+        result = await native.execute(brief=brief)
+        result["requested_tools"] = requested
+        return result
 
-    return StructuredTool.from_function(
+    tool = StructuredTool.from_function(
         name=native.name,
-        description=native.description,
+        description=native.description + " Put exact approved read-tool names in tools; Scout executes those tools directly.",
         coroutine=_run,
     )
+    from src.core.orchestration.scout_tool_policy import scout_tool_allowed
+    from src.infrastructure.tools.schema.schema_builder import attach_parameters_schema
+    schema = tool.args_schema.model_json_schema()
+    allowed = sorted(e["name"] for e in menu or [] if scout_tool_allowed(e.get("name", ""), tool_registry))
+    schema["properties"]["tools"] = {"type": "array", "items": {"type": "string", "enum": allowed},
+        "description": "Exact approved Scout tool names. Do not request gateway or connector management tools."} if allowed else {"type": "array", "maxItems": 0, "items": {"type": "string"}}
+    from src.infrastructure.tools.schema.argument_validation import wrapper_feedback
+    tool.handle_validation_error = wrapper_feedback(native.name, schema)
+    return attach_parameters_schema(tool, schema)
 
 
 def _build_propose_plan_tool() -> StructuredTool:
@@ -356,9 +387,11 @@ async def _run_planner_tool_loop(
             planning_tools.append(ask_tool)
     decision_tools: List[Any] = [_build_skip_scout_tool()]
     if allow_dispatch and dispatch_count < max_dispatch:
-        decision_tools.insert(0, _build_dispatch_scout_tool())
+        decision_tools.insert(0, _build_dispatch_scout_tool(tool_registry, menu))
     coverage_tools = [_build_review_scout_tool(allow_dispatch and dispatch_count < max_dispatch)]
-    bound = decision_tools if decision_required else coverage_tools if coverage_required else planning_tools
+    from src.core.orchestration.planner_observation import prepare_bindings, valid_phase_batch
+    planning_tools, decision_tools, coverage_tools, bound, read_names = prepare_bindings(
+        state, tool_registry, planning_tools, decision_tools, coverage_tools, decision_required, coverage_required)
 
     tool_map = {getattr(t, "name", ""): t for t in bound if getattr(t, "name", None)}
 
@@ -393,25 +426,8 @@ async def _run_planner_tool_loop(
         )
         prompt += f"\n### CONFIRMED TOOL MENU\n{menu_lines}\n"
 
-    history = list(state.get("messages") or [])
-    if gather_brief and history:
-        import json
-        updated_history = []
-        for msg in history:
-            if isinstance(msg, ToolMessage) and (
-                getattr(msg, "name", "") in ("dispatch_scout", "base_tool")
-                or "Scout dispatched" in str(msg.content)
-            ):
-                updated_history.append(
-                    ToolMessage(
-                        content=json.dumps({"success": True, "result": "See SCOUT EVIDENCE for findings and gaps."} if evidence_context else {"success": True, "gather_brief": gather_brief, "result": gather_brief}),
-                        tool_call_id=msg.tool_call_id,
-                        name=getattr(msg, "name", "dispatch_scout"),
-                    )
-                )
-            else:
-                updated_history.append(msg)
-        history = updated_history
+    from src.core.orchestration.planner_observation import planning_history
+    history = planning_history(state, gather_brief, evidence_context)
     messages: List[Any] = [SystemMessage(content=prompt)] + history
     thinking_level = _planner_thinking_level(model)
     planner_model = model.copy(update={"thinking_level": thinking_level, "max_tokens": 4096}).bind_tools(bound)
@@ -448,7 +464,7 @@ async def _run_planner_tool_loop(
                 feedback=state.get("validation_feedback"),
             )
 
-        if (decision_required or coverage_required) and (len(tool_calls) != 1 or tool_calls[0].get("name") not in tool_map):
+        if not valid_phase_batch(tool_calls, read_names, set(tool_map) - read_names, decision_required or coverage_required):
             # Reject the whole batch: a mixed dispatch+proposal must never skip recon.
             for tc in tool_calls:
                 error = ToolMessage(
@@ -477,9 +493,8 @@ async def _run_planner_tool_loop(
                     return await tool.coroutine(**args)
 
                 try:
-                    if name == "dispatch_scout":
-                        # Scout owns the dispatch lifecycle until gathering finishes.
-                        # Completing it here produces an empty, already-done UI panel.
+                    if name == "dispatch_scout" or name in read_names:
+                        # Scout owns dispatch; registry read wrappers emit their own lifecycle.
                         raw = await _run()
                     else:
                         raw = await run_with_tool_lifecycle(name, args, _run)
@@ -561,6 +576,7 @@ async def _run_planner_tool_loop(
                 state["scout_coverage"] = None
                 return {
                     "scout_gather_request": brief,
+                    "scout_requested_tools": raw.get("requested_tools") or [],
                     "scout_correlation_id": tc.get("id") or f"scout_{uuid.uuid4().hex}",
                     "scout_dispatch_count": dispatch_count + 1,
                     "messages": new_messages,

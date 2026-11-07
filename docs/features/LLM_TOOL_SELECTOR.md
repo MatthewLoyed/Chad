@@ -132,3 +132,23 @@ Latency for the 9B selection call: ~4–7s. This runs before the main model turn
 | `tests/manual/test_9b_tool_selector.py` | Initial v1 proof-of-concept (30 tools, 10 queries) |
 | `tests/manual/test_9b_tool_selector_v2.py` | v2 comparison: full registry vs RAG candidates vs strict prompt |
 | `tests/manual/test_9b_full_replace.py` | Before/after tool count benchmark (the definitive test) |
+
+
+## Per-need selection and Scout observation
+
+`tools.per_need_selection` (default false) uses `selection/needs_selector.py` to extract typed needs, select tools per need with the original task context, and preserve the union. There is no capability whitelist that drops unfamiliar tools. Failed/unresolved selection explicitly falls back to the existing flat selector and retains the failed need mapping in diagnostics. Model-only composition is allowed, but external retrieval cannot be declared complete without a tool merely because the extractor emitted `no_tool`.
+
+Planner receives selected tool descriptions in its confirmed menu and delegates observation to Scout. Task tools are never executable Planner bindings. Scout inherits selected native reads such as `get_calendar_events`. Its `scout_mcp_read` gateway discovers connected servers' live schemas and permits calls with explicit `readOnlyHint=true` and without `destructiveHint=true`. The legacy GitHub server lacks annotations: `mcp_classification.py` explicitly audits all 26 operations of `@modelcontextprotocol/server-github@2025.4.8` (14 reads allowed, 12 writes denied). New or unknown legacy operations are denied, even if they claim read-only. An explicit negative read hint or destructive hint overrides the audit. Other unannotated operations and generic `call_mcp_tool` remain blocked. Schemas and policy are rechecked on each call, including argument validation. MCP read annotations come from the configured server, never model arguments.
+
+The optional positive availability cache (`tools.selector_availability_ttl_s`, default zero/off) is implemented in `selection/model_availability.py`. Model-use protection remains in `active_use_sync`; registry ownership and priority still run on refresh. Configuration changes key separate entries; cleared resolved IDs force residency-loss refresh. Keep disabled where lifecycle/unload coordination is not verified.
+
+At the execution boundary, `tools/dispatch.py` validates against registered schemas before executor dispatch. Optional nulls that the schema disallows are omitted; required nulls are rejected. Calendar bounds additionally require valid timezone-qualified RFC3339 timestamps and increasing bounds. Invalid calls return the shared `bad_input` envelope with schema/field guidance and `dispatched=false`, without contacting the connector. StructuredTool argument-model errors use the same feedback form. Tool permission and approval policies still apply after argument validity is established.
+
+
+### Live MCP read index for planning
+
+`MCPScanner` builds a namespaced read index from live `tools/list` responses using the same audited permission policy as the Scout gateway. Raw MCP tools are excluded from the planning selector catalog; only approved aliases such as `github__list_commits` enter it. Full schemas stay in the registry and are bound only after selection. Planner sees selected descriptions, names tools in `dispatch_scout.tools`, and Scout inherits those direct bindings. The gateway remains a fallback.
+
+Before planning selection, the index refreshes after `tools.mcp_read_index_ttl_s` (30 seconds by default). Server replacement/removal drops old aliases; removed or revoked operations disappear on refresh. Planner dispatch and every direct invocation force a fresh server schema/policy check, so cached selection is not authorization. Changed arguments validate against the current schema. Failed binding returns a shared nonretryable `binding_unavailable` result to Planner before Scout dispatch; a transport failure during Scout execution is retained for the turn so changed-argument retries cannot silently repeat it. A successful refresh never turns an unknown legacy GitHub operation into an approved read.
+
+This is a planning/Scout observation path. It does not expose task tools as executable Planner bindings or change specialist write workflows.

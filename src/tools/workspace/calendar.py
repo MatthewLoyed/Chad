@@ -147,11 +147,13 @@ class GetCalendarEventsTool(BaseTool):
                     },
                     "time_min": {
                         "type": "string",
-                        "description": "Optional start boundary in ISO format (defaults to current time)"
+                        "format": "date-time",
+                        "description": "Optional timezone-qualified RFC3339 start boundary (defaults to current time)"
                     },
                     "time_max": {
                         "type": "string",
-                        "description": "Optional end boundary in ISO format"
+                        "format": "date-time",
+                        "description": "Optional timezone-qualified RFC3339 end boundary"
                     },
                     "calendar_id": {
                         "type": "string",
@@ -187,14 +189,14 @@ class GetCalendarEventsTool(BaseTool):
 
             # Resolve time_min
             if time_min:
-                resolved_min = time_min if time_min.endswith('Z') or '+' in time_min else time_min + 'Z'
+                resolved_min = time_min  # Registry validates timezone-qualified RFC3339.
             else:
                 resolved_min = now_utc.isoformat()
 
             # Resolve time_max
             resolved_max: Optional[str] = None
             if time_max:
-                resolved_max = time_max if time_max.endswith('Z') or '+' in time_max else time_max + 'Z'
+                resolved_max = time_max  # Preserve negative offsets; appending Z corrupts them.
             elif hours_ahead is not None and hours_ahead > 0:
                 resolved_max = (now_utc + timedelta(hours=hours_ahead)).isoformat()
 

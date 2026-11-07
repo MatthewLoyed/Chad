@@ -5,6 +5,8 @@ from src.core.orchestration.nodes import planner_node as planner
 
 
 def call(name, args, ident="call"):
+    if name == "dispatch_scout":
+        args = {"tools": [], **args}
     return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": ident}])
 
 

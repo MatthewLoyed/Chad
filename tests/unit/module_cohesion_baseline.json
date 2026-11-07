@@ -50,7 +50,6 @@
   "class:src/tools/canvas/manager.py:CanvasManager": 411,
   "class:src/infrastructure/database/local_postgrest.py:LocalPostgrestShim": 408,
   "class:src/tools/filesystem/file_manager.py:FileManagerTool": 403,
-  "class:src/infrastructure/tools/schema/schema_builder.py:ToolSchemaBuilder": 401,
   "func:src/core/orchestration/coordinators/tool_coordinator.py:execute_batch": 390,
   "func:src/infrastructure/tools/execution/executor_strategy.py:execute": 382,
   "func:src/core/orchestration/handoffs.py:create_handoff_tools": 343,

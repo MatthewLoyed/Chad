@@ -53,7 +53,7 @@ def resolve_env_value(raw: Any) -> str:
         # match the placeholder regex below, so falling through to it here
         # would make an unset credential look "resolved" (#216).
         key = text[1:-1]
-        return os.getenv(key, "")
+        return os.getenv(key, "") or ConfigManager.get_secret(key, "")
     if text.startswith("${") and text.endswith("}"):
         return os.getenv(text[2:-1], "")
     return os.path.expandvars(text)
@@ -144,7 +144,7 @@ def get_effective_mcp_servers(prefs: dict | None = None) -> dict[str, dict]:
         ok, _ = mcp_credentials_satisfied(cfg)
         if not ok:
             continue
-        effective[name] = cfg
+        effective[name] = {**cfg, "env": {key: resolve_env_value(value) for key, value in (cfg.get("env") or {}).items()}}
     return effective
 
 

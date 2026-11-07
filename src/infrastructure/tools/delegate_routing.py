@@ -65,6 +65,7 @@ SUPERVISOR_EXCLUDED_CATEGORIES: tuple[str, ...] = (
     "supabase",
     "spotify",
     "mcp",
+    "mcp_reads",  # Planner describes these; only Scout binds the selected reads.
 )
 
 # Subagent handling each excluded category. If the subagent is disabled,

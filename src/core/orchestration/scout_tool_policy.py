@@ -4,7 +4,7 @@ from typing import Any
 
 # Audited native retrieval operations. Mixed memory operations are checked per call.
 READ_TOOLS = frozenset({
-    "check_app_exists", "web_search", "search_for_tool", "read_file", "list_directory", "read_pdf",
+    "scout_mcp_read", "check_app_exists", "web_search", "search_for_tool", "read_file", "list_directory", "read_pdf",
     "manage_user_memory", "search_contacts", "search_gmail", "read_gmail", "get_gmail_history",
     "google_drive_search", "google_drive_list_folder", "google_drive_read_file",
     "get_calendar_events", "read_outlook_emails", "search_outlook_emails",

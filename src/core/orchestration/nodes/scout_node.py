@@ -159,7 +159,24 @@ def _bind_scout_tools(
         if tool:
             direct_tools.append(tool)
 
-    bound = [t for t in (handoff_tools or []) if scout_tool_allowed(getattr(t, "name", ""), tool_registry)] + direct_tools
+    from src.core.orchestration.scout_mcp import gateway
+    mcp_read = gateway(tool_registry)
+    if mcp_read is not None:
+        direct_tools.append(mcp_read)
+
+    # Bind supervisor's turn-selected tools directly into Scout if allowed by policy
+    turn_tools: List[Any] = []
+    requested = [{"name": name} for name in state.get("scout_requested_tools") or []]
+    for item in (state.get("tools") or []) + requested:
+        tname = item.get("name") if isinstance(item, dict) else getattr(item, "name", None)
+        if not tname or tname in _SCOUT_BLOCKED_TOOLS:
+            continue
+        if scout_tool_allowed(tname, tool_registry):
+            t_obj = tool_registry.get_langchain_tool_by_name(tname)
+            if t_obj and not any(getattr(t, "name", "") == tname for t in (direct_tools + turn_tools)):
+                turn_tools.append(t_obj)
+
+    bound = [t for t in (handoff_tools or []) if scout_tool_allowed(getattr(t, "name", ""), tool_registry)] + turn_tools + direct_tools
     tool_map = {getattr(t, "name", ""): t for t in bound if getattr(t, "name", None)}
     return bound, tool_map
 

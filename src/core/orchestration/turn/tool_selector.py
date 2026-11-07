@@ -110,6 +110,10 @@ class TurnToolSelector:
                     },
                 )
 
+        if category == "planning" and hasattr(self.tool_registry, "_tools"):
+            from src.infrastructure.tools.mcp_read_index import read_index
+            await read_index(self.tool_registry).refresh()
+
         # 1. Try smart schema extraction.
         # IMPORTANT: get_schemas_for_turn makes a synchronous HTTP call to the LLM selector
         # (urllib.request.urlopen, blocking). Running it directly would freeze the async event

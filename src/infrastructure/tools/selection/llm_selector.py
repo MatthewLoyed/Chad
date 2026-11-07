@@ -31,6 +31,7 @@ from src.core.intelligence.model_lifecycle import (
 )
 from src.core.intelligence.provider_capabilities import get_capabilities_for_url, is_residency_loss_error
 from src.shared.logger import setup_logger
+from .model_availability import finish_selection
 
 try:
     from langsmith import traceable
@@ -426,7 +427,7 @@ class LLMToolSelector:
             )
             return selected
         finally:
-            self._maybe_unload_after_use()
+            finish_selection(self)
 
     # ------------------------------------------------------------------
     # LM Studio lifecycle
@@ -446,83 +447,8 @@ class LLMToolSelector:
     _OWNER = OWNER_TOOL_SELECTOR
 
     def _ensure_model_loaded(self) -> bool:
-        """
-        Verify the inference backend is up and a model is available for tool selection.
-
-        Preference order:
-        1. Configured selector model (exact or quant-suffix match)
-        2. Load the selector model when the backend is idle (nothing loaded)
-        3. Reuse whatever model is already loaded (avoids evicting the user's
-           active chat model when a different weights file is in memory)
-
-        The actual load/unload HTTP calls, locking, and VRAM-budget eviction are delegated to
-        ``model_lifecycle`` (the shared coordinator) — this method only decides WHICH model to
-        target and registers our claim on it so nothing else evicts it mid-selection.
-        """
-        if not self._is_server_reachable():
-            self._unavailable_reason = "lm_studio_unreachable"
-            return False
-
-        # Read once here (same thread/task as the caller) — an autonomous/heartbeat turn's
-        # claim queues behind an active interactive turn instead of evicting it out from
-        # under a live conversation. See model_lifecycle.current_priority().
-        priority = current_priority()
-
-        loaded_ids = self._list_loaded_models()
-        matched = self._match_model_id(self._model_id, loaded_ids)
-        if matched:
-            ensure_resident_sync(self._base_url, matched, owner=self._OWNER, priority=priority)
-            self._resolved_model_id = matched
-            self._unavailable_reason = None
-            return True
-
-        # Non-strict (default): reuse whatever is already loaded rather than evicting the user's
-        # active chat model. This is convenient but NON-DETERMINISTIC — different turns can run on
-        # different models, which shows up as tool-selection variance. Strict mode pins the
-        # configured selector model: load it first, only reuse a different model if the load fails.
-        if loaded_ids and not self._strict_model:
-            self._resolved_model_id = loaded_ids[0]
-            ensure_resident_sync(self._base_url, self._resolved_model_id, owner=self._OWNER, priority=priority)
-            self._unavailable_reason = None
-            logger.info(
-                f"[ LLM_SELECTOR ] Selector model '{self._model_id}' not loaded; "
-                f"reusing active LM Studio model '{self._resolved_model_id}'."
-            )
-            return True
-
-        logger.info(
-            f"[ LLM_SELECTOR ] Model '{self._model_id}' not loaded — "
-            f"requesting load from LM Studio..."
-        )
-        if ensure_resident_sync(
-            self._base_url,
-            self._model_id,
-            owner=self._OWNER,
-            priority=priority,
-            timeout=_DEFAULT_LOAD_TIMEOUT,
-            context_length=self._context_length,
-        ):
-            self._resolved_model_id = self._model_id
-            self._unavailable_reason = None
-            logger.info(f"[ LLM_SELECTOR ] Model '{self._model_id}' loaded and ready.")
-            return True
-
-        # Last resort even in strict mode: reuse a loaded model rather than disabling the
-        # selector entirely (which would force the RAG-only fallback or abort the turn).
-        loaded_ids = self._list_loaded_models()
-        if loaded_ids:
-            self._resolved_model_id = loaded_ids[0]
-            ensure_resident_sync(self._base_url, self._resolved_model_id, owner=self._OWNER, priority=priority)
-            self._unavailable_reason = None
-            logger.warning(
-                f"[ LLM_SELECTOR ] Could not load '{self._model_id}'; "
-                f"reusing loaded model '{self._resolved_model_id}' as last resort."
-            )
-            return True
-
-        self._unavailable_reason = f"load_failed:{self._model_id}"
-        logger.warning(f"[ LLM_SELECTOR ] Failed to load '{self._model_id}' in LM Studio.")
-        return False
+        from .model_availability import ensure_available
+        return ensure_available(self)
 
     def _request_headers(self) -> Dict[str, str]:
         """Use the selected endpoint's credential, otherwise its provider default."""

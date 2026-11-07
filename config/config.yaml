@@ -240,6 +240,10 @@ tools:
   web_search_playwright_search_fallback: true
   llm_selector_model: qwen2.5-3b-instruct
   llm_selector_fail_fast: true
+  # Optional per-need selection; old selector remains rollback path.
+  mcp_read_index_ttl_s: 30  # Refresh live approved MCP reads before selection; force recheck on dispatch.
+  per_need_selection: false
+  selector_availability_ttl_s: 0  # Opt-in positive cache; model-use lifecycle guards remain active.
   # Hybrid selection: deterministic RAG shortlist -> 3B picks from it (vs 3B over the full
   # catalog). Narrows run-to-run variance without dropping plausibly-needed tools.
   # Env CHAD_HYBRID_SELECTION=0/1 overrides this for A/B benchmarking.

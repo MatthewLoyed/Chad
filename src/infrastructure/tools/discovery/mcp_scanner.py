@@ -42,6 +42,9 @@ class MCPScanner:
             else:
                 logger.warning(f"[ MCP ] Server '{server.name}' registered {len(tools)} tools.")
 
+            from src.infrastructure.tools.mcp_read_index import read_index
+            read_index(self.registry).replace(server, tools)
+
             # Register each tool
             excluded = server.config.get('excluded_tools', [])
             for tool_metadata in tools:
