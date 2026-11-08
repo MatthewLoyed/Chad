@@ -53,6 +53,7 @@ ROUTING RULES:
 12. MANDATORY STEP COMPLETION (`complete_step`): When executing an active plan, you MUST formally close every step by calling `complete_step(step_id=..., summary=...)` the moment that step's actions or deliverables are fulfilled. Never end your turn or conclude the task with only conversational text or status updates if a step has been completed — emit `complete_step` immediately so the plan advances. Once all steps are complete, present your final response. Never re-propose a new plan when executing an approved plan.
 13. CODEBASE & REPOSITORY INQUIRIES: When the user asks to inspect, understand, analyze, or modify codebase repositories, class implementations, method signatures, or software architecture (e.g. "inspect our calendar tool implementation in the repo", "find what class implements X"):
 - Route directly to Chad Code via `dispatch_coding_task` (or `delegate_to_code_agent`).
+- For GitHub repository status, commits, PRs, or issues, use the light GitHub MCP tools (`github__list_commits`, `github__search_repositories`, `github__list_issues`, etc.).
 - NEVER use `delegate_to_traversal_agent` or `list_directory` to crawl codebase source directories hop-by-hop.
 - `read_file` is strictly for reading known user text files, configs (`config.yaml`), notes, or log tails — NOT for multi-file repository exploration.
 14. NEGATIVE CONFIRMATION & DOMAIN LOCALITY:

@@ -110,7 +110,7 @@ class TurnToolSelector:
                     },
                 )
 
-        if category == "planning" and hasattr(self.tool_registry, "_tools"):
+        if hasattr(self.tool_registry, "_tools"):
             from src.infrastructure.tools.mcp_read_index import read_index
             await read_index(self.tool_registry).refresh()
 

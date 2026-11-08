@@ -116,8 +116,11 @@ class GetCalendarEventsTool(BaseTool):
     name = "get_calendar_events"
     description = (
         "Get upcoming events from Google Calendar. Can filter by keyword/search query, "
-        "lookahead window (hours_ahead), or specific time boundaries. Returns event summaries, "
-        "start/end times, locations, and relative time (e.g. 'starts in 15 mins')."
+        "lookahead window (hours_ahead), day shortcut (day='today'), or specific time boundaries. "
+        "Returns event summaries, start/end times, locations, and relative time (e.g. 'starts in 15 mins'). "
+        "Examples: get_calendar_events(day='today') retrieves all events for today from local midnight to midnight; "
+        "get_calendar_events(hours_ahead=24) retrieves upcoming events in the next 24 hours; "
+        "get_calendar_events(search_query='Meeting') searches for specific events."
     )
     category = "calendar"
 
@@ -140,6 +143,10 @@ class GetCalendarEventsTool(BaseTool):
                     "search_query": {
                         "type": "string",
                         "description": "Optional keyword or title to filter events by (e.g., 'Class', 'Meeting', 'Project')"
+                    },
+                    "day": {
+                        "type": "string",
+                        "description": "Optional day filter shortcut, e.g. 'today' or 'YYYY-MM-DD'. Automatically sets the time window from local midnight to next local midnight."
                     },
                     "hours_ahead": {
                         "type": "integer",
@@ -172,6 +179,7 @@ class GetCalendarEventsTool(BaseTool):
         hours_ahead: Optional[int] = None,
         time_min: Optional[str] = None,
         time_max: Optional[str] = None,
+        day: Optional[str] = None,
         calendar_id: str = "primary",
         **kwargs
     ) -> Dict[str, Any]:
@@ -186,6 +194,23 @@ class GetCalendarEventsTool(BaseTool):
             now_utc = datetime.now(timezone.utc)
             local_tz = _get_local_timezone()
             now_local = datetime.now(local_tz)
+
+            # If day is specified (e.g. 'today' or 'YYYY-MM-DD'), compute local midnight boundaries
+            if day:
+                day_clean = str(day).strip().lower()
+                if day_clean == "today":
+                    target_date = now_local.date()
+                else:
+                    try:
+                        target_date = datetime.fromisoformat(day_clean).date()
+                    except ValueError:
+                        target_date = now_local.date()
+                day_start = datetime.combine(target_date, datetime.min.time(), tzinfo=local_tz)
+                day_end = day_start + timedelta(days=1)
+                if not time_min:
+                    time_min = day_start.isoformat()
+                if not time_max:
+                    time_max = day_end.isoformat()
 
             # Resolve time_min
             if time_min:

@@ -72,6 +72,13 @@ async def test_get_calendar_events_tool():
         assert event["location"] == "Brock Hall 204"
         assert "starts_in_minutes" in event
 
+        # Test day='today' parameter
+        result_today = await tool.execute(day="today")
+        assert result_today["success"] is True
+        call_kwargs = mock_events.list.call_args[1]
+        assert "timeMin" in call_kwargs and "timeMax" in call_kwargs
+        assert call_kwargs["timeMin"] < call_kwargs["timeMax"]
+
 
 @pytest.mark.asyncio
 async def test_add_calendar_event_tool():

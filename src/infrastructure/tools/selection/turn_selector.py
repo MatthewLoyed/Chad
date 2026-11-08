@@ -373,6 +373,22 @@ class TurnToolSelector:
                 if tool_name not in expanded and tool_name in self._tools:
                     expanded.append(tool_name)
 
+        # GitHub / Git repository intent seeding (commits, PRs, issues, repository status)
+        github_intent = any(
+            token in q
+            for token in (
+                "github", "commit", "commits", "pull request", "pull requests", " pr ", "prs",
+                "repository", "repo status", "git commit", "git log", "git repo",
+            )
+        )
+        if github_intent:
+            for tool_name in (
+                "github__list_commits", "github__search_repositories",
+                "github__list_issues", "github__list_pull_requests", "dispatch_coding_task",
+            ):
+                if tool_name not in expanded and tool_name in self._tools:
+                    expanded.append(tool_name)
+
         return expanded
 
     def _selector_fail_fast(self) -> bool:
