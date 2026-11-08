@@ -17,6 +17,10 @@ parent_correlation_id_var: ContextVar[Optional[str]] = ContextVar("parent_correl
 # without threading it through RunnableConfig/exec_params across every layer.
 search_budget_var: ContextVar[Optional[Any]] = ContextVar("search_budget", default=None)
 
+# Turn-level direct web search counter (when outside deep_research_agent).
+# Prevents supervisor scout loops by gating consecutive web searches at 3-5 calls.
+direct_search_count_var: ContextVar[int] = ContextVar("direct_search_count", default=0)
+
 # LangGraph runtime.heartbeat() for the active timed node attempt.
 progress_heartbeat_var: ContextVar[Optional[Callable[[], None]]] = ContextVar(
     "progress_heartbeat", default=None

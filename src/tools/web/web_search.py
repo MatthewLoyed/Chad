@@ -784,7 +784,7 @@ class WebSearchTool(BaseTool):
 
 
 
-        from src.core.orchestration.context import search_budget_var
+        from src.core.orchestration.context import direct_search_count_var, search_budget_var
 
         budget = search_budget_var.get()
 
@@ -802,6 +802,20 @@ class WebSearchTool(BaseTool):
 
                 ),
 
+            }
+
+        # Direct supervisor web search gating (when outside deep_research_agent)
+        direct_count = direct_search_count_var.get() + 1
+        direct_search_count_var.set(direct_count)
+
+        if budget is None and direct_count > 5:
+            return {
+                "success": False,
+                "error": "Web search limit reached (maximum 5 searches per turn without deep_research_agent).",
+                "harness_hint": (
+                    "HARNESS NOTE: Direct web search cap reached (5/5). Do NOT call web_search again. "
+                    "Synthesize your final response immediately using the findings collected so far."
+                ),
             }
 
 
@@ -935,6 +949,11 @@ class WebSearchTool(BaseTool):
 
                 "retryable": False,
 
+                "harness_hint": (
+                    "HARNESS NOTE: Web search returned 0 results. Do NOT continue calling web_search with rephrased queries. "
+                    "Synthesize and answer the user directly with available knowledge or state that no results were found."
+                ),
+
                 "next_actions": [
 
                     "Do NOT call web_search again — the search backend is offline.",
@@ -985,11 +1004,24 @@ class WebSearchTool(BaseTool):
 
             caption += " " + " ".join(warnings)
 
-
+        harness_hint = None
+        if budget is None:
+            if direct_count == 3:
+                harness_hint = (
+                    "HARNESS NOTE: You have completed 3 web searches and have sufficient information. "
+                    "Do NOT call web_search again. Synthesize and deliver your final answer to the user in chat now."
+                )
+            elif direct_count >= 4:
+                harness_hint = (
+                    f"HARNESS NOTE: You have completed {direct_count} web searches for this turn. "
+                    "Do NOT call web_search again. Synthesize and deliver your final answer to the user in chat now."
+                )
 
         return {
 
             "success": True,
+
+            "harness_hint": harness_hint,
 
             "search_status": search_status,
 

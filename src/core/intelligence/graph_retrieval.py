@@ -641,6 +641,8 @@ class GraphRetriever:
             "wedding": {"wedding", "venue", "married", "ceremony", "fiancée", "fiancee"},
             "projects": {"project", "projects", "youtube", "channel"},
             "family": {"family", "fiancée", "fiancee", "parent", "brother", "sister"},
+            "interests": {"food", "foods", "hobby", "hobbies", "interests", "favorite", "cook", "cooking", "music"},
+            "food": {"food", "foods", "eat", "cook", "cooking", "dinner", "lunch", "recipe", "snack", "snacks"},
         }
 
         scored = []
@@ -659,7 +661,14 @@ class GraphRetriever:
             if score == 0.0:
                 # Keyword fallback (also fills when embeddings unavailable)
                 c_words = set(re.findall(r"[a-z0-9]+", content.lower()))
-                score = len(q_words & c_words) / max(len(q_words), 1)
+                _stop = {
+                    "who", "what", "where", "when", "why", "how", "is", "are", "was", "were",
+                    "the", "a", "an", "my", "me", "i", "to", "of", "for", "and", "or", "in",
+                    "on", "at", "do", "does", "did", "about", "tell", "with", "from",
+                    "next", "step", "steps",
+                }
+                denom_words = (q_words - _stop) or q_words
+                score = len(denom_words & c_words) / max(len(denom_words), 1)
 
             topic = (data.get("topic") or "").lower()
             if topic in topic_hints and (topic_hints[topic] & q_words):

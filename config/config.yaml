@@ -228,7 +228,7 @@ tools:
   # ONLY (no SearXNG, no Playwright) — round-robins across whichever of Serper/Tavily/
   # Brave are configured, spreading usage across keys/quotas instead of always hitting
   # the same one first. See docs/features/WEB_SEARCH.md.
-  search_backend: searxng
+  search_backend: all
   searxng_url: http://127.0.0.1:8080
   # Max queries per `web_search` call (batch cap). Research agent prompts target this size.
   web_search_max_queries: 10
