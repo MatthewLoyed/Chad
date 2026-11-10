@@ -78,7 +78,7 @@ _CATEGORY_ENTITY_TYPES: dict[str, frozenset] = {
     "Document": frozenset({
         "document", "documents", "folder", "folders", "spreadsheet", "roadmap", "drive",
     }),
-    "Project": frozenset({"project", "projects"}),
+    "Project": frozenset({"project", "projects", "app", "apps", "software", "tool", "tools"}),
     "Event": frozenset({"event", "events"}),
 }
 # Per type, per query. Bounds the blast radius when a user has a large catalog:
@@ -206,15 +206,18 @@ class GraphRetriever:
         # matches for free.
         ego_id = self.ego_node_id()
         if ego_id in self._graph and self._graph.nodes[ego_id].get("valid", True):
-            ego_triggers = (
-                "groomsmen", "groomsman", "best man", "bestman", "wedding party",
-                "my family", "my friends", "my fiancée", "my fiancee", "my fiancé",
-                "my fiance", "my partner", "my spouse", "my wife", "my husband",
-                "in-laws", "inlaws", "youtube", "my channel", "my channels",
-                "my wedding", "our wedding", "where do i work",
-                "my job", "my internship",
+            first_person = {"i", "me", "my", "mine", "we", "us", "our", "ours"}
+            has_first_person = bool(first_person & raw_words)
+
+            social_triggers = (
+                "groomsmen", "groomsman", "best man", "bestman", "best woman", "bestwoman",
+                "wedding party", "my family", "our family", "my friends", "my fiancée", "my fiancee",
+                "my fiancé", "my fiance", "my partner", "our partner", "my spouse", "my wife",
+                "my husband", "better half", "significant other", "in-laws", "inlaws", "in laws",
+                "my wedding", "our wedding", "ceremony"
             )
-            if any(t in q for t in ego_triggers):
+            pet_triggers = ("corgi", "my dog", "our dog", "my pet", "our pet", "my cat", "our cat")
+            if any(t in q for t in social_triggers) or any(t in q for t in pet_triggers):
                 scored.append((ego_id, 0.95))
 
         # Life-area shortcuts. These seed the EGO node and let the typed walk find
@@ -228,9 +231,10 @@ class GraphRetriever:
         # entity and so previously produced no seed and no works_with edge at all.
         work_terms = {"intern", "internship", "job", "employer", "employed", "company",
                       "coworker", "coworkers", "colleague", "colleagues", "teammate", "teammates",
-                      "occupation", "profession"}
+                      "occupation", "profession", "payroll", "paycheck", "salary", "boss"}
         work_phrases = ("where do i work", "currently work", "my job", "at work", "i work with",
-                        "work with", "my team", "my office", "my boss", "my company")
+                        "work with", "my team", "my office", "my boss", "my company", "on payroll",
+                        "clock in", "draw a paycheck")
 
         # "Where did I USED TO work" names no entity and matches no work phrase,
         # so without this it produced no seed and the expired edge was
@@ -430,12 +434,12 @@ class GraphRetriever:
         # Boost edges whose relation matches what the user is asking about.
         relation_boosts = (
             (("fiancé", "fiance", "fiancée", "fiancee", "partner", "girlfriend",
-              "boyfriend", "wife", "husband", "significant other"),
+              "boyfriend", "wife", "husband", "significant other", "better half"),
              ("partner_of",)),
             (("family", "father", "mother", "dad", "mom", "brother", "sister",
-              "parent", "sibling", "son", "daughter"),
+              "parent", "sibling", "son", "daughter", "in-laws", "inlaws", "in laws"),
              ("parent_of", "child_of", "sibling_of", "partner_of")),
-            (("groomsmen", "groomsman", "best man", "bestman", "wedding party"),
+            (("groomsmen", "groomsman", "best man", "bestman", "best woman", "bestwoman", "wedding party", "entourage"),
              ("best_man_of", "groomsman_of", "friend_of")),
             (("wedding", "venue", "married", "ceremony"),
              ("happened_at", "attended", "located_at", "in_service_of", "occurs_on", "about")),
@@ -448,7 +452,7 @@ class GraphRetriever:
             # Employer-specific phrases only. Deliberately NOT a bare "work":
             # that matches "how tcp handshakes work" and drags the whole career
             # subgraph into unrelated turns (the `neg-tcp` regression).
-            (("where do i work", "currently work", "my job", "employer", "employed", "my company"),
+            (("where do i work", "currently work", "my job", "employer", "employed", "my company", "payroll", "paycheck", "salary", "clock in"),
              ("employed_by", "member_of")),
             # "university"/"college"/"campus" seed the walk via school_terms in
             # seed_entity_ids but were missing here, so the `attended` edge they
@@ -466,7 +470,7 @@ class GraphRetriever:
              ("partner_of",)),
             (("gift", "gifts", "birthday", "surprise", "celebrate"),
              ("partner_of", "parent_of", "sibling_of", "child_of")),
-            (("youtube", "channel", "channels"),
+            (("youtube", "channel", "channels", "app", "apps", "pet", "pets", "corgi", "dog", "dogs", "cat", "cats"),
              ("owns",)),
             (("friend", "friends"),
              ("friend_of",)),
