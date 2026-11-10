@@ -209,7 +209,8 @@ class GraphRetriever:
             ego_triggers = (
                 "groomsmen", "groomsman", "best man", "bestman", "wedding party",
                 "my family", "my friends", "my fiancée", "my fiancee", "my fiancé",
-                "my fiance", "youtube", "my channel", "my channels",
+                "my fiance", "my partner", "my spouse", "my wife", "my husband",
+                "in-laws", "inlaws", "youtube", "my channel", "my channels",
                 "my wedding", "our wedding", "where do i work",
                 "my job", "my internship",
             )
@@ -225,10 +226,11 @@ class GraphRetriever:
         # "work" alone is too broad (matches "workout" / "how X works"); require a
         # workish phrase or term. Phrases cover "who do I work with", which names no
         # entity and so previously produced no seed and no works_with edge at all.
-        work_terms = {"intern", "internship", "job", "employer", "coworker", "coworkers",
-                      "colleague", "colleagues", "teammate", "teammates"}
-        work_phrases = ("where do i work", "my job", "at work", "i work with",
-                        "work with", "my team", "my office", "my boss")
+        work_terms = {"intern", "internship", "job", "employer", "employed", "company",
+                      "coworker", "coworkers", "colleague", "colleagues", "teammate", "teammates",
+                      "occupation", "profession"}
+        work_phrases = ("where do i work", "currently work", "my job", "at work", "i work with",
+                        "work with", "my team", "my office", "my boss", "my company")
 
         # "Where did I USED TO work" names no entity and matches no work phrase,
         # so without this it produced no seed and the expired edge was
@@ -446,7 +448,7 @@ class GraphRetriever:
             # Employer-specific phrases only. Deliberately NOT a bare "work":
             # that matches "how tcp handshakes work" and drags the whole career
             # subgraph into unrelated turns (the `neg-tcp` regression).
-            (("where do i work", "my job", "employer", "employed", "my company"),
+            (("where do i work", "currently work", "my job", "employer", "employed", "my company"),
              ("employed_by", "member_of")),
             # "university"/"college"/"campus" seed the walk via school_terms in
             # seed_entity_ids but were missing here, so the `attended` edge they
