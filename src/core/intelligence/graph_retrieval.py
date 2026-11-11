@@ -400,7 +400,7 @@ class GraphRetriever:
     # examples matched a bare-cue check.)
     _HISTORY_CUES = (
         "used to", "use to", "previously", "previous", "former", "formerly",
-        "no longer", "back then", "in the past",
+        "no longer", "back then", "in the past", "before that", "before", "prior", "earlier",
     )
     _HISTORY_LIFE_TERMS = (
         "work", "worked", "job", "career", "employer", "employed", "company",
