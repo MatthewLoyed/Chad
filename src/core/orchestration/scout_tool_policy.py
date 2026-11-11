@@ -8,6 +8,8 @@ READ_TOOLS = frozenset({
     "manage_user_memory", "search_contacts", "search_gmail", "read_gmail", "get_gmail_history",
     "google_drive_search", "google_drive_list_folder", "google_drive_read_file",
     "get_calendar_events", "read_outlook_emails", "search_outlook_emails",
+    "scout_mcp_read", "get_canvas_assignments", "get_assignment_submission",
+    "get_course_grades", "get_canvas_dashboard_todos",
     "get_datetime", "fuzzy_find_local", "find_project", "search_session_history",
     "search_browser_history", "ui_find", "ui_read", "browser_snapshot",
 })
@@ -17,19 +19,21 @@ DENIED = frozenset({"call_mcp_tool", "open_app", "window_management", "run_saved
                     "escalate_to_agent", "switch_to_agent_mode", "switch_to_plan_mode",
                     "dispatch_scout", "skip_scout", "review_scout", "propose_plan",
                     "complete_step", "fail_step", "pause_for_input", "ask_user_question",
-                    "execute_approved_plan", "dispatch_coding_task", "load_skill"})
+                    "execute_approved_plan", "dispatch_coding_task", "load_skill", "kanban_board"})
 
 
 def scout_tool_allowed(name: str, registry: Any = None) -> bool:
     if name in DENIED or name.startswith("delegate_to_"):
         return False
+    raw = getattr(registry, "_tools", {}).get(name) if registry is not None else None
+    # Raw MCP entries lack a live authorization check. Scout uses the read index or gateway.
+    if isinstance(raw, dict) and (raw.get("source") == "mcp" or "mcp_server" in raw):
+        return False
     if name in READ_TOOLS:
         return True
-    # Use explicit registered metadata, never naming prefixes or model-supplied claims.
-    raw = getattr(registry, "_tools", {}).get(name) if registry is not None else None
     if isinstance(raw, dict):
         annotations = raw.get("annotations") or (raw.get("schema") or {}).get("annotations") or {}
-        return annotations.get("readOnlyHint") is True
+        return annotations.get("readOnlyHint") is True and annotations.get("destructiveHint") is not True
     if raw is not None and getattr(raw, "is_side_effecting", None) is False:
         return True
     return False

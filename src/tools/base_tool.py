@@ -18,6 +18,8 @@ class BaseTool(ABC):
     description: str = "Base tool - override this"
     category: str = "custom"  # 'web', 'system', or 'custom'
     preferred_model: Optional[str] = None  # Suggest which model works best (optional)
+    # External adapters can opt out of receiving local request and memory objects.
+    accepts_local_context: bool = True
 
     # Idempotency flag: True if tool has side effects (sends emails, messages, creates files, etc.)
     # Tools with side effects are cached to prevent duplicate execution on retries.

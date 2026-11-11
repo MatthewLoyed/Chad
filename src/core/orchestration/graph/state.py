@@ -177,6 +177,7 @@ class ChadState(TypedDict):
     confirmed_tool_menu: Optional[List[Dict[str, str]]]
     # Brief from the planner telling Scout what environment facts to gather.
     scout_gather_request: Optional[str]
+    scout_requested_tools: Optional[List[str]]
     scout_correlation_id: Optional[str]
     scout_decision: Optional[str]
     scout_evidence: Optional[List[Dict[str, Any]]]

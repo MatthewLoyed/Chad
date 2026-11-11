@@ -145,6 +145,7 @@ class TurnStateBuilder:
             "scout_decision": None,
             "scout_dispatch_count": 0,
             "scout_gather_request": None,
+            "scout_requested_tools": [],
             "confirmed_tool_menu": None,
             "system_instruction": sys_instr,
             # Pre-fetched during tool selection so graphrag_injector can reuse it
@@ -185,7 +186,8 @@ class TurnStateBuilder:
             # Evidence belongs to the checkpointed plan, including approval turns.
             # Planner explicitly resets it when a new planning episode starts.
             for key in ("scout_evidence", "scout_coverage", "scout_episode_id", "gather_brief",
-                        "scout_decision", "scout_dispatch_count", "scout_gather_request", "confirmed_tool_menu"):
+                        "scout_decision", "scout_dispatch_count", "scout_gather_request", "scout_requested_tools",
+                        "confirmed_tool_menu"):
                 state.pop(key, None)
 
         return state
