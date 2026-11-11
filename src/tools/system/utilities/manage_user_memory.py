@@ -133,7 +133,10 @@ class ManageUserMemory(BaseTool):
                     "success": True,
                     "count": len(results),
                     "results": results,
-                    "caption": f"Found {len(results)} facts matching '{query}'.",
+                    "caption": (
+                        f"Found {len(results)} facts matching '{query}'."
+                        if results else f"No facts matched '{query}' in the current memory scope."
+                    ),
                 }
 
             elif action == "forget":
