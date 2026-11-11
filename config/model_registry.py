@@ -159,6 +159,22 @@ MODELS: dict[str, ModelProfile] = {
         top_p=0.95,
         context_length=32000,
     ),
+
+    # ── Prism ML Bonsai 27B (evaluation planner & supervisor) ────────────────
+    "prism-ml/bonsai-27b": ModelProfile(
+        model_id="prism-ml/bonsai-27b",
+        provider="lmstudio",
+        base_url="http://localhost:1234/v1",
+        supports_system_message=True,
+        supports_native_tool_calls=True,
+        thinking_mode=True,
+        thinking_param_style="qwen3",
+        thinking_budget=16384,
+        thinking_effort="medium",
+        temperature=0.6,
+        top_p=0.95,
+        context_length=60416,
+    ),
 }
 
 # Common LM Studio quantised-version suffixes (":2", ":3", …).  get_profile()

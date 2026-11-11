@@ -246,6 +246,12 @@ the seed, then the relation's intrinsic importance (`_RELATION_PRIORITY` —
 name is only a final determinism tiebreak; it used to be the *effective* one,
 which sorted `partner_of` last alphabetically.
 
+Personal pet and app queries can seed the walk without an entity name. For
+user-owned entities, the edge includes a natural label based on the entity type
+so the model can distinguish a pet from a project. Historical edges require an
+explicit past-time cue and a personal-life subject. When surfaced, their
+validity date is included in the edge label.
+
 ### Injection Point 2: Personal Context Block (per LLM call)
 **File:** `src/core/intelligence/memory_engine.py` → `get_unified_context()`  
 **Called from:** `src/core/intelligence/prompt_builder.py` → `build()`  

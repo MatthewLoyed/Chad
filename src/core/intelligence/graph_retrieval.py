@@ -90,6 +90,122 @@ _CATEGORY_SEED_CAP = 3
 TOPIC_HINT_BOOST = 1.35
 
 
+_QUERY_STOPWORDS = {
+    "who", "what", "where", "when", "why", "how", "is", "are", "was", "were",
+    "the", "a", "an", "my", "me", "i", "to", "of", "for", "and", "or", "in",
+    "on", "at", "do", "does", "did", "about", "tell", "with", "from",
+    "next", "step", "steps",
+}
+
+
+_WORK_TERMS = {
+    "intern", "internship", "job", "employer", "coworker", "coworkers",
+    "colleague", "colleagues", "teammate", "teammates",
+}
+_PERSONAL_WORK_TERMS = {
+    "employed", "company", "occupation", "profession", "payroll", "paycheck", "salary", "boss",
+}
+
+
+_WORK_PHRASES = ("where do i work", "currently work", "my job", "at work", "i work with",
+                "work with", "my team", "my office", "my boss", "my company", "on payroll",
+                "clock in", "draw a paycheck")
+
+
+_RELATION_BOOSTS = (
+    (("fiancé", "fiance", "fiancée", "fiancee", "partner", "girlfriend",
+      "boyfriend", "wife", "husband", "significant other", "better half"),
+     ("partner_of",)),
+    (("family", "father", "mother", "dad", "mom", "brother", "sister",
+      "parent", "sibling", "son", "daughter", "in-laws", "inlaws", "in laws"),
+     ("parent_of", "child_of", "sibling_of", "partner_of")),
+    (("groomsmen", "groomsman", "best man", "bestman", "best woman", "bestwoman", "wedding party", "entourage"),
+     ("best_man_of", "groomsman_of", "friend_of")),
+    (("wedding", "venue", "married", "ceremony"),
+     ("happened_at", "attended", "located_at", "in_service_of", "occurs_on", "about")),
+    (("dog", "dogs", "puppy", "puppies", "pet", "pets", "cat", "cats", "corgi", "breed", "breeds"),
+     ("owns", "is_a", "member_of")),
+    (("where", "live", "lives", "location", "from"),
+     ("lives_in", "located_at")),
+    (("project", "job", "owns", "cto", "business", "intern"),
+     ("owns", "member_of", "employed_by", "related_to_project", "works_with")),
+    (("colleague", "coworker", "teammate", "team", "work with", "my boss"),
+     ("works_with", "member_of", "employed_by")),
+    # Employer-specific phrases only. Deliberately NOT a bare "work":
+    # that matches "how tcp handshakes work" and drags the whole career
+    # subgraph into unrelated turns (the `neg-tcp` regression).
+    (("where do i work", "currently work", "my job", "employer", "employed", "my company", "payroll", "paycheck", "salary", "clock in"),
+     ("employed_by", "member_of")),
+    # "university"/"college"/"campus" seed the walk via school_terms in
+    # seed_entity_ids but were missing here, so the `attended` edge they
+    # were meant to surface ranked below every family edge on its
+    # intrinsic priority. The two vocabularies have to agree.
+    (("graduate", "graduation", "school", "degree", "bachelor", "master",
+      "university", "college", "campus", "studied", "alma"),
+     ("attended", "located_at", "member_of")),
+    (("roadmap", "document", "documents", "folder", "drive", "doc"),
+     ("about", "in_service_of", "sourced_from", "mentions")),
+    # "Help me do something for/with the person I love" — the single most
+    # common personalization ask, and previously the one with no vocabulary
+    # at all, so naming the partner instead of their role lost the edge.
+    (("date", "date night", "anniversary", "romantic", "valentine", "propose"),
+     ("partner_of",)),
+    (("gift", "gifts", "birthday", "surprise", "celebrate"),
+     ("partner_of", "parent_of", "sibling_of", "child_of")),
+    (("youtube", "channel", "channels", "app", "apps", "pet", "pets", "corgi", "dog", "dogs", "cat", "cats"),
+     ("owns",)),
+    (("friend", "friends"),
+     ("friend_of",)),
+)
+
+
+_PET_ENTITY_TYPES = {"pet", "animal", "dog", "cat"}
+_PROJECT_ENTITY_TYPES = {"project", "app", "codebase", "repository"}
+_PET_POSSESSION = re.compile(
+    r"\b(?:my|our) (?:dogs?|pupp(?:y|ies)|pets?|cats?|corgi)\b|"
+    r"\b(?:dogs?|pupp(?:y|ies)|pets?|cats?|corgi) (?:do )?(?:i|we) (?:have|own)\b"
+)
+_PROJECT_POSSESSION = re.compile(
+    r"\b(?:apps?|software) (?:do )?(?:i|we) (?:have|own|build|maintain)\b|"
+    r"\b(?:apps?|software) (?:am i|are we) (?:building|maintaining|developing)\b|"
+    r"\b(?:my|our) (?:apps?|software) projects?\b"
+)
+_EGO_PHRASES = re.compile(
+    r"\b(?:groomsmen|groomsman|best man|bestman|best woman|bestwoman|wedding party|"
+    r"(?:my|our) (?:family|friends|fiancée|fiancee|fiancé|fiance|partner|spouse|wife|"
+    r"husband|wedding|channels?|job|internship)|better half|significant other|"
+    r"in[- ]?laws?|youtube|where do i work)\b"
+)
+
+
+def _owned_entity_label(entity: dict) -> str:
+    entity_type = (entity.get("entity_type") or "").lower()
+    if entity_type in _PET_ENTITY_TYPES:
+        return "You have a pet"
+    if entity_type in _PROJECT_ENTITY_TYPES:
+        return "You own the project"
+    if entity_type in {"device", "vehicle"}:
+        return f"You own the {entity_type}"
+    return "You own"
+
+
+# Generic topic words apply across graphs. Specific names match fact content.
+_TOPIC_HINTS = {
+    "school": {"graduate", "graduation", "bachelor", "master", "masters", "school",
+               "degree", "college", "university", "campus"},
+    # Bare "work" is too broad — it matches "workout" and "how X works",
+    # which floored every career fact onto technical questions.
+    "career": {"job", "intern", "internship", "employer", "employee",
+               "coworker", "workplace"},
+    "routine": {"routine", "schedule", "weekday", "wake", "morning", "summer"},
+    "wedding": {"wedding", "venue", "married", "ceremony", "fiancée", "fiancee"},
+    "projects": {"project", "projects", "youtube", "channel"},
+    "family": {"family", "fiancée", "fiancee", "parent", "brother", "sister"},
+    "interests": {"food", "foods", "hobby", "hobbies", "interests", "favorite", "cook", "cooking", "music"},
+    "food": {"food", "foods", "eat", "cook", "cooking", "dinner", "lunch", "recipe", "snack", "snacks"},
+}
+
+
 class GraphRetriever:
     """Ranks and formats knowledge-graph content for one query."""
 
@@ -172,13 +288,7 @@ class GraphRetriever:
         # exactly the pronouns that `stop` is about to discard.
         raw_words = set(q_words)
         # Drop ultra-common query filler so "who is <name>" still seeds that name.
-        stop = {
-            "who", "what", "where", "when", "why", "how", "is", "are", "was", "were",
-            "the", "a", "an", "my", "me", "i", "to", "of", "for", "and", "or", "in",
-            "on", "at", "do", "does", "did", "about", "tell", "with", "from",
-            "next", "step", "steps",
-        }
-        q_words -= stop
+        q_words -= _QUERY_STOPWORDS
 
         scored: list[tuple[str, float]] = []
         for nid, data in self._graph.nodes(data=True):
@@ -206,14 +316,7 @@ class GraphRetriever:
         # matches for free.
         ego_id = self.ego_node_id()
         if ego_id in self._graph and self._graph.nodes[ego_id].get("valid", True):
-            ego_triggers = (
-                "groomsmen", "groomsman", "best man", "bestman", "wedding party",
-                "my family", "my friends", "my fiancée", "my fiancee", "my fiancé",
-                "my fiance", "youtube", "my channel", "my channels",
-                "my wedding", "our wedding", "where do i work",
-                "my job", "my internship",
-            )
-            if any(t in q for t in ego_triggers):
+            if _EGO_PHRASES.search(q) or _PET_POSSESSION.search(q):
                 scored.append((ego_id, 0.95))
 
         # Life-area shortcuts. These seed the EGO node and let the typed walk find
@@ -225,11 +328,6 @@ class GraphRetriever:
         # "work" alone is too broad (matches "workout" / "how X works"); require a
         # workish phrase or term. Phrases cover "who do I work with", which names no
         # entity and so previously produced no seed and no works_with edge at all.
-        work_terms = {"intern", "internship", "job", "employer", "coworker", "coworkers",
-                      "colleague", "colleagues", "teammate", "teammates"}
-        work_phrases = ("where do i work", "my job", "at work", "i work with",
-                        "work with", "my team", "my office", "my boss")
-
         # "Where did I USED TO work" names no entity and matches no work phrase,
         # so without this it produced no seed and the expired edge was
         # unreachable — history that exists but can never be asked for (#656).
@@ -238,12 +336,15 @@ class GraphRetriever:
         # seeding ego there is the context-pollution bug, not a recall fix.
         first_person = {"i", "me", "my", "mine", "we", "us", "our", "ours"}
         personal_history = self.wants_history(q) and bool(first_person & raw_words)
+        if first_person & raw_words and _PROJECT_POSSESSION.search(q):
+            q_words.add("projects")
 
         if (
             school_terms & q_words
             or any(t in q for t in ("bachelor's", "master's"))
-            or work_terms & q_words
-            or any(t in q for t in work_phrases)
+            or _WORK_TERMS & q_words
+            or (first_person & raw_words and _PERSONAL_WORK_TERMS & q_words)
+            or any(phrase in q for phrase in _WORK_PHRASES)
             or personal_history
         ) and ego_id in self._graph and self._graph.nodes[ego_id].get("valid", True):
             scored.append((ego_id, 0.92))
@@ -393,7 +494,7 @@ class GraphRetriever:
     # examples matched a bare-cue check.)
     _HISTORY_CUES = (
         "used to", "use to", "previously", "previous", "former", "formerly",
-        "no longer", "back then", "in the past",
+        "no longer", "back then", "in the past", "before that", "before", "prior", "earlier",
     )
     _HISTORY_LIFE_TERMS = (
         "work", "worked", "job", "career", "employer", "employed", "company",
@@ -411,8 +512,9 @@ class GraphRetriever:
         subject.
         """
         q = (query or "").lower()
-        return any(cue in q for cue in cls._HISTORY_CUES) and any(
-            term in q for term in cls._HISTORY_LIFE_TERMS
+        words = set(re.findall(r"[a-z]+", q))
+        return bool(words.intersection(cls._HISTORY_LIFE_TERMS)) and any(
+            re.search(r"\b" + cue + r"\b", q) for cue in cls._HISTORY_CUES
         )
 
     def collect_walk_lines(self, query: str, *, max_hops: int,
@@ -425,58 +527,24 @@ class GraphRetriever:
         walk_ego = self.ego_node_id()  # hoisted: re-reads config on every call
         q = query.lower()
         q_words = set(re.findall(r"[a-z0-9]+", q))
-        # Boost edges whose relation matches what the user is asking about.
-        relation_boosts = (
-            (("fiancé", "fiance", "fiancée", "fiancee", "partner", "girlfriend",
-              "boyfriend", "wife", "husband", "significant other"),
-             ("partner_of",)),
-            (("family", "father", "mother", "dad", "mom", "brother", "sister",
-              "parent", "sibling", "son", "daughter"),
-             ("parent_of", "child_of", "sibling_of", "partner_of")),
-            (("groomsmen", "groomsman", "best man", "bestman", "wedding party"),
-             ("best_man_of", "groomsman_of", "friend_of")),
-            (("wedding", "venue", "married", "ceremony"),
-             ("happened_at", "attended", "located_at", "in_service_of", "occurs_on", "about")),
-            (("where", "live", "lives", "location", "from"),
-             ("lives_in", "located_at")),
-            (("project", "job", "owns", "cto", "business", "intern"),
-             ("owns", "member_of", "employed_by", "related_to_project", "works_with")),
-            (("colleague", "coworker", "teammate", "team", "work with", "my boss"),
-             ("works_with", "member_of", "employed_by")),
-            # Employer-specific phrases only. Deliberately NOT a bare "work":
-            # that matches "how tcp handshakes work" and drags the whole career
-            # subgraph into unrelated turns (the `neg-tcp` regression).
-            (("where do i work", "my job", "employer", "employed", "my company"),
-             ("employed_by", "member_of")),
-            # "university"/"college"/"campus" seed the walk via school_terms in
-            # seed_entity_ids but were missing here, so the `attended` edge they
-            # were meant to surface ranked below every family edge on its
-            # intrinsic priority. The two vocabularies have to agree.
-            (("graduate", "graduation", "school", "degree", "bachelor", "master",
-              "university", "college", "campus", "studied", "alma"),
-             ("attended", "located_at", "member_of")),
-            (("roadmap", "document", "documents", "folder", "drive", "doc"),
-             ("about", "in_service_of", "sourced_from", "mentions")),
-            # "Help me do something for/with the person I love" — the single most
-            # common personalization ask, and previously the one with no vocabulary
-            # at all, so naming the partner instead of their role lost the edge.
-            (("date", "date night", "anniversary", "romantic", "valentine", "propose"),
-             ("partner_of",)),
-            (("gift", "gifts", "birthday", "surprise", "celebrate"),
-             ("partner_of", "parent_of", "sibling_of", "child_of")),
-            (("youtube", "channel", "channels"),
-             ("owns",)),
-            (("friend", "friends"),
-             ("friend_of",)),
-        )
+        pet_query = bool(_PET_POSSESSION.search(q))
+        project_query = bool(_PROJECT_POSSESSION.search(q)) or bool({"project", "projects"} & q_words)
 
+        # Boost edges whose relation matches what the user is asking about.
         def edge_rank(relation: str, src: str, tgt: str) -> tuple[int, int]:
             rel = relation.lower()
+            if rel == "owns" and src == walk_ego and (pet_query or project_query):
+                entity_type = (self._graph.nodes[tgt].get("entity_type") or "").lower()
+                preferred = _PET_ENTITY_TYPES if pet_query else _PROJECT_ENTITY_TYPES
+                return (0, 0) if entity_type in preferred else (1, 1)
             endpoints = f"{self.node_label(src)} {self.node_label(tgt)} {src} {tgt}".lower()
-            for keywords, rels in relation_boosts:
+            for keywords, rels in _RELATION_BOOSTS:
                 if rel not in rels:
                     continue
-                if not any(k in q for k in keywords):
+                if not any(
+                    k in q_words if " " not in k and k.isascii() else k in q
+                    for k in keywords
+                ):
                     continue
                 # Prefer edges whose endpoints also mention a query keyword, so
                 # naming one project doesn't boost an unrelated membership edge.
@@ -546,10 +614,11 @@ class GraphRetriever:
                 # trailing two separate bracketed groups.
                 expired_at = edata.get("valid_to")
                 until = (f"until {str(expired_at)[:10]}",) if expired_at else ()
-                line = (
-                    f"{self.annotated_label(src, ego_id=walk_ego)} -{relation}-> "
-                    f"{self.annotated_label(tgt, extra=until, ego_id=walk_ego)}"
-                )
+                src_label = self.annotated_label(src, ego_id=walk_ego)
+                target_label = self.annotated_label(tgt, extra=until, ego_id=walk_ego)
+                line = f"{src_label} -{relation}-> {target_label}"
+                if src == walk_ego and relation == "owns":
+                    line = f"{_owned_entity_label(tgt_data)} {self.node_label(tgt)} ({line})"
                 boost, sub = edge_rank(relation, src, tgt)
                 rel_l = relation.lower()
                 priority = RELATION_PRIORITY.get(rel_l, DEFAULT_RELATION_PRIORITY)
@@ -626,23 +695,7 @@ class GraphRetriever:
         query_emb = self._embed(query)
         q = query.lower()
         q_words = set(re.findall(r"[a-z0-9]+", q))
-        # Topic name (the user's ## section heading) -> words that mean that topic.
-        # Generic English only: a specific employer or project name here would be
-        # dead weight on every other graph, and it is redundant anyway — naming a
-        # thing already matches the fact containing it by embedding/keyword.
-        topic_hints = {
-            "school": {"graduate", "graduation", "bachelor", "master", "masters", "school",
-                       "degree", "college", "university", "campus"},
-            # Bare "work" is too broad — it matches "workout" and "how X works",
-            # which floored every career fact onto technical questions.
-            "career": {"job", "intern", "internship", "employer", "employee",
-                       "coworker", "workplace"},
-            "routine": {"routine", "schedule", "weekday", "wake", "morning", "summer"},
-            "wedding": {"wedding", "venue", "married", "ceremony", "fiancée", "fiancee"},
-            "projects": {"project", "projects", "youtube", "channel"},
-            "family": {"family", "fiancée", "fiancee", "parent", "brother", "sister"},
-        }
-
+        keyword_words = q_words - _QUERY_STOPWORDS
         scored = []
         for nid, data in nodes:
             content = data.get("content", "")
@@ -659,10 +712,10 @@ class GraphRetriever:
             if score == 0.0:
                 # Keyword fallback (also fills when embeddings unavailable)
                 c_words = set(re.findall(r"[a-z0-9]+", content.lower()))
-                score = len(q_words & c_words) / max(len(q_words), 1)
+                score = len(keyword_words & c_words) / max(len(keyword_words), 1)
 
             topic = (data.get("topic") or "").lower()
-            if topic in topic_hints and (topic_hints[topic] & q_words):
+            if topic in _TOPIC_HINTS and (_TOPIC_HINTS[topic] & q_words):
                 # Multiply, don't floor. `max(score, 0.55) + 0.15` pinned every
                 # topic-matched fact to a flat 0.70 — above any usable threshold and
                 # identical to its neighbours, so a single stray keyword forced a

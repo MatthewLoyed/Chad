@@ -458,6 +458,9 @@ async def test_restating_the_same_value_does_not_expire_it(temporal_client):
         "who was my previous employer",
         "where did i live previously",
         "what company did i formerly work for",
+        "where did i work before that",
+        "who was my prior employer",
+        "where did i live earlier",
     ],
 )
 def test_history_intent_detected(query):
@@ -475,6 +478,7 @@ def test_history_intent_detected(query):
         "refactor my regex-based parser",
         "fix my index-based lookup",
         "explain how tcp handshakes work",
+        "prioritize my current work",
     ],
 )
 def test_history_intent_not_triggered_by_code_talk(query):
@@ -717,15 +721,39 @@ def test_seed_sync_leaves_runtime_saved_facts_alone(client, monkeypatch):
     assert "manual_1" in client._graph
 
 
-def test_topic_hint_boosts_rather_than_floors(client):
-    """A flat floor pinned every topic-matched fact to an identical 0.70."""
-    scores = [
-        s for _, _, s in client.retrieval.score_nodes(
-            "what is my family like", list(client._graph.nodes(data=True))
-        )
+def test_topic_hint_boosts_rather_than_floors(client, monkeypatch):
+    """Rank matching facts within a topic and leave unrelated facts at zero."""
+    monkeypatch.setattr(client.retrieval, "_embed", lambda _: None)
+    nodes = [
+        ("first", {"content": "Family picnic in April.", "topic": "family"}),
+        ("second", {"content": "Family dinner in May.", "topic": "family"}),
+        ("third", {"content": "Sam likes tea.", "topic": "family"}),
     ]
-    assert len(set(round(s, 3) for s in scores)) > 1, "scores collapsed to one value"
-    assert not any(abs(s - 0.70) < 1e-9 for s in scores), "0.70 saturation is back"
+    scores = [s for _, _, s in client.retrieval.score_nodes("family picnic in April", nodes)]
+    assert scores[0] > scores[1] > scores[2] == 0
+    assert not any(abs(s - 0.70) < 1e-9 for s in scores)
+
+
+@pytest.mark.parametrize(
+    ("query", "first_line"),
+    [
+        ("which dogs do I have", "You have a pet Juniper"),
+        ("what apps do I own", "You own the project Starling"),
+        ("what drawing apps am I building", "You own the project Starling"),
+    ],
+)
+def test_owned_entities_use_their_type_in_recall(client, query, first_line):
+    graph = client._graph
+    graph.add_node("Pet:Juniper", kind="entity", name="Juniper", entity_type="Pet")
+    graph.add_node("Project:Starling", kind="entity", name="Starling", entity_type="Project")
+    graph.add_edge(EGO, "Pet:Juniper", relation="owns")
+    graph.add_edge(EGO, "Project:Starling", relation="owns")
+
+    lines = client.retrieval.collect_walk_lines(query, max_hops=1)
+
+    assert lines[0].startswith(first_line)
+    assert "-owns->" in lines[0]
+    assert client.retrieval.seed_entity_ids("refactor the app's tool selector") == []
 
 
 def test_core_profile_only_injected_for_user_facing_scopes():
