@@ -217,7 +217,14 @@ class GraphRetriever:
                 "in-law", "inlaw", "in law", "mother-in-law", "father-in-law", "sister-in-law", "brother-in-law",
                 "my wedding", "our wedding", "ceremony"
             )
-            pet_triggers = ("corgi", "my dog", "our dog", "my pet", "our pet", "my cat", "our cat")
+            pet_triggers = (
+                "corgi", "my dog", "our dog", "my dogs", "our dogs", "my pet", "our pet",
+                "my pets", "our pets", "my cat", "our cat", "my cats", "our cats", "my puppy", "our puppy",
+                "dogs do i have", "dog do i have", "pets do i have", "cats do i have",
+                "dogs i have", "dog i have", "pets i have", "cats i have",
+                "dogs do we have", "pets do we have", "dogs we have", "pets we have",
+                "dogs do i own", "pets do i own", "dogs i own", "pets i own",
+            )
             if any(t in q for t in social_triggers) or any(t in q for t in pet_triggers):
                 scored.append((ego_id, 0.95))
 
@@ -444,6 +451,8 @@ class GraphRetriever:
              ("best_man_of", "groomsman_of", "friend_of")),
             (("wedding", "venue", "married", "ceremony"),
              ("happened_at", "attended", "located_at", "in_service_of", "occurs_on", "about")),
+            (("dog", "dogs", "puppy", "puppies", "pet", "pets", "cat", "cats", "corgi", "breed", "breeds"),
+             ("owns", "is_a", "member_of")),
             (("where", "live", "lives", "location", "from"),
              ("lives_in", "located_at")),
             (("project", "job", "owns", "cto", "business", "intern"),
@@ -570,7 +579,15 @@ class GraphRetriever:
                     elif relation == "attended":
                         natural_desc = f"You attended {tgt_lbl}{until_str}"
                     elif relation == "owns":
-                        natural_desc = f"You own {tgt_lbl}{until_str}"
+                        tgt_type = (self._graph.nodes.get(tgt, {}).get("entity_type") or "").lower()
+                        if tgt_type in ("pet", "animal", "dog", "cat"):
+                            natural_desc = f"You have a pet {tgt_lbl}{until_str}"
+                        elif tgt_type in ("project", "app", "codebase", "repository"):
+                            natural_desc = f"You own the project {tgt_lbl}{until_str}"
+                        elif tgt_type in ("device", "vehicle"):
+                            natural_desc = f"You own the {tgt_type} {tgt_lbl}{until_str}"
+                        else:
+                            natural_desc = f"You own {tgt_lbl}{until_str}"
                     elif relation == "lives_in":
                         natural_desc = f"You live in {tgt_lbl}{until_str}"
                     else:
