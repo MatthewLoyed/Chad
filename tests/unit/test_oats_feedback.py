@@ -1,7 +1,7 @@
 import sys
 import asyncio
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import ANY, MagicMock, AsyncMock, patch
 import numpy as np
 import pytest
 
@@ -108,7 +108,8 @@ async def test_tool_event_wrapper_logs_turn_id():
                     "query_text": "sub-query text",
                     "query_embedding": query_emb,
                     "outcome": "success",
-                    "turn_id": "turn-uuid-123"
+                    "turn_id": "turn-uuid-123",
+                    "created_at": ANY,
                 }
             )
     finally:

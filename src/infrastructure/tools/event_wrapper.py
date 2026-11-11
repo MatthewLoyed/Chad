@@ -97,27 +97,22 @@ class ToolEventWrapper:
                         from src.infrastructure.database.supabase_manager import get_supabase_manager
                         supabase = get_supabase_manager()
                         if supabase:
-                            # When Supabase isn't configured the insert routes through the
-                            # LocalPostgrestShim (issue #470) — register the backing table first
-                            # so the same write path persists outcomes locally with zero setup.
-                            if not supabase.enabled:
-                                from src.core.orchestration.oats_refiner import ensure_local_oats_tables
-                                ensure_local_oats_tables()
+                            from datetime import datetime, timezone
+                            from src.core.orchestration.oats_refiner import ensure_local_oats_tables
+
+                            # Both unconfigured and failed cloud writes use the local shim.
+                            ensure_local_oats_tables()
 
                             async def _insert_and_increment():
                                 insert_data = {
                                     "tool_name": tool_name,
                                     "query_text": query_text,
                                     "query_embedding": query_embedding,
-                                    "outcome": "success" if is_success else "failure"
+                                    "outcome": "success" if is_success else "failure",
+                                    "created_at": datetime.now(timezone.utc).isoformat(),
                                 }
                                 if turn_id:
                                     insert_data["turn_id"] = turn_id
-                                if not supabase.enabled:
-                                    # Supabase's tool_outcome_log.created_at has DEFAULT NOW();
-                                    # the local table has no default, so stamp it here.
-                                    from datetime import datetime, timezone
-                                    insert_data["created_at"] = datetime.now(timezone.utc).isoformat()
                                 res = await supabase.async_insert(
                                     "tool_outcome_log",
                                     insert_data
