@@ -37,6 +37,12 @@ src/tools/
 **Scope**: Local file operations
 **Location**: `src/tools/filesystem/`
 
+`read_file` returns numbered pages. Use `query` to find the first literal match
+at or after `offset`. Continue with `next_offset` and `next_column` when present.
+A single long line can span multiple pages. The line count and serialized output
+budget both bound each page. Complete reads include raw `full_content` when it
+also fits in the response.
+
 ### Workspace (14+ tools)
 **Scope**: Google Workspace (Gmail, Docs, Calendar, Drive, Contacts)
 **Location**: `src/tools/workspace/`

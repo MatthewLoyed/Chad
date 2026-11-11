@@ -79,6 +79,8 @@ def test_ceilings_are_the_exception():
         # Feed limits bound quoted text and supplied interest memory; they never
         # refuse a tool call, cancel a turn, or cap the model's execution rounds.
         "feed_preview_words", "feed_memory_topics",
+        # File pages bound one response and provide a cursor for the rest.
+        "read_file_max_lines",
     }
     assert {c.name for c in ceilings} <= allowed, (
         "New CEILING added — justify it against limits.py's policy, or make it a HINT."
