@@ -24,7 +24,7 @@ This skill guides your use of Canvas LMS tools. All Canvas tools support natural
 | **What's Due Soon / Dashboard** | `get_upcoming_assignments`, `get_canvas_dashboard_todos` | Shows upcoming deadlines, undated work, and to-do items. |
 | **Read Attached PDF / Handout** | `read_course_file` | `file_id=12345` (extracts text from assignment prompts or slides). |
 | **Find Lecture Files / Downloads** | `get_course_files` | `course="Manage Software Project"`, `search_term="Chapter 3"`. |
-| **Check Grades & Rubric Feedback** | `get_assignment_submission` | `assignment="Assignment 4"`, `course="..."` (shows submission text, score, feedback comments). |
+| **Check Submitted Work, Grades & Feedback** | `get_assignment_submission` | `assignment="Assignment 4"`, `course="..."` (shows submission text, uploaded files, score, and feedback). |
 | **Course Overall Grade Summary** | `get_course_grades` | `course="Manage Software Project"`. |
 | **Modules & Lecture Topics** | `get_course_modules`, `get_module_items` | Explore weekly modules, reading lists, and published units. |
 | **Course Syllabus & Policies** | `get_course_syllabus` | `course="Manage Software Project"` (grading scales, course policies). |

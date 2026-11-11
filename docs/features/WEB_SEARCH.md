@@ -33,6 +33,8 @@ architecture replaced: a "research 10 caterers" turn used to burn 25 iterations
 and 44 raw `web_search` calls directly in the main supervisor's context).
 
 Both `web_search` paths use the same pipeline inside `src/tools/web/web_search.py`.
+When SearXNG reports a completed search with zero results and the fallback
+chain finds no matches, the tool reports an empty search for those queries.
 For the full tier-escalation design, benchmark numbers, and prod checklist see
 [`docs/architecture/WEB_SEARCH_FETCH_TIERS.md`](../architecture/WEB_SEARCH_FETCH_TIERS.md).
 
@@ -79,6 +81,8 @@ injected into supervisor prompts, handoff tool descriptions, Scout, and skill ca
 | `search_backend` | `searxng` | `searxng` (default chain), `brave`/`serper`/`tavily` (single backend only), or `all` (**API keys only, no SearXNG** — round-robins whichever of Serper/Tavily/Brave are configured) |
 | `searxng_url` | `http://127.0.0.1:8080` | Self-hosted SearXNG JSON endpoint |
 | `web_search_max_queries` | `10` | Max queries per `web_search` call (batch cap) |
+| `direct_web_search_calls_soft` | `3` | Direct batches before guidance to use existing findings or delegate |
+| `direct_web_search_calls_max` | `5` | Direct batches shared across parallel calls in one turn. Set to 0 to disable. Deep-research workers use their task's result budget. |
 | `web_search_results_per_query` | `3` | Default pages fetched per query (1–5) |
 | `web_search_playwright_fallback` | `true` | Tier-2 headless Playwright when Tier-1 extract score is low |
 | `web_search_playwright_search_fallback` | `true` | Search-step Playwright Startpage scrape when SearXNG JSON is empty |
