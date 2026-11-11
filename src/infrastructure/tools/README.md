@@ -101,6 +101,13 @@ an OpenAPI-style block with ``name``, ``description``, and ``parameters`` (JSON 
 | **LangGraph wrap** | ``ToolSchemaBuilder.wrap_lc_tool`` builds a flat Pydantic ``args_model`` so LangGraph can invoke tools (`array` → ``list``, ``object`` → ``dict``). |
 | **LLM exposure** | ``ChatChad`` forwards the **canonical** ``parameters`` block (pinned on each ``StructuredTool`` as ``_chad_parameters_schema``), **not** the flattened Pydantic JSON Schema. |
 
+Registry-dispatched tools can opt into pre-dispatch validation in
+`schema/argument_validation.py`. The Calendar read tool checks its canonical
+schema and requires explicit time bounds to include a timezone and form an
+ordered window. Invalid calls return a structured `bad_input` result with
+`dispatched: false` before executor or connector work begins. The LangGraph
+wrapper returns the same feedback when argument names or types fail validation.
+
 **Why this matters:** tools like ``ask_user_question`` and ``propose_file_plan`` use nested
 ``questions[]`` / ``actions[]`` shapes. If the model only sees ``"questions": { "type": "array", "items": {} }``,
 it will invent its own structure (``label``/``value`` at the wrong level, missing ``question``, etc.).

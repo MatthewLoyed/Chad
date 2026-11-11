@@ -5,6 +5,7 @@ Also provides upcoming schedule context for proactive assistant awareness.
 """
 
 import logging
+import re
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
@@ -12,6 +13,7 @@ from googleapiclient.errors import HttpError
 
 from src.tools.base_tool import BaseTool
 from src.core.tools.formatter import tool_display
+from src.infrastructure.tools.schema.argument_validation import argument_failure
 from src.shared.logger import setup_logger
 from src.tools.workspace.manager import GoogleWorkspaceManager
 
@@ -109,6 +111,31 @@ def parse_datetime_flexible(time_str: str, default_duration_minutes: int = 60) -
     return start_dt, end_dt
 
 
+_RFC3339_BOUND = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?(?:[Zz]|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])"
+)
+
+
+def _calendar_window_issues(arguments: dict[str, Any]) -> list[dict[str, str]]:
+    bounds = {}
+    issues = []
+    for key in ("time_min", "time_max"):
+        value = arguments.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and _RFC3339_BOUND.fullmatch(value):
+            try:
+                bounds[key] = datetime.fromisoformat(value.upper().replace("Z", "+00:00"))
+                continue
+            except ValueError:
+                pass
+        issues.append({"path": key, "expected": "timezone-qualified RFC3339 timestamp"})
+    if len(bounds) == 2 and bounds["time_min"] >= bounds["time_max"]:
+        issues.append({"path": "time_max", "expected": "later than time_min"})
+    return issues
+
+
 @tool_display("Retrieving calendar events")
 class GetCalendarEventsTool(BaseTool):
     """Tool to fetch upcoming calendar events."""
@@ -147,11 +174,13 @@ class GetCalendarEventsTool(BaseTool):
                     },
                     "time_min": {
                         "type": "string",
-                        "description": "Optional start boundary in ISO format (defaults to current time)"
+                        "format": "date-time",
+                        "description": "Optional RFC3339 start with timezone (defaults to current time)"
                     },
                     "time_max": {
                         "type": "string",
-                        "description": "Optional end boundary in ISO format"
+                        "format": "date-time",
+                        "description": "Optional RFC3339 end with timezone, later than time_min"
                     },
                     "calendar_id": {
                         "type": "string",
@@ -159,9 +188,12 @@ class GetCalendarEventsTool(BaseTool):
                         "default": "primary"
                     }
                 },
-                "required": []
+                "required": [],
+                "additionalProperties": False,
             }
         }
+
+    validate_argument_semantics = staticmethod(_calendar_window_issues)
 
     async def execute(
         self,
@@ -173,6 +205,10 @@ class GetCalendarEventsTool(BaseTool):
         calendar_id: str = "primary",
         **kwargs
     ) -> Dict[str, Any]:
+        issues = self.validate_argument_semantics({"time_min": time_min, "time_max": time_max})
+        if issues:
+            return argument_failure(self.name, self.get_schema()["parameters"], issues)
+
         try:
             service = self._manager.get_calendar_service()
             if not service:
@@ -185,17 +221,9 @@ class GetCalendarEventsTool(BaseTool):
             local_tz = _get_local_timezone()
             now_local = datetime.now(local_tz)
 
-            # Resolve time_min
-            if time_min:
-                resolved_min = time_min if time_min.endswith('Z') or '+' in time_min else time_min + 'Z'
-            else:
-                resolved_min = now_utc.isoformat()
-
-            # Resolve time_max
-            resolved_max: Optional[str] = None
-            if time_max:
-                resolved_max = time_max if time_max.endswith('Z') or '+' in time_max else time_max + 'Z'
-            elif hours_ahead is not None and hours_ahead > 0:
+            resolved_min = time_min or now_utc.isoformat()
+            resolved_max = time_max
+            if resolved_max is None and hours_ahead is not None and hours_ahead > 0:
                 resolved_max = (now_utc + timedelta(hours=hours_ahead)).isoformat()
 
             try:
