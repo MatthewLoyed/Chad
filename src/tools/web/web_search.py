@@ -189,6 +189,24 @@ def _search_call_feedback(budget: SearchBudget | None) -> tuple[dict | None, str
     return None, None
 
 
+def _search_miss(query: str, last_error: str | None, searxng_failed: bool, completed_empty: bool) -> dict:
+    if completed_empty:
+        message = "The search backend returned no results for this query."
+    elif searxng_failed:
+        message = "SearXNG JSON returned no results and all fallbacks failed. Do NOT invent URLs or web facts."
+    else:
+        message = last_error or "No readable results found."
+    return {
+        "query": query,
+        "sources": [],
+        "source_count": 0,
+        "message": message,
+        "searxng_failed": searxng_failed,
+        "search_backend": None,
+        "search_available": completed_empty,
+    }
+
+
 _SCRAPED_BACKENDS = {"searxng_search", "playwright_search"}
 
 _STOPWORDS = {
@@ -437,10 +455,11 @@ class WebSearchTool(BaseTool):
         )
         brave_fallbacks = sum(1 for r in results if r.get("search_backend") == "brave_web_search")
         searxng_primary = bool(backends) and backends[0] == "searxng_search"
-        searxng_connected = searxng_primary and searxng_failures == 0
+        completed_empty = not found and all(r.get("search_available") for r in results)
+        searxng_connected = searxng_primary and (completed_empty or (found > 0 and searxng_failures == 0))
 
         warnings: List[str] = []
-        if searxng_failures:
+        if searxng_failures and not completed_empty:
             warnings.append(
                 f"SearXNG JSON returned no results for {searxng_failures}/{len(queries)} "
                 f"queries (curated engines; CAPTCHA/blocking is common)."
@@ -465,7 +484,7 @@ class WebSearchTool(BaseTool):
         elif brave_fallbacks:
             warnings.append(f"Brave fallback used for {brave_fallbacks}/{len(queries)} queries.")
 
-        if found == 0:
+        if found == 0 and not completed_empty:
             search_status = "unavailable"
             caption = (
                 f"Web search FAILED: 0/{len(queries)} queries returned content. "
@@ -486,12 +505,11 @@ class WebSearchTool(BaseTool):
                 "brave_fallbacks": brave_fallbacks or None,
             }
 
-        if searxng_failures:
-            search_status = "degraded"
-        else:
-            search_status = "ok"
-
-        caption = f"Web search complete: {found}/{len(queries)} queries returned content."
+        search_status = "empty" if completed_empty else "degraded" if searxng_failures else "ok"
+        caption = (
+            "Web search completed without matches for these queries."
+            if completed_empty else f"Web search complete: {found}/{len(queries)} queries returned content."
+        )
         if warnings:
             caption += " " + " ".join(warnings)
 
@@ -517,6 +535,7 @@ class WebSearchTool(BaseTool):
         last_err: Optional[str] = None
         search_backend: Optional[str] = None
         searxng_failed = False
+        completed_empty = False
         weak_hits: List[Dict[str, str]] = []
         weak_backend: Optional[str] = None
 
@@ -535,6 +554,10 @@ class WebSearchTool(BaseTool):
                         break
                     continue
                 payload = payload if isinstance(payload, dict) else {}
+                if payload.get("search_completed_empty"):
+                    completed_empty = True
+                    last_err = payload.get("error")
+                    break
                 if not payload.get("success"):
                     last_err = str(payload.get("error") or "search returned no results")
                     logger.warning(f"{backend} miss for {query!r} (attempt {attempt + 1}): {last_err}")
@@ -565,8 +588,8 @@ class WebSearchTool(BaseTool):
             if hits:
                 break
             if backend == "searxng_search" and len(backends) > 1:
-                searxng_failed = True
-                logger.error(
+                searxng_failed = not completed_empty
+                logger.warning(
                     f"[ SEARCH ] SearXNG JSON empty for {query!r}: {last_err} "
                     f"— trying Playwright/Brave fallback"
                 )
@@ -586,21 +609,7 @@ class WebSearchTool(BaseTool):
             hits, search_backend = weak_hits, weak_backend
 
         if not hits:
-            unavailable = (
-                "SearXNG JSON returned no results and all fallbacks failed. "
-                "Do NOT invent URLs or web facts."
-                if searxng_failed
-                else last_err or "No readable results found."
-            )
-            return {
-                "query": query,
-                "sources": [],
-                "source_count": 0,
-                "message": unavailable,
-                "searxng_failed": searxng_failed,
-                "search_backend": None,
-                "search_available": False,
-            }
+            return _search_miss(query, last_err, searxng_failed, completed_empty)
 
         if not fetch_content:
             return {

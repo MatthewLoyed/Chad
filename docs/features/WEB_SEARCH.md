@@ -33,6 +33,8 @@ architecture replaced: a "research 10 caterers" turn used to burn 25 iterations
 and 44 raw `web_search` calls directly in the main supervisor's context).
 
 Both `web_search` paths use the same pipeline inside `src/tools/web/web_search.py`.
+When SearXNG reports a completed search with zero results and the fallback
+chain finds no matches, the tool reports an empty search for those queries.
 For the full tier-escalation design, benchmark numbers, and prod checklist see
 [`docs/architecture/WEB_SEARCH_FETCH_TIERS.md`](../architecture/WEB_SEARCH_FETCH_TIERS.md).
 

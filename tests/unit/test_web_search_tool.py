@@ -537,3 +537,33 @@ async def test_deep_research_uses_its_own_budget_when_direct_budget_is_exhausted
             search_budget_var.reset(token)
         blocked = await tool.execute(queries=["direct again"], tool_registry=object())
         assert blocked["failure_class"] == "blocked"
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("unresponsive_engines", [[], [["engine", "timeout"]]])
+async def test_web_search_distinguishes_clean_searxng_empty_from_degraded(monkeypatch, unresponsive_engines):
+    import httpx
+    from src.tools.web.searxng_search import SearxngSearchTool
+
+    def serve(request):
+        return httpx.Response(200, json={"results": [], "unresponsive_engines": unresponsive_engines})
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(serve))
+    monkeypatch.setattr("src.tools.web.searxng_search.httpx.AsyncClient", lambda **kwargs: client)
+    backend_result = await SearxngSearchTool().execute("subject")
+    assert backend_result["search_completed_empty"] is (not unresponsive_engines)
+
+    registry = _FakeRegistry({
+        "searxng_search": [backend_result] * 3,
+        "brave_web_search": [{"success": False, "error": "connection refused"}] * 3,
+    })
+    result = await WebSearchTool().execute(queries=["subject"], tool_registry=registry)
+
+    expected = "unavailable" if unresponsive_engines else "empty"
+    assert result["search_status"] == expected
+    assert result["success"] is (not unresponsive_engines)
+    assert result["results"][0]["sources"] == []
+    assert result["searxng_connected"] is (not unresponsive_engines)
+    assert any(backend == "brave_web_search" for backend, _ in registry.calls)
+    if not unresponsive_engines:
+        assert result["warnings"] is None
+        assert "without matches for these queries" in result["caption"]
