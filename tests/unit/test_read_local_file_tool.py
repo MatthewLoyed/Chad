@@ -168,3 +168,21 @@ async def test_read_file_rejects_a_zero_offset(tmp_path):
 
     assert result["failure_class"] == "bad_input"
     assert "offset" in result["detail"]
+
+
+@pytest.mark.asyncio
+async def test_read_file_line_cap_keeps_the_next_page_reachable(tmp_path, monkeypatch):
+    from src.core.tools import limits
+
+    path = tmp_path / "page.txt"
+    path.write_text("first\nsecond\nthird\n", encoding="utf-8")
+    get_limit = limits.get
+    monkeypatch.setattr(limits, "get", lambda key: 2 if key == "read_file_max_lines" else get_limit(key))
+    tool = ReadLocalFileTool()
+
+    page = await tool.execute(str(path), limit=10)
+    tail = await tool.execute(str(path), offset=page["next_offset"], column=page["next_column"])
+
+    assert page["limit"] == 2
+    assert tail["content"] == "   3 | third"
+    assert not tail["has_more"]
