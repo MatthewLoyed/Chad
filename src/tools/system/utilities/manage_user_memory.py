@@ -124,7 +124,7 @@ class ManageUserMemory(BaseTool):
 
                     "content": {
 
-                        "type": "string",
+                        "type": ["string", "null"],
 
                         "description": "For 'save': the fact to store. For 'forget': description of what to invalidate."
 
@@ -132,7 +132,7 @@ class ManageUserMemory(BaseTool):
 
                     "query": {
 
-                        "type": "string",
+                        "type": ["string", "null"],
 
                         "description": "For 'search': keyword or phrase to look for."
 

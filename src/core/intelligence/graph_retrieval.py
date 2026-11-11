@@ -214,6 +214,7 @@ class GraphRetriever:
                 "wedding party", "my family", "our family", "my friends", "my fiancée", "my fiancee",
                 "my fiancé", "my fiance", "my partner", "our partner", "my spouse", "my wife",
                 "my husband", "better half", "significant other", "in-laws", "inlaws", "in laws",
+                "in-law", "inlaw", "in law", "mother-in-law", "father-in-law", "sister-in-law", "brother-in-law",
                 "my wedding", "our wedding", "ceremony"
             )
             pet_triggers = ("corgi", "my dog", "our dog", "my pet", "our pet", "my cat", "our cat")
@@ -551,11 +552,49 @@ class GraphRetriever:
                 # `Tidewater (marine engineering, until 2026-02)` rather than
                 # trailing two separate bracketed groups.
                 expired_at = edata.get("valid_to")
+                until_str = f", until {str(expired_at)[:10]}" if expired_at else ""
                 until = (f"until {str(expired_at)[:10]}",) if expired_at else ()
-                line = (
-                    f"{self.annotated_label(src, ego_id=walk_ego)} -{relation}-> "
-                    f"{self.annotated_label(tgt, extra=until, ego_id=walk_ego)}"
-                )
+                
+                src_lbl = self.annotated_label(src, ego_id=walk_ego)
+                tgt_lbl = self.annotated_label(tgt, extra=until, ego_id=walk_ego)
+                
+                # Canonical Relational Projection: Format paths relative to user
+                # so the LLM receives disambiguated natural English rather than raw triples.
+                is_src_ego = (src == walk_ego)
+                is_tgt_ego = (tgt == walk_ego)
+                rel_clean = relation.replace("_", " ")
+
+                if is_src_ego:
+                    if relation == "employed_by":
+                        natural_desc = f"You are employed by {tgt_lbl}{until_str}"
+                    elif relation == "attended":
+                        natural_desc = f"You attended {tgt_lbl}{until_str}"
+                    elif relation == "owns":
+                        natural_desc = f"You own {tgt_lbl}{until_str}"
+                    elif relation == "lives_in":
+                        natural_desc = f"You live in {tgt_lbl}{until_str}"
+                    else:
+                        natural_desc = f"You are {rel_clean} {tgt_lbl}{until_str}"
+                elif is_tgt_ego:
+                    if relation == "partner_of":
+                        natural_desc = f"{src_lbl} is your partner/fiancé{until_str}"
+                    elif relation == "parent_of":
+                        natural_desc = f"{src_lbl} is your parent (mother/father){until_str}"
+                    elif relation == "sibling_of":
+                        natural_desc = f"{src_lbl} is your sibling{until_str}"
+                    elif relation == "works_with":
+                        natural_desc = f"{src_lbl} is your coworker/teammate{until_str}"
+                    elif relation == "best_man_of":
+                        natural_desc = f"{src_lbl} is your best woman/man{until_str}"
+                    elif relation == "groomsman_of":
+                        natural_desc = f"{src_lbl} is your groomsman{until_str}"
+                    else:
+                        natural_desc = f"{src_lbl} is {rel_clean} you{until_str}"
+                else:
+                    natural_desc = f"{src_lbl} is {rel_clean} {tgt_lbl}{until_str}"
+
+                # Retain both natural description and triple syntax for backward compatibility with downstream assertions
+                line = f"{natural_desc} ({src_lbl} -{relation}-> {tgt_lbl})"
                 boost, sub = edge_rank(relation, src, tgt)
                 rel_l = relation.lower()
                 priority = RELATION_PRIORITY.get(rel_l, DEFAULT_RELATION_PRIORITY)
