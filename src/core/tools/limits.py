@@ -201,6 +201,8 @@ LIMITS: Dict[str, Limit] = {
         ),
         Limit("feed_memory_topics", "discovery.feed_memory_topics", 16, CEILING,
               "Maximum interest topics supplied to a Feed authoring turn."),
+        Limit("mcp_read_index_ttl_s", "tools.mcp_read_index_ttl_s", 30, HINT,
+              "Reuse MCP read catalog entries for selection within this interval."),
         # --- generation-level nudges ------------------------------------------
         Limit(
             "reasoning_token_cap", "planner.reasoning_token_cap", 10000, HINT,

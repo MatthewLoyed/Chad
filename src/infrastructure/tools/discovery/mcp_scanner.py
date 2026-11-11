@@ -56,5 +56,8 @@ class MCPScanner:
                     category=category
                 )
 
+            from src.infrastructure.tools.mcp_read_index import read_index
+            read_index(self.registry).replace(server, tools)
+
         except Exception as e:
             logger.error(f"Failed to scan MCP server '{server.name}': {e}")

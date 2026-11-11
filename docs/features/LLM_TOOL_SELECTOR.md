@@ -132,3 +132,26 @@ Latency for the 9B selection call: ~4–7s. This runs before the main model turn
 | `tests/manual/test_9b_tool_selector.py` | Initial v1 proof-of-concept (30 tools, 10 queries) |
 | `tests/manual/test_9b_tool_selector_v2.py` | v2 comparison: full registry vs RAG candidates vs strict prompt |
 | `tests/manual/test_9b_full_replace.py` | Before/after tool count benchmark (the definitive test) |
+
+## Scout read bindings
+
+On planning turns the selector can consider approved native reads from specialist
+categories. Planner can name approved reads from the confirmed menu in
+`dispatch_scout.tools`. Scout adds those tools to its core bindings for that
+gathering pass. Planner uses its existing control tools to delegate, review
+evidence, and propose a plan.
+
+The live MCP read catalog registers namespaced aliases such as
+`github__list_commits`. A connected server can advertise an approved read with
+`readOnlyHint=true`. The legacy GitHub server uses an exact allowlist audited
+against version 2025.4.8. The built-in Playwright and Windows UI connectors
+retain their existing Scout inspection tools through the same live read catalog.
+Explicit negative read hints, destructive hints, and connector exclusions block
+these reads. The hybrid selector includes approved reads for named MCP servers. Scout executes MCP reads through the
+aliases or the read-only `scout_mcp_read` discovery gateway. Selected raw MCP
+schemas can still appear in the confirmed plan menu.
+
+Selection refreshes the read catalog after `tools.mcp_read_index_ttl_s`
+(default 30 seconds). Planner checks requested aliases against the live catalog
+before dispatching Scout. Each call checks the current server, policy, and
+argument schema before invoking the connector.

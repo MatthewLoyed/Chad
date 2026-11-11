@@ -110,6 +110,9 @@ class TurnToolSelector:
                     },
                 )
 
+        from src.infrastructure.tools.mcp_read_index import refresh_mcp_reads
+        await refresh_mcp_reads(self.tool_registry)
+
         # 1. Try smart schema extraction.
         # IMPORTANT: get_schemas_for_turn makes a synchronous HTTP call to the LLM selector
         # (urllib.request.urlopen, blocking). Running it directly would freeze the async event
