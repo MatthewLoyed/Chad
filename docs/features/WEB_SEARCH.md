@@ -79,6 +79,8 @@ injected into supervisor prompts, handoff tool descriptions, Scout, and skill ca
 | `search_backend` | `searxng` | `searxng` (default chain), `brave`/`serper`/`tavily` (single backend only), or `all` (**API keys only, no SearXNG** — round-robins whichever of Serper/Tavily/Brave are configured) |
 | `searxng_url` | `http://127.0.0.1:8080` | Self-hosted SearXNG JSON endpoint |
 | `web_search_max_queries` | `10` | Max queries per `web_search` call (batch cap) |
+| `direct_web_search_calls_soft` | `3` | Direct batches before guidance to use existing findings or delegate |
+| `direct_web_search_calls_max` | `5` | Direct batches shared across parallel calls in one turn. Set to 0 to disable. Deep-research workers use their task's result budget. |
 | `web_search_results_per_query` | `3` | Default pages fetched per query (1–5) |
 | `web_search_playwright_fallback` | `true` | Tier-2 headless Playwright when Tier-1 extract score is low |
 | `web_search_playwright_search_fallback` | `true` | Search-step Playwright Startpage scrape when SearXNG JSON is empty |

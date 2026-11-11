@@ -235,6 +235,8 @@ tools:
   searxng_url: http://127.0.0.1:8080
   # Max queries per `web_search` call (batch cap). Research agent prompts target this size.
   web_search_max_queries: 10
+  direct_web_search_calls_soft: 3  # Advise the model to use its findings or delegate.
+  direct_web_search_calls_max: 5   # Cap direct search batches per turn (0 disables).
   # Default pages fetched+extracted per query (1-5; override per call via results_per_query).
   web_search_results_per_query: 3
   # Tier-2 fetch: headless Playwright when fetch_html + extract score is low (JS SPAs).

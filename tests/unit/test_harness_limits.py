@@ -69,6 +69,8 @@ def test_ceilings_are_the_exception():
     # context budget, or the final runway stop.
     allowed = {
         "browser_max_actions_per_task", "search_budget_per_task",
+        # Direct batches may spend API quota. The turn and the deep-research path stay open.
+        "direct_web_search_calls_max",
         "repeat_failure_block_after", "repeat_success_block_after",
         "tool_output_max_chars", "browser_snapshot_max_chars",
         "failed_output_max_chars", "tool_timeout_default_s",

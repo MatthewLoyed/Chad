@@ -260,6 +260,7 @@ class TurnCoordinator:
         initiator: Optional[str] = None,
     ) -> str:
         from src.core.orchestration.context import current_turn_tool_queries_var
+        from src.core.tools.direct_search_budget import direct_search_budget_scope
         import uuid
         turn_id = context.turn_id if hasattr(context, "turn_id") and context.turn_id else str(uuid.uuid4())
         if hasattr(context, "turn_id") and not context.turn_id:
@@ -289,7 +290,8 @@ class TurnCoordinator:
                 metadata=metadata,
                 initiator=initiator,
             )
-            return await pipeline.run()
+            with direct_search_budget_scope():
+                return await pipeline.run()
         finally:
             current_turn_tool_queries_var.reset(token)
 

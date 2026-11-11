@@ -29,6 +29,8 @@ import re
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
+from src.core.orchestration.context import search_budget_var
+from src.core.tools import direct_search_budget
 from src.core.tools.formatter import tool_display
 from src.tools.web.content_extraction import DEFAULT_MAX_CHARS
 from src.tools.web.fetch_pipeline import resolve_url_content
@@ -171,6 +173,20 @@ class SearchBudget:
                 return False, 0
             self._remaining = max(0, self._remaining - max(0, n))
             return True, self._remaining
+
+
+def _search_call_feedback(budget: SearchBudget | None) -> tuple[dict | None, str | None]:
+    if budget is None:
+        return direct_search_budget.check_call()
+    if budget.remaining <= 0:
+        return {
+            "success": False,
+            "error": (
+                "Search budget exhausted for this research task "
+                "(0 results remaining) — synthesize with what you already have."
+            ),
+        }, None
+    return None, None
 
 
 _SCRAPED_BACKENDS = {"searxng_search", "playwright_search"}
@@ -391,18 +407,12 @@ class WebSearchTool(BaseTool):
         if not tool_registry:
             return {"success": False, "error": "web_search requires tool_registry (internal error)."}
 
-        from src.core.orchestration.context import search_budget_var
-        budget = search_budget_var.get()
-        if budget is not None and budget.remaining <= 0:
-            return {
-                "success": False,
-                "error": (
-                    "Search budget exhausted for this research task "
-                    "(0 results remaining) — synthesize with what you already have."
-                ),
-            }
-
         per_query = max(1, min(5, int(results_per_query or _default_results_per_query())))
+        budget = search_budget_var.get()
+        blocked, hint = _search_call_feedback(budget)
+        if blocked is not None:
+            return blocked
+        feedback = {"search_budget_hint": hint} if hint else {}
         logger.info(
             f"[ SEARCH ] {len(queries)} queries (results_per_query={per_query}, "
             f"fetch_content={fetch_content})"
@@ -464,6 +474,7 @@ class WebSearchTool(BaseTool):
             return {
                 "success": False,
                 "error": caption,
+                **feedback,
                 "search_status": search_status,
                 "searxng_connected": searxng_connected,
                 "query_count": len(queries),
@@ -486,6 +497,7 @@ class WebSearchTool(BaseTool):
 
         return {
             "success": True,
+            **feedback,
             "search_status": search_status,
             "searxng_connected": searxng_connected,
             "query_count": len(queries),

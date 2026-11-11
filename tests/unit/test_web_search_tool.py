@@ -8,6 +8,7 @@ test_fetch_pipeline.py) by patching resolve_url_content directly.
 """
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -477,3 +478,62 @@ async def test_no_organic_results_skips_retrying_same_backend():
     assert len(serper_calls) == 1
     assert result["results"][0]["search_backend"] == "brave_web_search"
 
+
+@pytest.mark.asyncio
+async def test_direct_search_budget_is_shared_by_parallel_calls_and_resets(monkeypatch):
+    from src.core.tools.direct_search_budget import direct_search_budget_scope
+    from src.shared.config_manager import ConfigManager
+
+    monkeypatch.setattr(ConfigManager, "get", staticmethod(_config_get({
+        "tools.direct_web_search_calls_max": 3,
+        "tools.direct_web_search_calls_soft": 2,
+    })))
+    tool = WebSearchTool()
+    run_query = AsyncMock(return_value={"source_count": 1})
+    monkeypatch.setattr(tool, "_run_query", run_query)
+
+    with direct_search_budget_scope():
+        results = await asyncio.gather(*[
+            tool.execute(queries=[f"subject {index}"], tool_registry=object())
+            for index in range(6)
+        ])
+        assert run_query.await_count == 3
+        admitted = [result for result in results if result["success"]]
+        rejected = [result for result in results if not result["success"]]
+        assert len(admitted) == len(rejected) == 3
+        assert sum("search_budget_hint" in result for result in admitted) == 2
+        assert all(result["failure_class"] == "blocked" and not result["dispatched"] for result in rejected)
+        assert all("deep_research_agent" in result["error"] for result in rejected)
+
+    with direct_search_budget_scope():
+        fresh = await tool.execute(queries=["another subject"], tool_registry=object())
+    assert fresh["success"]
+    assert run_query.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_deep_research_uses_its_own_budget_when_direct_budget_is_exhausted(monkeypatch):
+    from src.core.orchestration.context import search_budget_var
+    from src.core.tools.direct_search_budget import direct_search_budget_scope
+    from src.shared.config_manager import ConfigManager
+    from src.tools.web.web_search import SearchBudget
+
+    monkeypatch.setattr(ConfigManager, "get", staticmethod(_config_get({
+        "tools.direct_web_search_calls_max": 1,
+    })))
+    tool = WebSearchTool()
+    monkeypatch.setattr(tool, "_run_query", AsyncMock(return_value={"source_count": 1}))
+
+    with direct_search_budget_scope():
+        assert (await tool.execute(queries=["direct"], tool_registry=object()))["success"]
+        budget = SearchBudget(1)
+        token = search_budget_var.set(budget)
+        try:
+            delegated = await tool.execute(queries=["research"], tool_registry=object())
+            assert delegated["success"]
+            assert "search_budget_hint" not in delegated
+            assert budget.remaining == 0
+        finally:
+            search_budget_var.reset(token)
+        blocked = await tool.execute(queries=["direct again"], tool_registry=object())
+        assert blocked["failure_class"] == "blocked"
