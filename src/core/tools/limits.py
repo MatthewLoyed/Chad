@@ -203,6 +203,8 @@ LIMITS: Dict[str, Limit] = {
               "Maximum interest topics supplied to a Feed authoring turn."),
         Limit("mcp_read_index_ttl_s", "tools.mcp_read_index_ttl_s", 30, HINT,
               "Reuse MCP read catalog entries for selection within this interval."),
+        Limit("mcp_read_selection_wait_s", "tools.mcp_read_selection_wait_s", 3.0, HINT,
+              "Time to wait for a fresh read catalog before selecting with available tools."),
         # --- generation-level nudges ------------------------------------------
         Limit(
             "reasoning_token_cap", "planner.reasoning_token_cap", 10000, HINT,

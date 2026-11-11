@@ -152,6 +152,8 @@ aliases or the read-only `scout_mcp_read` discovery gateway. Selected raw MCP
 schemas can still appear in the confirmed plan menu.
 
 Selection refreshes the read catalog after `tools.mcp_read_index_ttl_s`
-(default 30 seconds). Planner checks requested aliases against the live catalog
+(default 30 seconds). It waits up to `tools.mcp_read_selection_wait_s` for
+the refresh, then uses the available catalog while discovery continues.
+Planner checks requested aliases against the live catalog
 before dispatching Scout. Each call checks the current server, policy, and
 argument schema before invoking the connector.

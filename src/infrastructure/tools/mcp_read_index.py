@@ -2,6 +2,7 @@
 
 import asyncio
 import copy
+import logging
 import re
 import time
 from pathlib import PureWindowsPath
@@ -11,6 +12,8 @@ from src.core.tools import failure, limits
 from src.infrastructure.tools.schema.argument_validation import validate_arguments
 from src.tools.base_tool import BaseTool
 
+
+logger = logging.getLogger(__name__)
 
 _GITHUB_PACKAGE = "@modelcontextprotocol/server-github"
 # Exact read operations audited for the legacy 2025.4.8 GitHub server.
@@ -76,6 +79,7 @@ async def execute_read(server: Any, metadata: dict, name: str, arguments: dict, 
 
 class MCPReadTool(BaseTool):
     is_side_effecting = False
+    accepts_local_context = False
     category = "mcp_reads"
 
     def __init__(self, index: "MCPReadIndex", server: Any, metadata: dict):
@@ -117,6 +121,7 @@ class MCPReadIndex:
         self.registry = registry
         self.refreshed: dict[str, tuple[Any, float]] = {}
         self.locks: dict[str, asyncio.Lock] = {}
+        self._selection_refresh: asyncio.Task[None] | None = None
 
     def servers(self) -> dict:
         mcp = getattr(self.registry, "mcp_registry", None)
@@ -164,6 +169,22 @@ class MCPReadIndex:
                 self.refreshed.pop(name)
         await asyncio.gather(*(self._refresh_server(server) for server in servers.values()))
 
+    async def refresh_for_selection(self) -> None:
+        """Let a slow connector finish without blocking subsequent selections."""
+        if self._selection_refresh is not None and not self._selection_refresh.done():
+            return
+        task = asyncio.create_task(self.refresh())
+        self._selection_refresh = task
+        task.add_done_callback(self._report_refresh_failure)
+        # asyncio.wait leaves discovery running on timeout. Cancelling it here
+        # could interrupt a server connection that is still opening.
+        await asyncio.wait({task}, timeout=limits.get("mcp_read_selection_wait_s"))
+
+    @staticmethod
+    def _report_refresh_failure(task: asyncio.Task[None]) -> None:
+        if not task.cancelled() and (error := task.exception()) is not None:
+            logger.warning("MCP read catalog refresh failed (%s)", type(error).__name__)
+
     async def live_binding(self, tool: MCPReadTool) -> MCPReadTool | None:
         if self.servers().get(tool.server.name) is not tool.server:
             return None
@@ -184,4 +205,4 @@ def read_index(registry: Any) -> MCPReadIndex:
 
 async def refresh_mcp_reads(registry: Any) -> None:
     if isinstance(getattr(registry, "_tools", None), dict) and getattr(registry, "mcp_registry", None) is not None:
-        await read_index(registry).refresh()
+        await read_index(registry).refresh_for_selection()

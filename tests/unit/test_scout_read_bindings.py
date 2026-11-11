@@ -1,12 +1,16 @@
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from src.core.orchestration.context import turn_id_var
 from src.core.orchestration.nodes.scout_node import _bind_scout_tools, _execute_scout_tool
 from src.core.orchestration.scout_bindings import build_dispatch_scout_tool, build_mcp_read_gateway
 from src.core.orchestration.scout_tool_policy import scout_tool_allowed
 from src.core.orchestration.turn.tool_selector import TurnToolSelector
+from src.core.tools import limits
+from src.core.tools.tool_executor import LocalToolExecutor
 from src.infrastructure.tools.execution.executor_strategy import MCPExecutor
 from src.infrastructure.tools.mcp_read_index import approved_reads, read_index
 from src.infrastructure.tools.registry import ToolRegistry
@@ -153,3 +157,53 @@ def test_existing_inspection_tools_are_available_on_builtin_connectors():
     assert set(approved_reads(desktop, [
         {"name": "ui_find"}, {"name": "ui_read"}, {"name": "ui_click"},
     ])) == {"ui_find", "ui_read"}
+
+
+@pytest.mark.asyncio
+async def test_selection_uses_available_catalog_while_slow_discovery_finishes(registry_and_server, monkeypatch):
+    registry, server, selector = registry_and_server
+    original_get = limits.get
+    monkeypatch.setattr(limits, "get", lambda key: 0 if key == "mcp_read_selection_wait_s" else original_get(key))
+    started = asyncio.Event()
+    release = asyncio.Event()
+    tools = server.list_tools.return_value
+
+    async def delayed_discovery():
+        started.set()
+        await release.wait()
+        return tools
+
+    server.list_tools.side_effect = delayed_discovery
+    selector.select.return_value = []
+    index = read_index(registry)
+    try:
+        selection = await TurnToolSelector(registry).select("List commits on GitHub", "planning")
+        await asyncio.wait_for(started.wait(), timeout=1)
+        assert all(schema["name"] != "github__list_commits" for schema in selection.schemas)
+        await TurnToolSelector(registry).select("List issues on GitHub", "planning")
+        server.list_tools.assert_awaited_once()
+    finally:
+        release.set()
+        if index._selection_refresh is not None:
+            await index._selection_refresh
+
+    assert "github__list_commits" in registry.tools
+
+
+@pytest.mark.asyncio
+async def test_mcp_alias_passes_only_tool_arguments_to_connector(registry_and_server, monkeypatch):
+    registry, _, _ = registry_and_server
+    await read_index(registry).refresh()
+    execute = AsyncMock(return_value={"success": True})
+    monkeypatch.setattr(MCPExecutor, "execute", execute)
+    turn_id_var.set("scout-local-context-boundary")
+    executor = LocalToolExecutor(registry, memory_engine=object())
+
+    result = await executor.execute_tool_call(
+        {"name": "github__list_commits", "params": {"repo": "demo"}, "id": "fixture"},
+        context=object(),
+    )
+
+    assert result["success"] is True
+    execute.assert_awaited_once()
+    assert execute.await_args.args[1] == {"repo": "demo"}
