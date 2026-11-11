@@ -114,7 +114,6 @@
   "func:src/infrastructure/tools/event_wrapper.py:_exec_wrapper": 129,
   "func:src/core/intelligence/adapters/gemini_adapter.py:_convert_to_gemini_contents": 128,
   "func:src/core/orchestration/conversation_orchestrator.py:start_turn": 127,
-  "func:src/tools/web/web_search.py:_run_query": 125,
   "func:src/remote/remote_factory.py:handle_telegram_webhook": 123,
   "func:src/remote/webhooks/gmail_handler.py:_worker_loop": 123,
   "func:src/infrastructure/tools/selection/semantic_selector.py:_query_supabase_rag": 121

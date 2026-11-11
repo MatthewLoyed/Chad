@@ -192,6 +192,14 @@ LIMITS: Dict[str, Limit] = {
             "browser_* MCP calls per conversation before browser_agent must stop.",
         ),
         Limit(
+            "direct_web_search_calls_soft", "tools.direct_web_search_calls_soft", 3, HINT,
+            "Direct web search calls before recommending use of existing results or delegation.",
+        ),
+        Limit(
+            "direct_web_search_calls_max", "tools.direct_web_search_calls_max", 5, CEILING,
+            "Direct web search batches per turn outside a deep-research task. Zero disables.",
+        ),
+        Limit(
             "search_budget_per_task", "subagents.search_budget_per_task", 50, CEILING,
             "Shared web_search results one deep-research task may draw.",
         ),

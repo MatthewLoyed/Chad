@@ -108,7 +108,15 @@ class SearxngSearchTool(BaseTool):
                 detail += " Engines: " + ", ".join(
                     f"{name} ({reason})" for name, reason in unresp[:4]
                 )
-            return {"success": False, "error": detail, "searxng_empty": True}
+            return {
+                "success": False,
+                "error": detail,
+                "searxng_empty": True,
+                "search_completed_empty": isinstance(data, dict)
+                and isinstance(data.get("results"), list)
+                and not raw_results
+                and not unresp,
+            }
 
         # Brave-shaped envelope: result is a JSON string with web.results[], which
         # web_search._parse_search_results already knows how to parse.
