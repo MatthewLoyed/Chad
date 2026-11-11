@@ -640,7 +640,7 @@ class GetCanvasDashboardTodosTool(BaseTool):
             if not todo_items:
                 return {
                     "success": True,
-                    "result": "Your Canvas To-Do list is empty.",
+                    "result": "Canvas returned no items for the dashboard To-Do list.",
                     "todos": []
                 }
             
@@ -684,8 +684,8 @@ class GetAssignmentSubmissionTool(BaseTool):
     
     name = "get_assignment_submission"
     description = (
-        "Get submission details, grades, scores, teacher feedback comments, and rubric grading breakdown "
-        "for a specific Canvas assignment. Accepts either IDs or names (e.g. course='Manage Software Project', assignment='Assignment 4')."
+        "Get submission details, uploaded file metadata, grades, instructor comments, and rubric scores "
+        "for a Canvas assignment. Accepts course and assignment IDs or names."
     )
     category = "canvas"
     requirements = ["CANVAS_TOKEN", "CANVAS_BASE_URL"]
@@ -783,6 +783,18 @@ class GetAssignmentSubmissionTool(BaseTool):
                             "comments": crit_data.get("comments") or "No comment"
                         })
             
+            raw_attachments = sub.get("attachments")
+            attachments = [
+                {
+                    "id": attachment.get("id"),
+                    "filename": attachment.get("display_name") or attachment.get("filename") or "Untitled file",
+                    "size": attachment.get("size"),
+                    "content_type": attachment.get("content-type"),
+                }
+                for attachment in (raw_attachments if isinstance(raw_attachments, list) else [])
+                if isinstance(attachment, dict)
+            ]
+
             formatted_sub = {
                 "assignment_id": aid,
                 "assignment_name": aname,
@@ -802,6 +814,7 @@ class GetAssignmentSubmissionTool(BaseTool):
                 "body_preview": sub.get("body", "")[:300] if sub.get("body") else None,
                 "instructor_comments": comments,
                 "rubric_assessment": rubric_scores,
+                "attachments": attachments,
             }
             
             state_desc = formatted_sub["workflow_state"].capitalize()

@@ -71,21 +71,28 @@ class FuzzyFindTool(BaseTool):
                 roots = ["Documents", "Desktop", "Downloads"]
 
             all_matches = []
-            
+            search_errors = []
             for root in roots:
-                # Find in this root (using to_thread)
-                import asyncio
                 matches = await asyncio.to_thread(_engine.find, query, root)
-                
-                # Filter out errors
-                valid_matches = [m for m in matches if "error" not in m]
-                all_matches.extend(valid_matches)
+                for match in matches:
+                    if "error" in match:
+                        search_errors.append(match["error"])
+                    else:
+                        all_matches.append(match)
 
             if not all_matches:
-                return {
-                    "success": False, 
-                    "error": f"No matches found for '{query}' in {roots}. Try scouting to find the right folder."
-                }
+                if search_errors:
+                    return failure.failure(search_errors[0], tool_name=self.name)
+                scope = "the sandbox root" if roots == [""] else ", ".join(roots)
+                return failure.failure(
+                    f"Fuzzy filename search returned no matches for '{query}' in {scope}.",
+                    failure_class=failure.NOT_FOUND,
+                    tool_name=self.name,
+                    next_actions=[
+                        "Report that the filename search found no matches in its scope.",
+                        "Search another folder only if the user or earlier results point to it.",
+                    ],
+                )
             
             # Sort all combined matches by score
             all_matches.sort(key=lambda x: x['score'], reverse=True)
