@@ -640,7 +640,7 @@ class GetCanvasDashboardTodosTool(BaseTool):
             if not todo_items:
                 return {
                     "success": True,
-                    "result": "Your Canvas To-Do list is empty.",
+                    "result": "Canvas returned no items for the dashboard To-Do list.",
                     "todos": []
                 }
             
