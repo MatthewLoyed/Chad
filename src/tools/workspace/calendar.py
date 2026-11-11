@@ -7,7 +7,7 @@ Also provides upcoming schedule context for proactive assistant awareness.
 import logging
 import re
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 from googleapiclient.errors import HttpError
 
@@ -117,7 +117,55 @@ _RFC3339_BOUND = re.compile(
 )
 
 
+_ISO_CALENDAR_DAY = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+
+def _parse_calendar_day(value: str) -> date | None:
+    """Return the explicit date, or None for the relative 'today' shortcut."""
+    if not isinstance(value, str):
+        raise ValueError("Expected today or YYYY-MM-DD")
+    normalized = value.strip().lower()
+    if normalized == "today":
+        return None
+    if not _ISO_CALENDAR_DAY.fullmatch(normalized):
+        raise ValueError("Expected today or YYYY-MM-DD")
+    parsed = date.fromisoformat(normalized)
+    if parsed == date.max:
+        raise ValueError("A following day is required")
+    return parsed
+
+
+def _local_midnight(day: date) -> datetime:
+    # Ask the operating system for the offset at this midnight. The offset of
+    # the next midnight can differ when daylight saving time changes.
+    return datetime.combine(day, datetime.min.time()).astimezone()
+
+
+def _calendar_query_bounds(
+    now_utc: datetime, day: Optional[str], time_min: Optional[str],
+    time_max: Optional[str], hours_ahead: Optional[int],
+) -> tuple[str, Optional[str]]:
+    if day is not None:
+        target = _parse_calendar_day(day) or now_utc.astimezone().date()
+        return (
+            _local_midnight(target).isoformat(),
+            _local_midnight(target + timedelta(days=1)).isoformat(),
+        )
+    if time_max is None and hours_ahead is not None and hours_ahead > 0:
+        time_max = (now_utc + timedelta(hours=hours_ahead)).isoformat()
+    return time_min or now_utc.isoformat(), time_max
+
+
 def _calendar_window_issues(arguments: dict[str, Any]) -> list[dict[str, str]]:
+    if (day := arguments.get("day")) is not None:
+        try:
+            _parse_calendar_day(day)
+        except ValueError:
+            return [{"path": "day", "expected": "today or a valid YYYY-MM-DD date with a following day"}]
+        if any(arguments.get(key) is not None for key in ("hours_ahead", "time_min", "time_max")):
+            return [{"path": "day", "expected": "use day without hours_ahead, time_min, or time_max"}]
+        return []
+
     bounds = {}
     issues = []
     for key in ("time_min", "time_max"):
@@ -143,7 +191,8 @@ class GetCalendarEventsTool(BaseTool):
     name = "get_calendar_events"
     description = (
         "Get upcoming events from Google Calendar. Can filter by keyword/search query, "
-        "lookahead window (hours_ahead), or specific time boundaries. Returns event summaries, "
+        "lookahead window (hours_ahead), a local calendar day, or explicit time boundaries. "
+        "Use day='today' for the full local day. Returns event summaries, "
         "start/end times, locations, and relative time (e.g. 'starts in 15 mins')."
     )
     category = "calendar"
@@ -171,6 +220,10 @@ class GetCalendarEventsTool(BaseTool):
                     "hours_ahead": {
                         "type": "integer",
                         "description": "Optional lookahead window in hours from now (e.g., 2, 24, 48)"
+                    },
+                    "day": {
+                        "type": "string",
+                        "description": "Full local day, today or YYYY-MM-DD. Use without hours_ahead or explicit bounds."
                     },
                     "time_min": {
                         "type": "string",
@@ -203,11 +256,24 @@ class GetCalendarEventsTool(BaseTool):
         time_min: Optional[str] = None,
         time_max: Optional[str] = None,
         calendar_id: str = "primary",
+        *,
+        day: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
-        issues = self.validate_argument_semantics({"time_min": time_min, "time_max": time_max})
+        issues = self.validate_argument_semantics({
+            "time_min": time_min, "time_max": time_max, "hours_ahead": hours_ahead, "day": day,
+        })
         if issues:
             return argument_failure(self.name, self.get_schema()["parameters"], issues)
+
+        now_utc = datetime.now(timezone.utc)
+        try:
+            resolved_min, resolved_max = _calendar_query_bounds(now_utc, day, time_min, time_max, hours_ahead)
+        except (OSError, OverflowError, ValueError):
+            field = "day" if day is not None else "hours_ahead"
+            return argument_failure(self.name, self.get_schema()["parameters"], [
+                {"path": field, "expected": "a window supported by the local timezone"},
+            ])
 
         try:
             service = self._manager.get_calendar_service()
@@ -217,14 +283,8 @@ class GetCalendarEventsTool(BaseTool):
                     "error": "Failed to connect to Google Calendar. Please ensure credentials exist and authentication is complete."
                 }
 
-            now_utc = datetime.now(timezone.utc)
             local_tz = _get_local_timezone()
-            now_local = datetime.now(local_tz)
-
-            resolved_min = time_min or now_utc.isoformat()
-            resolved_max = time_max
-            if resolved_max is None and hours_ahead is not None and hours_ahead > 0:
-                resolved_max = (now_utc + timedelta(hours=hours_ahead)).isoformat()
+            now_local = now_utc.astimezone(local_tz)
 
             try:
                 limit = int(limit) if limit is not None else 10

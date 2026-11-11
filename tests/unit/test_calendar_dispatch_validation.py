@@ -1,6 +1,7 @@
 """Calendar argument validation at the registry and LangGraph entry points."""
 
 import json
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -12,6 +13,7 @@ from langgraph.prebuilt import ToolNode
 from src.core.tools import repetition
 from src.infrastructure.tools.registry import ToolRegistry
 from src.infrastructure.tools.schema.schema_builder import ToolSchemaBuilder
+from src.tools.workspace import calendar
 from src.tools.workspace.calendar import GetCalendarEventsTool
 
 
@@ -164,3 +166,75 @@ async def test_direct_read_checks_bounds_before_opening_calendar_service(calenda
     assert result["failure_class"] == "bad_input"
     assert result["dispatched"] is False
     tool._manager.get_calendar_service.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("arguments", [
+    {"day": "2026-02-30"},
+    {"day": "2026-11-01T00:00:00"},
+    {"day": "tomorrow"},
+    {"day": "9999-12-31"},
+    {"day": "today", "time_min": "2026-11-01T00:00:00Z"},
+    {"day": "today", "hours_ahead": 24},
+])
+async def test_invalid_day_stops_before_calendar_dispatch(calendar_registry, arguments):
+    registry, tool, executor, _ = calendar_registry
+
+    result = await registry.execute_tool(tool.name, arguments)
+
+    assert result["failure_class"] == "bad_input"
+    assert result["dispatched"] is False
+    assert result["validation_errors"][0]["path"] == "day"
+    executor.execute.assert_not_awaited()
+    tool._manager.get_calendar_service.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("day", "start_offset", "end_offset"), [
+    ("2026-03-08", "-06:00", "-05:00"),
+    ("2026-11-01", "-05:00", "-06:00"),
+    ("2026-12-31", "-06:00", "-06:00"),
+])
+async def test_wrapped_day_resolves_each_local_midnight(calendar_registry, monkeypatch, day, start_offset, end_offset):
+    registry, tool, executor, service = calendar_registry
+    first = datetime.fromisoformat(day).date()
+    offsets = iter([start_offset, end_offset])
+
+    class LocalDateTime(datetime):
+        def astimezone(self, tz=None):
+            if self.tzinfo is not None:
+                return super().astimezone(tz)
+            assert tz is None
+            return datetime.fromisoformat(self.isoformat() + next(offsets))
+
+    monkeypatch.setattr(calendar, "datetime", LocalDateTime)
+    monkeypatch.setattr(calendar, "_get_local_timezone", lambda: timezone.utc)
+    result = await registry.get_langchain_tool_by_name(tool.name).ainvoke({"day": day, "search_query": "Planning"})
+
+    assert result["success"]
+    executor.execute.assert_awaited_once()
+    params = service.events.return_value.list.call_args.kwargs
+    assert params["timeMin"] == first.isoformat() + "T00:00:00" + start_offset
+    assert params["timeMax"] == (first + timedelta(days=1)).isoformat() + "T00:00:00" + end_offset
+    assert params["q"] == "Planning"
+
+
+@pytest.mark.asyncio
+async def test_today_uses_the_host_local_date(calendar_registry, monkeypatch):
+    registry, tool, _, service = calendar_registry
+    fixed_now = datetime(2026, 11, 10, 1, 30, tzinfo=timezone.utc)
+    local_day = fixed_now.astimezone().date()
+    next_day = local_day + timedelta(days=1)
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed_now.astimezone(tz)
+
+    monkeypatch.setattr(calendar, "datetime", FrozenDateTime)
+    result = await registry.execute_tool(tool.name, {"day": "today"})
+
+    assert result["success"]
+    params = service.events.return_value.list.call_args.kwargs
+    assert params["timeMin"].startswith(local_day.isoformat() + "T00:00:00")
+    assert params["timeMax"].startswith(next_day.isoformat() + "T00:00:00")
