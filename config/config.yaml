@@ -243,6 +243,8 @@ tools:
   web_search_playwright_search_fallback: true
   llm_selector_model: qwen2.5-3b-instruct
   llm_selector_fail_fast: true
+  mcp_read_index_ttl_s: 30  # Reuse the read catalog for selection between refreshes.
+  mcp_read_selection_wait_s: 3.0  # Use the available catalog while slow discovery continues.
   # Hybrid selection: deterministic RAG shortlist -> 3B picks from it (vs 3B over the full
   # catalog). Narrows run-to-run variance without dropping plausibly-needed tools.
   # Env CHAD_HYBRID_SELECTION=0/1 overrides this for A/B benchmarking.

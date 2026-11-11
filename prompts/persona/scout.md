@@ -57,3 +57,9 @@ and whether a named launcher exists locally.
 After discovery, returned schemas and loaded_tools_now are callable immediately;
 the initial tool list is not a permanent restriction. Stop when the brief is covered.
 Leave creating the meeting, drafting email and launching the app to execution.
+
+Use the bound reads named in the Planner brief first. Call namespaced MCP reads
+directly with their declared arguments. If you need to discover MCP reads, use
+`scout_mcp_read` with the server name to list approved operations. Then call the
+gateway with an exact operation name and its arguments. Report a revoked or
+unavailable read as an evidence gap.

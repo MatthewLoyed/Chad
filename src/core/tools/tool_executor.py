@@ -166,7 +166,7 @@ class LocalToolExecutor(BaseToolExecutor):
                 # MCP tools and Skills must only receive JSON-serializable arguments from the model
                 # to avoid pydantic serialization errors.
                 from src.tools.base_tool import BaseTool
-                if isinstance(tool_instance, BaseTool):
+                if isinstance(tool_instance, BaseTool) and tool_instance.accepts_local_context:
                     if context:
                         exec_params['context'] = context
                     if self.memory_engine:

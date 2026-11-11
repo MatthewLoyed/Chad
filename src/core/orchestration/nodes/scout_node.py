@@ -20,6 +20,7 @@ from src.core.orchestration.context import await_with_progress_heartbeat
 from src.core.orchestration.agent_scope import agent_scope
 from src.core.orchestration.scout_evidence import report_tool, evidence_record, render_evidence, relevant_known_context, validate_report_sources
 from src.core.orchestration.scout_tool_policy import scout_tool_allowed
+from src.core.orchestration.scout_bindings import build_mcp_read_gateway
 
 logger = logging.getLogger("ChadSupervisor")
 
@@ -154,10 +155,17 @@ def _bind_scout_tools(
 ) -> tuple[List[Any], Dict[str, Any]]:
     """Resolve LangChain tools for the scout ReAct loop."""
     direct_tools: List[Any] = []
-    for name in _SCOUT_CORE_TOOLS:
+    requested = state.get("scout_requested_tools") or []
+    for name in dict.fromkeys((*_SCOUT_CORE_TOOLS, *requested)):
+        if name in _SCOUT_BLOCKED_TOOLS or not scout_tool_allowed(name, tool_registry):
+            continue
         tool = tool_registry.get_langchain_tool_by_name(name)
         if tool:
             direct_tools.append(tool)
+
+    gateway = build_mcp_read_gateway(tool_registry)
+    if gateway is not None:
+        direct_tools.append(gateway)
 
     bound = [t for t in (handoff_tools or []) if scout_tool_allowed(getattr(t, "name", ""), tool_registry)] + direct_tools
     tool_map = {getattr(t, "name", ""): t for t in bound if getattr(t, "name", None)}
@@ -311,13 +319,14 @@ async def _execute_scout_tool(
     async def _run():
         if tool_name == "search_for_tool":
             # Resolve an advertised exact name regardless of an accidentally narrow category.
-            query = re.sub(r"[^a-z0-9]+", "_", str(sanitized_args.get("query", "")).lower()).strip("_")
+            exact_name = str(sanitized_args.get("query", "")).strip()
+            query = re.sub(r"[^a-z0-9]+", "_", exact_name.lower()).strip("_")
             exact = [schema for schema in tool_registry.get_all_schemas()
-                     if isinstance(schema, dict) and _schema_name(schema) == query
-                     and scout_tool_allowed(query, tool_registry)]
+                     if isinstance(schema, dict) and _schema_name(schema) in (exact_name, query)
+                     and scout_tool_allowed(_schema_name(schema), tool_registry)]
             if exact:
                 return {"success": True, "result": {"message": "Exact registered tool found; its schema will now be loaded.",
-                        "_injected_schemas": exact, "tools": [{"name": query}], "exact_lookup": True}}
+                        "_injected_schemas": exact, "tools": [{"name": _schema_name(schema)} for schema in exact], "exact_lookup": True}}
         result = await _invoke(sanitized_args)
         schemas = _extract_injected_schemas(result)
         permitted = [schema for schema in schemas if scout_tool_allowed(_schema_name(schema) or "", tool_registry)]
@@ -535,8 +544,7 @@ def make_scout_node(
             f"{known_context}"
             f"{render_evidence(state.get('scout_evidence'))}"
         )
-        # Do not copy the supervisor's composite system_instruction: it includes
-        # unrelated retrieval/activity context. Scout retrieves facts for its brief.
+        # Scout receives its own context for the brief.
         if not bound_tools:
             logger.info("[ SCOUT ] No tools bound — skipping gather loop.")
             _emit_scout_lifecycle(event_bus, scout_id, start=True, prompt=scout_brief or user_goal)
@@ -549,6 +557,7 @@ def make_scout_node(
                 "scout_coverage": None,
                 "confirmed_tool_menu": menu,
                 "scout_gather_request": None,
+                "scout_requested_tools": [],
             }
 
         finish_tool = report_tool()
@@ -576,7 +585,6 @@ def make_scout_node(
         report_attempted = False
         report_failures = 0
         report_failure_text = ""
-
         from src.core.orchestration.read_memory import fresh_read_cache
 
         with agent_scope("Scout", parent_id=scout_id, set_parent=True), fresh_read_cache():
@@ -761,8 +769,8 @@ def make_scout_node(
                     "scout_coverage": None,
                     "confirmed_tool_menu": menu,
                     "tools": updated_tools,
-                    # Clear the request so route_after_planner does not re-dispatch Scout.
                     "scout_gather_request": None,
+                "scout_requested_tools": [],
                 }
                 if pending_approval:
                     result["pending_approval"] = pending_approval
@@ -778,6 +786,7 @@ def make_scout_node(
                     "confirmed_tool_menu": menu,
                     "tools": updated_tools,
                     "scout_gather_request": None,
+                "scout_requested_tools": [],
                 }
 
     return scout_node

@@ -13,6 +13,8 @@ import os
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from src.shared.logger import setup_logger
+from src.infrastructure.tools.mcp_read_index import named_mcp_reads
+
 from .configuration import configured_selector
 
 try:
@@ -64,6 +66,18 @@ NON_TRIGGERING_BUNDLE_TOOLS = {
     "list_directory",
     "render_chart",
 }
+
+
+def _selection_candidates(registry: Any, category: Optional[str]) -> Dict[str, Any]:
+    from src.infrastructure.tools.delegate_routing import is_supervisor_delegate_only
+    from src.core.orchestration.scout_tool_policy import scout_tool_allowed
+    return {
+        n: t for n, t in registry._tools.copy().items()
+        if n not in registry._core_tool_names and (
+            not is_supervisor_delegate_only(n, registry._categories, registry._tool_sources)
+            or (category == "planning" and scout_tool_allowed(n, registry))
+        )
+    }
 
 
 class TurnToolSelector:
@@ -417,7 +431,7 @@ class TurnToolSelector:
 
     def _selector_catalog(self, query: str, history: Optional[List[Any]],
                           selection_meta: Dict[str, Any],
-                          knowledge_context: Optional[str] = None) -> Dict[str, Any]:
+                          knowledge_context: Optional[str] = None, *, category: Optional[str] = None) -> Dict[str, Any]:
         """The tool dict handed to the 9B selector.
 
         Hybrid ON  → a generous, recall-oriented RAG shortlist (narrows the catalog without
@@ -426,12 +440,7 @@ class TurnToolSelector:
         Hybrid OFF → the full catalog (legacy behavior).
         Falls back to the full catalog if RAG yields nothing (e.g. Supabase unreachable).
         """
-        from src.infrastructure.tools.delegate_routing import is_supervisor_delegate_only
-        candidate_pool = {
-            n: t for n, t in self._tools.items()
-            if not is_supervisor_delegate_only(n, self._categories, self._tool_sources)
-            and n not in self._core_tool_names
-        }
+        candidate_pool = _selection_candidates(self._registry, category)
 
         if not self._hybrid_enabled():
             selection_meta["selector_catalog"] = "full"
@@ -450,6 +459,7 @@ class TurnToolSelector:
             logger.warning("[ TOOL_SELECT ] Hybrid shortlist empty — handing LLM selector candidate pool.")
             return candidate_pool
         sub_catalog = {n: candidate_pool[n] for n in shortlist if n in candidate_pool}
+        sub_catalog.update(named_mcp_reads(query, candidate_pool))
         if self._is_explicit_canva_query(query):
             sub_catalog = {n: t for n, t in sub_catalog.items() if not self._is_canvas_lms_tool(n)}
             for tool_name in ("call_mcp_tool", "load_skill"):
@@ -654,7 +664,7 @@ class TurnToolSelector:
 
         if llm_available:
             catalog = self._selector_catalog(
-                query, history, selection_meta, knowledge_context=knowledge_context
+                query, history, selection_meta, knowledge_context=knowledge_context, category=category
             )
             llm_names = self._llm_selector.select(
                 query,
@@ -702,7 +712,7 @@ class TurnToolSelector:
                     f"[ TOOL_SELECT ] LLM selector call failed ({reason}) — falling back to RAG."
                 )
             selected_metadata = self._selector.retrieve_relevant_tools(
-                query, self._tools, history=history
+                query, self._tools.copy(), history=history
             )
             rag_names = [m.get('name') for m in selected_metadata]
             if is_canva:

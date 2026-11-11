@@ -18,7 +18,7 @@ from src.core.orchestration.nodes.scout_node import (
     validate_plan_tools_against_menu,
 )
 from src.core.orchestration.plan_service import PlanService
-from src.tools.system.dispatch_scout import DispatchScoutTool
+from src.core.orchestration.scout_bindings import build_dispatch_scout_tool
 from src.tools.system.propose_plan import ProposePlanTool
 from src.core.orchestration.scout_evidence import render_evidence
 
@@ -139,19 +139,6 @@ def _build_skip_scout_tool() -> StructuredTool:
     return StructuredTool.from_function(
         coroutine=_skip, name="skip_scout",
         description="Explicitly skip reconnaissance only when no missing external facts are needed. Give a reason.",
-    )
-
-
-def _build_dispatch_scout_tool() -> StructuredTool:
-    native = DispatchScoutTool()
-
-    async def _run(brief: str) -> Dict[str, Any]:
-        return await native.execute(brief=brief)
-
-    return StructuredTool.from_function(
-        name=native.name,
-        description=native.description,
-        coroutine=_run,
     )
 
 
@@ -349,13 +336,12 @@ async def _run_planner_tool_loop(
             planning_tools.append(ask_tool)
     decision_tools: List[Any] = [_build_skip_scout_tool()]
     if allow_dispatch and dispatch_count < max_dispatch:
-        decision_tools.insert(0, _build_dispatch_scout_tool())
+        decision_tools.insert(0, build_dispatch_scout_tool(tool_registry, menu))
     coverage_tools = [_build_review_scout_tool(allow_dispatch and dispatch_count < max_dispatch)]
     bound = decision_tools if decision_required else coverage_tools if coverage_required else planning_tools
 
     tool_map = {getattr(t, "name", ""): t for t in bound if getattr(t, "name", None)}
 
-    # Runtime data only — doctrine lives in prompts/persona/planner.md
     prompt = planning_base
     prompt += (
         f"\n\n### RUNTIME\n"
@@ -414,7 +400,7 @@ async def _run_planner_tool_loop(
         if not tool_calls:
             if not nudged:
                 nudged = True
-                nudge = ("Choose exactly one tool: dispatch_scout(brief) or skip_scout(reason)."
+                nudge = ("Choose exactly one tool: dispatch_scout(brief, tools) or skip_scout(reason)."
                          if decision_required else "Call review_scout to assess findings and gaps."
                          if coverage_required else _propose_nudge_text())
                 messages.append(HumanMessage(content=nudge))
@@ -546,6 +532,7 @@ async def _run_planner_tool_loop(
                 state["scout_coverage"] = None
                 return {
                     "scout_gather_request": brief,
+                    "scout_requested_tools": raw.get("requested_tools", []),
                     "scout_correlation_id": tc.get("id") or f"scout_{uuid.uuid4().hex}",
                     "scout_dispatch_count": dispatch_count + 1,
                     "messages": new_messages,
@@ -668,6 +655,7 @@ def make_planner_node(model: Any, tool_registry: Any = None, handoff_tools: Opti
             result.setdefault("scout_coverage", None)
             result.setdefault("gather_brief", None)
             result.setdefault("scout_dispatch_count", 0)
+            result.setdefault("scout_requested_tools", [])
         return result
 
     return planner_node
