@@ -5,7 +5,9 @@ wraps the DiscoveryEngine into standard LLM tools.
 
 from typing import Dict, Any, Optional
 import asyncio
+from src.core.tools import failure, limits
 from src.tools.base_tool import BaseTool
+from src.tools.filesystem._file_page import file_page
 from src.core.filesystem.discovery_engine import DiscoveryEngine
 from src.shared.logger import setup_logger
 
@@ -112,8 +114,9 @@ class ReadLocalFileTool(BaseTool):
     
     name = "read_file"
     description = (
-        "Read the text contents of a local file. Use fuzzy_find_local first to find the file path, "
-        "then use this tool to read its contents. Supports .txt, .md, .py, .json, .yaml, .csv, and similar text files."
+        "Read a numbered page of a local text file. Use query to jump to a symbol or literal text. "
+        "To continue a page, call again with next_offset and next_column as offset and column, "
+        "omitting query. Supports .txt, .md, .py, .json, .yaml, .csv, and similar text files."
     )
     category = "filesystem"
     
@@ -135,18 +138,44 @@ class ReadLocalFileTool(BaseTool):
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Full or relative path to the file (from fuzzy_find_local results)"
-                    }
+                        "description": "Absolute or home-relative path from fuzzy_find_local results."
+                    },
+                    "offset": {"type": "integer", "description": "First line to read, numbered from 1."},
+                    "limit": {"type": "integer", "description": "Maximum lines to read on this page."},
+                    "query": {"type": "string", "description": "Optional case-insensitive literal to find at or after offset."},
+                    "column": {"type": "integer", "description": "First character on the starting line, numbered from 1. Use next_column for continuation."},
                 },
                 "required": ["file_path"]
             }
         }
     
-    async def execute(self, file_path: str, **kwargs) -> Dict[str, Any]:
+    async def execute(
+        self,
+        file_path: str,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        query: Optional[str] = None,
+        column: Optional[int] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
         import os
         from pathlib import Path
         
         from src.shared.fs_sandbox import sandbox_root
+
+        for field, value in (("offset", offset), ("limit", limit), ("column", column)):
+            if value is not None and (type(value) is not int or value < 1):
+                return failure.failure(
+                    f"{field} must be a positive integer",
+                    failure_class=failure.BAD_INPUT,
+                    tool_name=self.name,
+                )
+        if query is not None and not isinstance(query, str):
+            return failure.failure(
+                "query must be text", failure_class=failure.BAD_INPUT, tool_name=self.name,
+            )
+        maximum = max(1, int(limits.get("read_file_max_lines")))
+        default = max(1, int(limits.get("read_file_default_lines")))
 
         try:
             # Under an eval sandbox, relative paths resolve against the SANDBOX, not home
@@ -212,33 +241,16 @@ class ReadLocalFileTool(BaseTool):
                 # Try with latin-1 as fallback
                 content = await asyncio.to_thread(full_path.read_text, encoding='latin-1')
             
-            # Truncate if very long for display
-            display_content = content
-            truncated = False
-            if len(content) > 5000:
-                display_content = content[:5000]
-                truncated = True
-            
-            result_msg = f"Read {len(content)} characters from '{full_path.name}'"
-            if truncated:
-                result_msg += f" (showing first 5000 chars)"
-            
-            return {
-                "success": True,
-                "result": result_msg,
-                "file_name": full_path.name,
-                "file_path": str(full_path),
-                "content": display_content,
-                "full_content": content,
-                "truncated": truncated,
-                "size_bytes": file_size,
-                # Provenance marker (#642): a local file the user/agent asked for by
-                # path is a trusted source — sanitize_tool_output must not mangle
-                # legitimate discussion of "system prompt"/"instructions" in, e.g.,
-                # this repo's own persona prompts or eval transcripts.
-                "_trusted_source": True,
-            }
-            
+            return file_page(
+                content,
+                file_path=full_path,
+                size_bytes=file_size,
+                offset=offset or 1,
+                limit=min(limit or default, maximum),
+                query=(query or "").strip(),
+                column=column or 1,
+            )
+
         except Exception as e:
             logger.error(f"Failed to read file: {e}", exc_info=True)
             return {"success": False, "error": f"Read failed: {str(e)}"}

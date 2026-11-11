@@ -213,6 +213,9 @@ tools:
   # Context budget. Failed results are capped far tighter than successful ones —
   # a failure needs its class and next actions, not its stack trace.
   tool_output_max_chars: 8000
+  # Local file pages also fit within the serialized tool-output budget.
+  read_file_default_lines: 200
+  read_file_max_lines: 300
   failed_output_max_chars: 1800
   # Cosmetic GUI status-line filler (src/core/wait_theater/narrator.py). Off (refs #592):
   # it opportunistically calls the 9B tool selector "if already resident" for pure UI

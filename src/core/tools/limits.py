@@ -161,6 +161,14 @@ LIMITS: Dict[str, Limit] = {
             "Chars kept from a SUCCESSFUL tool result before truncation.",
         ),
         Limit(
+            "read_file_default_lines", "tools.read_file_default_lines", 200, HINT,
+            "Default line count requested by read_file.",
+        ),
+        Limit(
+            "read_file_max_lines", "tools.read_file_max_lines", 300, CEILING,
+            "Maximum line count per read_file page. More lines remain available by cursor.",
+        ),
+        Limit(
             "browser_snapshot_max_chars", "tools.browser_snapshot_max_chars", 24000, CEILING,
             "Chars kept from browser_snapshot before truncation (preserves large SPA interactive trees).",
         ),
