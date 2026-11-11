@@ -127,6 +127,36 @@ async def test_draft_success_returns_validated_steps():
 
 
 @pytest.mark.asyncio
+async def test_draft_loads_persona_overlay_without_registry_warmup(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHAD_PERSONA_OVERLAY_DIR", str(tmp_path))
+    monkeypatch.setenv("CHAD_PERSONA_LAYER", "merged")
+    (tmp_path / "routine_builder.md").write_text("Draft using the test catalog.\n", encoding="utf-8")
+    adapter = adapter_for('[{"tool_name":"get_datetime"}]')
+
+    result = await RoutineBuilder(adapter).draft("Check the time", CATALOG)
+
+    assert result["success"]
+    assert adapter.generate.await_args.kwargs["messages"][0] == {
+        "role": "system",
+        "content": "Draft using the test catalog.\n",
+    }
+
+
+@pytest.mark.asyncio
+async def test_draft_missing_prompt_fails_without_calling_adapter(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHAD_PERSONA_OVERLAY_DIR", str(tmp_path))
+    monkeypatch.setenv("CHAD_PERSONA_LAYER", "overlay")
+    adapter = adapter_for("")
+
+    result = await RoutineBuilder(adapter).draft("Check the time", CATALOG)
+
+    assert not result["success"]
+    assert result["steps"] == []
+    assert result["failure_class"] == "config"
+    adapter.generate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("reason", ["length", "error"])
 async def test_draft_rejects_incomplete_or_failed_generation(reason):
     result = await RoutineBuilder(adapter_for('[{"tool_name":"get_datetime"}]', reason)).draft("time", CATALOG)

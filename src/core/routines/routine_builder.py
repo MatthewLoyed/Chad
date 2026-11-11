@@ -7,27 +7,11 @@ from typing import Any, Dict, List, Optional
 
 from jsonschema import SchemaError, ValidationError, validate
 
+from src.core.tools import failure
+from src.infrastructure.repositories import persona_store
 from src.shared.logger import setup_logger
 
 logger = setup_logger("RoutineBuilder")
-
-SYSTEM_PROMPT = """\
-You are the routine builder for an AI desktop assistant. Draft, never execute.
-Given a goal and a tool catalog, return ONLY a JSON array of ordered steps:
-{"tool_name": "<exact catalog name>", "label": "<short label>", "params": {...}}
-
-Rules:
-- Use exact catalog names and conform to the full parameter schemas.
-- Preserve every required action and dependency; never return a partial routine.
-- Saved steps replay literal parameters in order. They cannot interpret earlier
-  results, substitute variables, ask questions, or execute instructions in labels.
-- Never invent assignment IDs, chapter numbers, URLs, file paths, or tool outputs.
-- If required inputs are missing, or a later action depends on reading/interpreting
-  an earlier result, return []. Such a goal needs an agent following a skill.
-- Loading a skill alone does not execute it in the saved-routine runner.
-- Do not add schedules unless explicitly requested. A routine runs on demand.
-- Prefer concise human labels; do not limit steps at the expense of completeness.
-"""
 
 
 class RoutineBuilder:
@@ -80,10 +64,21 @@ class RoutineBuilder:
             return failed("Description is required.")
         if not catalog_entries:
             return failed("No tools are available for routine drafting.")
+        # Drafting also runs before PromptRegistry warmup, so resolve from disk.
+        fragment = await asyncio.to_thread(persona_store.get_fragment, "routine_builder")
+        if fragment is None:
+            logger.warning("[ ROUTINE_BUILDER ] Missing persona fragment: routine_builder")
+            return failure.failure(
+                "Routine builder prompt is unavailable. Check the routine_builder persona fragment.",
+                failure_class=failure.CONFIG,
+                steps=[],
+            )
+        # The fragment parser strips the original prompt's trailing newline.
+        system_prompt = fragment[1] + "\n"
         try:
             response = await asyncio.wait_for(self._adapter.generate(
                 messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"User goal:\n{description.strip()}\n\nAvailable tools:\n{self._build_catalog_text(catalog_entries)}"},
                 ],
                 tools=None,

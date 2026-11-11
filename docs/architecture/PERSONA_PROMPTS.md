@@ -29,9 +29,9 @@ Why this matters for debugging: when an eval fails, ask “is this a wiring bug 
 a prompt bug?” Wiring lives in `src/`; prompts live in `prompts/persona/`. Mixing
 them forces you to chase both on every failure.
 
-`scope: internal` fragments (e.g. `scout_brief_synth.md`) are loaded **by id** for
-one-shot jobs (brief compression). They are never injected via
-`SystemPromptBuilder.build()`.
+`scope: internal` fragments are loaded **by id** for one-shot jobs such as
+[routine drafting](../../prompts/persona/routine_builder.md). They are never
+injected via `SystemPromptBuilder.build()`.
 
 ---
 
