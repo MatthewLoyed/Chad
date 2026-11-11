@@ -1,7 +1,7 @@
 import sys
 import asyncio
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import ANY, MagicMock, AsyncMock, patch
 import numpy as np
 import pytest
 
@@ -124,7 +124,8 @@ async def test_event_wrapper_background_logging_success():
                     "tool_name": "my_tool",
                     "query_text": "sub-query text",
                     "query_embedding": query_emb,
-                    "outcome": "success"
+                    "outcome": "success",
+                    "created_at": ANY,
                 }
             )
     finally:
@@ -165,7 +166,8 @@ async def test_event_wrapper_background_logging_failure():
                     "tool_name": "my_tool",
                     "query_text": "sub-query text",
                     "query_embedding": query_emb,
-                    "outcome": "failure"
+                    "outcome": "failure",
+                    "created_at": ANY,
                 }
             )
     finally:

@@ -216,8 +216,24 @@ def test_local_selector_prefers_refined_embedding(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_event_wrapper_logs_outcome_locally():
-    """The outcome-log write path persists locally when Supabase is unconfigured."""
+@pytest.mark.parametrize("cloud_rejects_insert", [False, True])
+async def test_event_wrapper_logs_outcome_locally(monkeypatch, cloud_rejects_insert):
+    from unittest.mock import Mock
+
+    import httpx
+
+    # Simulate a fresh process before any other reader has registered the table.
+    monkeypatch.setattr(local_postgrest, "_shim_instance", None)
+    db = get_supabase_manager()
+    if cloud_rejects_insert:
+        request = httpx.Request("POST", "https://database.example.com/rest/v1/tool_outcome_log")
+        client = Mock()
+        client.post.return_value = httpx.Response(401, request=request)
+        monkeypatch.setattr(db, "enabled", True)
+        monkeypatch.setattr(db, "base_url", "https://database.example.com/rest/v1", raising=False)
+        monkeypatch.setattr(db, "headers", {}, raising=False)
+        monkeypatch.setattr(db, "_client", client)
+
     query_emb = _unit(11).tolist()
     token = current_turn_tool_queries_var.set({
         "__query__": "user asked something",
@@ -236,17 +252,21 @@ async def test_event_wrapper_logs_outcome_locally():
 
     # The insert runs in a fire-and-forget background task; poll rather than sleep a fixed
     # amount so this stays deterministic on slow CI runners (not a timing race).
-    db = get_supabase_manager()
     rows = []
     for _ in range(150):  # up to ~3s
-        rows = db.query("tool_outcome_log", select="tool_name,outcome,query_embedding",
-                        filters={"tool_name": "eq.my_tool"})
+        rows = local_postgrest.get_local_shim().query(
+            "tool_outcome_log", select="tool_name,outcome,query_embedding,created_at",
+            filters={"tool_name": "eq.my_tool"},
+        )
         if rows:
             break
         await asyncio.sleep(0.02)
     assert len(rows) == 1
     assert rows[0]["outcome"] == "success"
     assert rows[0]["query_embedding"] == query_emb
+    assert datetime.fromisoformat(rows[0]["created_at"]).utcoffset().total_seconds() == 0
+    if cloud_rejects_insert:
+        client.post.assert_called_once()
 
 
 @pytest.mark.asyncio
