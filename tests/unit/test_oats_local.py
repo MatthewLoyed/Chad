@@ -270,13 +270,16 @@ async def test_event_wrapper_logs_outcome_locally(monkeypatch, cloud_rejects_ins
 
 
 @pytest.mark.asyncio
-async def test_feedback_endpoint_writes_user_rating_locally():
+async def test_feedback_endpoint_writes_user_rating_locally(monkeypatch):
     """The /feedback user_rating write path persists to the local shim when offline,
     respecting credit assignment (a thumbs-down stamps only the FAILED tools), and the
     rating badge is persisted on the message metadata so it survives a reload."""
     from src.remote.endpoints import _feedback_endpoint
     from src.infrastructure.repositories.chat_history_repository import ChatHistoryRepository
 
+    monkeypatch.setattr(
+        "src.infrastructure.repositories.chat_history_repository.get_supabase_manager", get_supabase_manager,
+    )
     # Seed a real conversation + assistant message so the rating badge has somewhere to land.
     repo = ChatHistoryRepository()
     conv = await repo.create_conversation()
