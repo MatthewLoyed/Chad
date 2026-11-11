@@ -391,52 +391,14 @@ class ToolSchemaBuilder:
     def wrap_lc_tool(self, name: str, schema: Dict[str, Any]) -> Any:
         """Convert a tool schema into a LangChain StructuredTool."""
         from langchain_core.tools import StructuredTool
-        from pydantic import create_model, Field
+        from .argument_model import build_argument_model
+        from .argument_validation import uses_argument_validation, wrapper_feedback
 
         tool = self._tools.get(name)
         description = schema.get('description', '')
-        params = schema.get('parameters', {}).get('properties', {})
-        required = schema.get('parameters', {}).get('required', [])
-
-        # Create a dynamic Pydantic model for the tool arguments
-        fields = {}
-        for p_name, p_info in params.items():
-            p_type = p_info.get('type', 'string')
-            p_desc = p_info.get('description', '')
-
-            # Basic type mapping
-            if isinstance(p_type, list):
-                from typing import Union, Any
-                type_map = {
-                    'integer': int,
-                    'boolean': bool,
-                    'number': float,
-                    'array': list,
-                    'object': dict,
-                    'string': str,
-                }
-                matched_types = [type_map[t] for t in p_type if t in type_map]
-                py_type = Union[tuple(matched_types)] if matched_types else Any
-            else:
-                py_type = str
-                if p_type == 'integer':
-                    py_type = int
-                elif p_type == 'boolean':
-                    py_type = bool
-                elif p_type == 'number':
-                    py_type = float
-                elif p_type == 'array':
-                    py_type = list
-                elif p_type == 'object':
-                    py_type = dict
-                elif p_type == 'any':
-                    from typing import Any
-                    py_type = Any
-
-            default = ... if p_name in required else p_info.get("default", None)
-            fields[p_name] = (py_type, Field(default=default, description=p_desc))
-
-        args_model = create_model(f"{name}_args", **fields)
+        parameters = schema.get("parameters") or {"type": "object", "properties": {}}
+        validate = uses_argument_validation(name)
+        args_model = build_argument_model(name, parameters, strict=validate)
 
         # ARCHITECTURE NOTE: We wrap the tool execution in a notification layer.
         # This is critical for LangGraph integration because LangGraph's ToolNode
@@ -450,13 +412,12 @@ class ToolSchemaBuilder:
             tool_instance=tool
         )
 
-        parameters = schema.get("parameters") or {"type": "object", "properties": {}}
-
         lc_tool = StructuredTool.from_function(
             name=name,
             description=description,
             func=None,  # Async only
             coroutine=exec_coro,
             args_schema=args_model,
+            handle_validation_error=wrapper_feedback(name, parameters) if validate else False,
         )
         return attach_parameters_schema(lc_tool, parameters)

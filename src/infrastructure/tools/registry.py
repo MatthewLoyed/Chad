@@ -389,29 +389,27 @@ class ToolRegistry:
 
     async def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Any:
         """Execute a tool using the appropriate strategy."""
-        tool = self._tools.get(tool_name)
-        if not tool:
-            raise ValueError(f"Tool '{tool_name}' not found in registry.")
-
-        # Check if it's a stub and hydrate if necessary
-        if isinstance(tool, dict) and tool.get('is_stub'):
-            tool = self._load_stub(tool_name)
-            if not tool:
-                raise ValueError(f"Failed to hydrate stub tool '{tool_name}'.")
-
-        from src.tools.base_tool import BaseTool
-        if isinstance(tool, BaseTool) and "tool_registry" not in parameters:
-            parameters = {**parameters, "tool_registry": self}
-
-        source = self._tool_sources.get(tool_name, 'local')
-        executor = self._routing_engine.route_to_executor(tool)
-
-        # Non-progress guard (src/core/tools/repetition.py). This is the one place
-        # every lane passes through — the LangGraph tool node reaches tools via
-        # this method, bypassing ToolCoordinator and its LoopDetector entirely.
-        # Blocks only an identical call that already failed; everything else is an
-        # advisory hint attached to the result.
         from src.core.tools import fault_injection, repetition
+        from src.tools.base_tool import BaseTool
+        from .schema.argument_validation import uses_argument_validation, validate_arguments
+
+        if not self._tools.get(tool_name):
+            raise ValueError(f"Tool '{tool_name}' not found in registry.")
+        tool = self.get_tool(tool_name)
+        if not tool:
+            raise ValueError(f"Failed to hydrate stub tool '{tool_name}'.")
+
+        if isinstance(tool, BaseTool):
+            if uses_argument_validation(tool_name):
+                parameters, invalid = validate_arguments(
+                    tool_name, parameters, tool.get_schema()["parameters"],
+                    getattr(tool, "validate_argument_semantics", None), registry=self,
+                )
+                if invalid is not None:
+                    return invalid
+            if "tool_registry" not in parameters:
+                parameters = {**parameters, "tool_registry": self}
+        executor = self._routing_engine.route_to_executor(tool)
 
         # Measurement hook: OFF unless explicitly armed (env var or the
         # `injecting()` context manager — deliberately no config.yaml key, so a
