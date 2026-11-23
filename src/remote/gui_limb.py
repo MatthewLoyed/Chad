@@ -75,7 +75,7 @@ class GUIChadLimb(ChadLimb):
         # runs entirely on this typed path: it emits the StreamEvent union
         # (src/remote/stream_events.py) to window.applyStreamEvent, the React reducer
         # (streamReducer) folds it into streamTurn, and ChatStream renders from it.
-        # See docs/features/STREAMING_REFACTOR.md.
+        # See docs/archive/features/STREAMING_REFACTOR.md.
         self._stream_emitter = None  # type: Optional[Any]
         # Coalescing buffer for the typed stream: token deltas are batched into
         # ~35ms windows before crossing the evaluate_js IPC boundary (see

@@ -14,7 +14,7 @@
  *
  * Not yet wired into the live app. It is proven against the Phase 0 wall via the
  * legacy-frame bridge (testkit/legacyFrameBridge.ts) before any production swap —
- * see docs/features/STREAMING_REFACTOR.md, Phase 1 step 4.
+ * see docs/archive/features/STREAMING_REFACTOR.md, Phase 1 step 4.
  */
 import { detectSeqGap, assertNever, type StreamEvent, type BrowserProgressPayload } from './streamEvents';
 import type { PlanStep, TokenUsage, ThinkingEvent } from '../store';

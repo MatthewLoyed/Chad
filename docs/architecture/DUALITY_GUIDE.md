@@ -102,3 +102,5 @@ When changing what the model sees or how it reasons:
 | Model adapter (streaming, thinking) | `src/core/intelligence/adapters/` — shared |
 | Persistence timing | Update Path 1 (`gui_limb.py`) AND Path 2 (`message_commands.py`) separately |
 | GUI-only events (streaming tokens, plan cards) | `gui_limb.py` only |
+
+Reply directives (tags the model can emit to control delivery) are parsed in `src/core/intelligence/reply_parser.py`; see the [reply directives guide](../features/reply_directives_guide.md).

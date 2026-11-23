@@ -24,7 +24,7 @@ Ranking history worth not re-learning: unboosted walk edges used to fall through
 to an ALPHABETICAL tiebreak on relation name, which sorted `partner_of` last;
 and topic hints used to FLOOR a fact's score to a flat 0.70, putting a whole
 topic above any threshold with its internal ranking destroyed. See
-docs/architecture/MEMORY_AUDIT_2026-07.md.
+docs/archive/architecture/MEMORY_AUDIT_2026-07.md.
 """
 
 from __future__ import annotations

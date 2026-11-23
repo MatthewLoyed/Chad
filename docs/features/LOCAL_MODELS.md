@@ -283,7 +283,7 @@ below.
 | `qwen/qwen3.5-9b` | Tool selector | ~6GB | `tools.llm_selector_model` |
 | `google/gemma-3-1b` | Intent router | ~1GB | `intent_router.model` |
 
-These three are the legacy CLI preset, not a prerequisite for basic Chat.
+These three are the legacy CLI preset, not a prerequisite for basic Chat. The runtime selector default is now `qwen2.5-3b-instruct` (`tools.llm_selector_model` in `config/config.yaml`); `scripts/setup/setup_lmstudio.py` still downloads the 9B preset.
 Manual desktop Chat setup shares its chosen model with the selector and
 compatible specialists. Hardware-guided setup uses the role bundle described
 above. Both disable the separate intent router and preserve specialist overrides. Pass

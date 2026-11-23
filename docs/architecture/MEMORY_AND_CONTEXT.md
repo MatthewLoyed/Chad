@@ -543,3 +543,5 @@ both summary paths, bounded repeated compaction, malformed input and old records
 [checkpoint tests](../../tests/unit/test_turn_consolidator_bounded_checkpoint.py)
 cover the history reset separately. These fixture tests do not prove a live model
 will extract every required fact; use the onboarding/resume eval for that.
+
+Proactive behavior (heartbeat, curiosity, impulses) that reads and proposes memory is described in [autonomous companion and memory](../features/AUTONOMOUS_COMPANION_AND_MEMORY.md).

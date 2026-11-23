@@ -424,7 +424,7 @@ interface AppState {
      * Phase 2 streaming refactor: the reducer-driven turn state, folded from the
      * typed StreamEvent protocol via applyStreamEvent. Runs PARALLEL to activeTurn
      * for now (populated only when the Limb has CHAD_STREAM_EVENTS on); the render
-     * path migrates to this slice incrementally. See docs/features/STREAMING_REFACTOR.md.
+     * path migrates to this slice incrementally. See docs/archive/features/STREAMING_REFACTOR.md.
      */
     streamTurn: TurnState | null;
     /** Conversation that owns the in-flight streamTurn (scoped buddy / avatar state). */

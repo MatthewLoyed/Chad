@@ -147,9 +147,9 @@ Current suites: `tool_selection`, `prompt_contracts`, `information_gathering`, `
 `wedding_links_once`, `wedding_registry`, `wedding_roadmap_site`, `wedding_quality_hitl` are
 **maintainer-local** (gitignored under `evals/datasets/wedding_*.jsonl` — personal workflow /
 HITL quality cases, not in the public repo). Vision for human-reviewed + Gemma-4 behavioral
-quality judging: [`docs/evals/QUALITY_HITL.md`](../docs/evals/QUALITY_HITL.md). `intent_router` is
+quality judging: [`docs/archive/evals/QUALITY_HITL.md`](../docs/archive/evals/QUALITY_HITL.md). `intent_router` is
 consumed by the standalone `evals/intent_router_live.py`, not `runner.py`. See
-`docs/evals/PROGRESS.md` for the full table with case counts. Add more by dropping a `.jsonl` in
+`docs/archive/evals/PROGRESS.md` for the full table with case counts. Add more by dropping a `.jsonl` in
 `datasets/`.
 
 **Dataset sizing (refs #315):** case count should scale with how much a suite is actually gated on,
@@ -326,7 +326,7 @@ fast to tell "the judge is wrong" from "the human label needs revisiting."
 produced nothing scoreable at all (e.g. no judge reachable). "Agreement is currently 70%, rubric X
 needs tuning" is a valid, useful finding per #312, not a build failure.
 
-**Baseline (2026-07-04, qwen/qwen3.5-9b): 83% (15/18)** — see `docs/evals/PROGRESS.md` for the full
+**Baseline (2026-07-04, qwen/qwen3.5-9b): 83% (15/18)** — see `docs/archive/evals/PROGRESS.md` for the full
 breakdown and the two real rubric-prompt findings it surfaced (`planner_quality` over-penalizes
 legitimate non-delegate tools; `tool_appropriateness` doesn't know `delegate_to_*` handoffs are
 always-bound infra, not a selection choice).
@@ -442,5 +442,5 @@ failure you should investigate, not ignore. Use this to tell a real regression f
 - **Phase 4b+ — scoreboard** (`evals/report.py`): trend over last N runs with significance vs stderr.
 - **Nightly judged full run**: `--all --judge` on a schedule, independent of the free CI gate above.
 
-See `docs/evals/PROGRESS.md` for the full roadmap + the model-comparison design, and the audit in
+See `docs/archive/evals/PROGRESS.md` for the full roadmap + the model-comparison design, and the audit in
 memory (`harness-eval-system`).

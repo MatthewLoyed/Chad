@@ -287,3 +287,5 @@ before/after number instead of an opinion.
 - **Lesson lifecycle.** `reflection.py` writes lessons but nothing expires them.
   A transient outage recorded as a lesson stays doctrine forever (one had frozen
   "the sandbox returns 401" into every prompt for two weeks). Prune by hand.
+
+See also: [conversation concurrency gate](CONCURRENCY_GATE.md) for how foreground turns and background work are gated.

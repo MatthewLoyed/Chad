@@ -138,8 +138,8 @@ development history privately; neither repository is rewritten or made public.
 
 ## Experimental Windows alpha preparation â€” October 22, 2026
 
-The [bounded release plan](strategy/PUBLIC_ALPHA_RELEASE_PLAN.md) defines the
-promise and approval points. The [issue triage proposal](strategy/PUBLIC_ALPHA_ISSUE_TRIAGE.md)
+The [bounded release plan](archive/strategy/PUBLIC_ALPHA_RELEASE_PLAN.md) defines the
+promise and approval points. The [issue triage proposal](archive/strategy/PUBLIC_ALPHA_ISSUE_TRIAGE.md)
 covers the 51 open issues. Release maintenance owns this evidence.
 
 The candidate is on `codex/public-alpha-release`, in draft PR #722 into dev.

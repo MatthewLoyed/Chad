@@ -2,7 +2,7 @@
 
 Research behind the July 2026 memory work (audit in
 [MEMORY_AND_CONTEXT.md](../architecture/MEMORY_AND_CONTEXT.md), findings in
-[MEMORY_AUDIT_2026-07.md](../architecture/MEMORY_AUDIT_2026-07.md), follow-ups in
+[MEMORY_AUDIT_2026-07.md](../archive/architecture/MEMORY_AUDIT_2026-07.md), follow-ups in
 [#655](https://github.com/MatthewLoyed/AIAssistant/issues/655)).
 
 Written down because the *reasoning* is the reusable part. Several of these

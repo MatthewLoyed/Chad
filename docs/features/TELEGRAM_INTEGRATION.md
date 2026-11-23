@@ -131,7 +131,7 @@ git push origin main
 **After deploying to cloud:**
 
 ```bash
-python scripts/setup_telegram_webhook.py \
+python src/scripts/setup_telegram_webhook.py \
     --url https://your-app.onrender.com/webhooks/telegram \
     --secret your_webhook_secret_here
 ```
@@ -143,7 +143,7 @@ python scripts/setup_telegram_webhook.py \
 ngrok http 8767
 
 # Terminal 2: Register webhook
-python scripts/setup_telegram_webhook.py \
+python src/scripts/setup_telegram_webhook.py \
     --url https://abc123.ngrok.io/webhooks/telegram
 ```
 
@@ -153,7 +153,7 @@ python scripts/setup_telegram_webhook.py \
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 # Delete webhook (if needed)
-python scripts/setup_telegram_webhook.py --delete
+python src/scripts/setup_telegram_webhook.py --delete
 ```
 
 ### Step 5: Test Integration
@@ -443,7 +443,7 @@ stats = chat_repo.get_stats()
 
 3. **Register webhook:**
    ```bash
-   python scripts/setup_telegram_webhook.py \
+   python src/scripts/setup_telegram_webhook.py \
        --url https://abc123.ngrok.io/webhooks/telegram
    ```
 
@@ -549,7 +549,7 @@ A: Phase 1 supports only private chats. Group chat support is planned for Phase 
 A: Phase 1 supports text only. Media support is planned for Phase 2.
 
 **Q: How do I disable Telegram integration?**
-A: Delete the webhook: `python scripts/setup_telegram_webhook.py --delete`
+A: Delete the webhook: `python src/scripts/setup_telegram_webhook.py --delete`
 
 **Q: Can I use multiple bots?**
 A: Currently only one bot token is supported. Multi-bot support would require code changes.

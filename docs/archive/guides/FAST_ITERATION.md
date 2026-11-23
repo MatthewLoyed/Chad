@@ -22,7 +22,7 @@ This guide shows you how to iterate on Chad's Brain with **near-instant feedback
 To start the auto-reloading environment, run:
 
 ```powershell
-python scripts/dev_server.py
+python src/scripts/dev_server.py
 ```
 
 ### What this does:
@@ -57,7 +57,7 @@ When you are finished developing and want to switch the bot back to your **Rende
 3.  Render will build and deploy naturally. 
 4.  **Note**: The Telegram webhook will remain pointed at ngrok until you manually update it or Render starts up (if Render has auto-update logic). To manually reset to Render:
     ```powershell
-    python scripts/setup_telegram_webhook.py --url https://your-app.onrender.com/webhooks/telegram
+    python src/scripts/setup_telegram_webhook.py --url https://your-app.onrender.com/webhooks/telegram
     ```
 
 > [!IMPORTANT]

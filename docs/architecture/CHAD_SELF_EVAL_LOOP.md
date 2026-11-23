@@ -14,7 +14,7 @@ reproducible finding to Codex or another capable cloud model for a quick fix.
 Local self-repair and matched before/after proof are optional extensions, not the
 definition of success. Do not let a missing repair/check policy block identification.
 
-Use the [labeled phase plan](../evals/CHAD_SELF_EVAL_NEXT_STEPS.md): four core phases
+Use the [labeled phase plan](../archive/evals/CHAD_SELF_EVAL_NEXT_STEPS.md): four core phases
 (evidence, detection/reproduction, analysis/handoff, repeatable discovery), followed
 by optional repair. The repair-oriented workflow below remains historical design
 and optional integration work; it must not override this priority.
@@ -32,7 +32,7 @@ in **#358**. Agent runbook: [`evals/AGENTS.md`](../../evals/AGENTS.md).
 Verification update (2026-10-18): the driver now gates replay on terminal successful
 worker status and a captured patch, preserves reports across failures, and requires
 an independent verifier for `ready_for_review`. A model judge alone is advisory.
-See [verification gates and remaining work](../evals/CHAD_SELF_EVAL_VERIFICATION_GATES.md).
+See [verification gates and remaining work](../archive/evals/CHAD_SELF_EVAL_VERIFICATION_GATES.md).
 
 Chad improves Chad the way a contributor would: **observe a failing eval → diagnose it → make a
 fix → re-run the eval → judge whether it improved.** The division of labor is deliberate:

@@ -62,7 +62,7 @@ follow [contribution checks](../../CONTRIBUTING.md).
 
 - This page is a navigation map, not another copy of each subsystem manual.
   Detailed constants, inventories and procedures live with their owning domain.
-- Proposed work belongs in issues; historical plans and research explain prior
+- Priorities and project state live in [STATUS](../STATUS.md). Proposed work belongs in issues; historical plans and research explain prior
   reasoning but do not define implemented behavior. See the
   [documentation lifecycle](../../CONTRIBUTING.md#documentation-lifecycle).
 - A code index helps navigate symbols but cannot establish live correctness.

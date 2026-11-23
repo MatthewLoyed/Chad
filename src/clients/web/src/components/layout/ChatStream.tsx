@@ -116,7 +116,7 @@ export default function ChatStream({ onRetryFailedSend, onRetryPrompt }: ChatStr
     const [editText, setEditText] = useState('');
     // The single render source: the typed reducer turn (streamTurn) adapted into
     // the flat event list AIResponseRenderer consumes. The legacy imperative-DOM /
-    // activeTurn render path has been removed — see docs/features/STREAMING_REFACTOR.md.
+    // activeTurn render path has been removed — see docs/archive/features/STREAMING_REFACTOR.md.
     const streamTurn = useActiveChatStreamTurn();
     const renderEvents = useMemo(
         () => (streamTurn ? partsToThinkingEvents(streamTurn) : EMPTY_EVENTS),

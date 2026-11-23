@@ -158,10 +158,10 @@ trees so chrome children do not zombie. Seed with `scripts/maintenance/seed_chro
   loop-breaker, optional `screenshot` / `select`. Model: `google/gemma-4-26b-a4b-qat`.
   **Proved (2026-07-03):** HN read, AutoTrader.ca listing price, GTA VI character names
   (Jason, Lucia), ExampleBiz owners (Jordan Sample, Alex Example). **Biggest unlock: feedback
-  quality**, not a new CUA. Writeup: `docs/features/BROWSER_HYBRID_PROBE.md`.
+  quality**, not a new CUA. Writeup: `docs/archive/features/BROWSER_HYBRID_PROBE.md`.
 - **Fara-7B vision spike (issue #288) — complete, not promoted:** `evals/browser_fara_probe.py`
   screenshot-native CUA. Official `fara-cli` also hallucinated finals. Do **not** ship Fara as
-  Path B. See `docs/features/FARA_SPIKE.md`.
+  Path B. See `docs/archive/features/FARA_SPIKE.md`.
 - **Known gap**: local model inference in LM Studio has been observed to report
   `Model unloaded` mid-generation during long agentic runs (20+ turns), independent of which
   model is loaded — not yet root-caused. If a live browser_agent run dies with a LiteLLM

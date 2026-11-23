@@ -1,7 +1,7 @@
 # Proof-of-concept trajectories (2026-07-03)
 
 Curated runs from the hybrid Gemma + DOM probe and one Fara contrast case.
-Full writeup: [`docs/features/BROWSER_HYBRID_PROBE.md`](../../../docs/features/BROWSER_HYBRID_PROBE.md).
+Full writeup: [`docs/archive/features/BROWSER_HYBRID_PROBE.md`](../../../docs/archive/features/BROWSER_HYBRID_PROBE.md).
 
 Model unless noted: `google/gemma-4-26b-a4b-qat` via `evals/browser_hybrid_probe.py`.
 

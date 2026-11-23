@@ -6,7 +6,7 @@ remain, and agent-lane turns have no plan — so nothing ever pushed it to make 
 
 The fix follows the documented remedy for "premature completion": anchor the stop
 condition to observable state, name the specific gap in the nudge, and bound the retries.
-See docs/evals/PREMATURE_COMPLETION.md.
+See docs/archive/evals/PREMATURE_COMPLETION.md.
 """
 import pytest
 

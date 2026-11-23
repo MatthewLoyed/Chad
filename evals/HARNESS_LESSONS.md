@@ -10,7 +10,7 @@ Related:
 - Schema/rubrics: [`REFERENCE.md`](./REFERENCE.md)
 - Chad-on-Chad fix → retest: [`docs/architecture/CHAD_SELF_EVAL_LOOP.md`](../docs/architecture/CHAD_SELF_EVAL_LOOP.md) (issue **#358**)
 - Diagnosis skill: [`src/skills/eval_diagnosis/SKILL.md`](../src/skills/eval_diagnosis/SKILL.md)
-- HITL quality design: [`docs/evals/QUALITY_HITL.md`](../docs/evals/QUALITY_HITL.md)
+- HITL quality design: [`docs/archive/evals/QUALITY_HITL.md`](../docs/archive/evals/QUALITY_HITL.md)
 
 ## Division of labor (do not blur)
 
@@ -103,8 +103,8 @@ set in production.
 
 ### 2026-07-26 — Browser named-SaaS cluster (`browser_named_saas`)
 
-Full writeup: [`docs/evals/BROWSER_NAMED_SAAS_2026-07-26.md`](../docs/evals/BROWSER_NAMED_SAAS_2026-07-26.md).
-Catalog (FIXED + OPEN): [`docs/evals/FOUND_AND_FIXED.md`](../docs/evals/FOUND_AND_FIXED.md).
+Full writeup: [`docs/archive/evals/BROWSER_NAMED_SAAS_2026-07-26.md`](../docs/archive/evals/BROWSER_NAMED_SAAS_2026-07-26.md).
+Catalog (FIXED + OPEN): [`docs/archive/evals/FOUND_AND_FIXED.md`](../docs/archive/evals/FOUND_AND_FIXED.md).
 
 **Landed**
 
@@ -312,8 +312,8 @@ rediscovery on `planner_quality` (or a dedicated dimension) with the full trajec
   failure can evade a machine failure-signature parser and appear successful.
 - Validate planner statuses at entry: `in_progress` survives normalization but is
   ignored by consumers expecting `running`, silently skipping an unfinished step.
-- Initial report: `docs/evals/CHAD_REFINED_GUI_TRACE_TRIAGE.md`. Subsequent repairs
-  and offline verification: `docs/evals/CHAD_GUI_HARNESS_REPAIRS.md` (111 tests).
+- Initial report: `docs/archive/evals/CHAD_REFINED_GUI_TRACE_TRIAGE.md`. Subsequent repairs
+  and offline verification: `docs/archive/evals/CHAD_GUI_HARNESS_REPAIRS.md` (111 tests).
   Screenshot containment is an explicit text-channel fallback, not native vision.
 
 ### 2026-10-19 — Approval identity and pause lifetime are separate contracts
@@ -329,7 +329,7 @@ rediscovery on `planner_quality` (or a dedicated dimension) with the full trajec
   or substantive requests for new plans.
 - Model construction and residency must share one pin policy. Browser inherits the
   supervisor; ignoring a stale pin only in graph construction still leaves a model
-  swap mismatch. See `docs/evals/CHAD_BONSAI_APPROVAL_REPAIRS.md`.
+  swap mismatch. See `docs/archive/evals/CHAD_BONSAI_APPROVAL_REPAIRS.md`.
 
 ### 2026-10-19 — UI success needs target identity and matched postconditions
 
@@ -347,7 +347,7 @@ rediscovery on `planner_quality` (or a dedicated dimension) with the full trajec
   Test the real executor-to-compiled-graph boundary with runtime kwargs.
 - A launcher instance name does not imply `<name>.exe`. Negative guessed-process
   searches cannot invalidate a UI report; verify relevant observed app state.
-- Repair/evidence report: `docs/evals/CHAD_SUCCESS_UI_TRACE_REPAIRS.md`; 98 offline
+- Repair/evidence report: `docs/archive/evals/CHAD_SUCCESS_UI_TRACE_REPAIRS.md`; 98 offline
   tests pass. User-observed success and independently captured postconditions remain
   separate; no external task replay or production restart was performed.
 
@@ -358,12 +358,12 @@ Scout root events must explicitly clear inherited parent context. A planner disp
 placeholder must not complete the real Scout lifecycle early. Preserve one call ID
 and carry the final report through the stream to the panel. Increased tool budgets
 also require sufficient child-graph recursion. See
-`docs/evals/CHAD_SCOUT_UI_AND_BUDGET_REPAIRS.md` for fixes and validation.
+`docs/archive/evals/CHAD_SCOUT_UI_AND_BUDGET_REPAIRS.md` for fixes and validation.
 
 
 ### Scout input isolation follow-up
 
-See `docs/evals/CHAD_SCOUT_CONTEXT_ISOLATION.md`: Scout now starts with an independent
+See `docs/archive/evals/CHAD_SCOUT_CONTEXT_ISOLATION.md`: Scout now starts with an independent
 core search/read tool set and Scout-only persona, brief and original request; no
 composite supervisor context. Discovery filtering and memory mutation guards were
 repaired. Thirty focused tests pass; no live replay or manual Brain restart.
@@ -371,7 +371,7 @@ repaired. Thirty focused tests pass; no live replay or manual Brain restart.
 
 ### Required planner Scout decision
 
-See `docs/evals/CHAD_PLANNER_SCOUT_DECISION.md`. Tool binding and execution now
+See `docs/archive/evals/CHAD_PLANNER_SCOUT_DECISION.md`. Tool binding and execution now
 require a nonempty dispatch or explicit skip before planning; early proposals,
 mixed batches and degraded fallback paths cannot bypass the decision. Keep local
 planner overlays aligned with baseline policy. No live replay or manual restart.
@@ -379,7 +379,7 @@ planner overlays aligned with baseline policy. No live replay or manual restart.
 
 ### Scout evidence survives planning and approval
 
-`docs/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md` records checkpointed findings, mandatory
+`docs/archive/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md` records checkpointed findings, mandatory
 coverage review, one targeted follow-up, supervisor/delegate evidence injection and
 read-only operation classification. Checkpoints must preserve evidence across
 approval; cached child system prompts still need current facts on each task message.
@@ -393,7 +393,7 @@ A user-role fallback saying "No more tool calls" with zero bound tools conflicte
 with finish_scout_report and made Scout attribute a harness restriction to the user.
 Use explicit gather/report phases, a real gather task message, one enabled-tool
 retry and one bounded report-only attempt. See the report-phase correction in
-`docs/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md`.
+`docs/archive/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md`.
 
 
 ### check_app_exists restored as read-only
@@ -402,12 +402,12 @@ The protocol/partition declaration survived but the callable tool and daemon han
 were missing. Restored both using a shared non-launching app resolver, with explicit
 shortcut/alias limits and Scout discovery visibility. 44 focused tests pass; a local
 Prism lookup verified its executable without launching. No services restarted.
-See `docs/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md`.
+See `docs/archive/evals/CHAD_SCOUT_EVIDENCE_HANDOFF.md`.
 
 
 ### Scout discovery/report contract — live verified
 
-See `docs/evals/CHAD_SCOUT_LIVE_CONTRACT_FIX.md`: explicit outgoing report schema,
+See `docs/archive/evals/CHAD_SCOUT_LIVE_CONTRACT_FIX.md`: explicit outgoing report schema,
 source IDs in results, actionable validation, bounded report retries, exact tool
 discovery/category recovery and refreshed loaded-tool context. 77 focused tests
 pass; two real Bonsai planning runs on dev 8788 reached approval with zero report
@@ -424,4 +424,4 @@ stream mid-tool. Fixed desktop approval clearing stream ownership, plus stale fi
 responses closing the next turn's emitter. Real graph tests cover direct/specialist
 calls, exact arguments, decline, receipts and sibling isolation; UI tests cover
 visibility/session isolation. Production untouched; no live GUI rerun for this patch.
-See `docs/evals/CHAD_DIRECT_TOOL_APPROVAL_RESUME.md`.
+See `docs/archive/evals/CHAD_DIRECT_TOOL_APPROVAL_RESUME.md`.

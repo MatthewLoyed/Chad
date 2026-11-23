@@ -103,7 +103,7 @@ CONTINUE_NUDGE = os.getenv(
 # remedy the literature converges on for this failure mode — "premature completion" /
 # "stopping-criterion misalignment", where an agent fires its done-token on the first sign of
 # progress. Generic "be thorough" instructions measurably do NOT help; a specific, observable
-# gap does. See docs/evals/PREMATURE_COMPLETION.md for sources.
+# gap does. See docs/archive/evals/PREMATURE_COMPLETION.md for sources.
 COMPLETION_NUDGE = os.getenv(
     "EVAL_WORKFLOW_COMPLETION_NUDGE",
     "You ended your turn but the task is not done: {gap}. Do not describe what you would do "

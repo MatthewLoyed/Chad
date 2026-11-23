@@ -106,7 +106,7 @@ def _backend_chain() -> tuple[list[str], float]:
 
     Every paid/free-tier backend is opt-in — it only joins a chain when its key is
     configured; the default (``searxng``) chain is unchanged for anyone who hasn't set
-    a key (see docs/strategy/OPEN_SOURCE_STRATEGY.md).
+    a key (see docs/archive/strategy/OPEN_SOURCE_STRATEGY.md).
     """
     from src.tools.web.playwright_search import playwright_search_fallback_enabled
 
