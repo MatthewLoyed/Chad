@@ -378,7 +378,6 @@ nothing.
 - `tests/unit/test_turn_delivery.py` — `GUIChadLimb` fragment/status routing into `on_sentence`, voice-vs-GUI delivery gating.
 - `tests/unit/test_voice_node.py` — `voice_responder` tagging (streaming) and fixed tool-set binding.
 - `tests/unit/test_langgraph_voice_streaming.py` — `voice-llm`-tagged chunks reach `on_token`.
-- `tests/unit/test_buddy_bridge.py` — includes the `listening` state.
 - `tests/unit/test_voice_lane_routing.py` — category survives intent resolution; `route_entry` reaches `voice_responder`.
 - `tests/unit/test_tts_fallback.py` — primary→fallback engine handoff + per-engine voice resolution.
 - `tests/unit/test_wake_word.py` — openWakeWord threshold/buffering + engine-selection facade, fakes only (CI-safe, no ONNX runtime or vendor account).

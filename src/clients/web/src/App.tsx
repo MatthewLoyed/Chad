@@ -259,7 +259,7 @@ function App() {
 
   // Install the window.* bridge handlers once (status, telemetry, finalize, and
   // the typed-stream sink window.applyStreamEvent). Live turn content renders from
-  // the typed reducer; see ./runtime/streamRuntime and docs/features/STREAMING_REFACTOR.md.
+  // the typed reducer; see ./runtime/streamRuntime and docs/archive/features/STREAMING_REFACTOR.md.
   useEffect(() => {
     const uninstall = installStreamHandlers();
     return () => { uninstall(); };

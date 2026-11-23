@@ -8,7 +8,7 @@ Use when asked to test the harness, run evals, check tool/subagent selection, fi
 contradictions/bloat, verify prompt/tool-selection/orchestration changes, or HITL quality suites.
 
 **Diagnosing a live/workflow failure?** Read
-[`docs/evals/FOUND_AND_FIXED.md`](../docs/evals/FOUND_AND_FIXED.md) and
+[`docs/archive/evals/FOUND_AND_FIXED.md`](../docs/archive/evals/FOUND_AND_FIXED.md) and
 [`HARNESS_LESSONS.md`](./HARNESS_LESSONS.md) before inventing a root cause.
 
 ## Matt defaults
@@ -36,7 +36,7 @@ Eval residency (also see `eval_exclusivity.py`):
   + `ui_mode=agent` so `_maybe_preload_on_connect` does not JIT-load intent-router gemma-1b.
   Use `open_eval_ws(ui_mode="plan")` for planner-heavy suites.
   Persistent named-SaaS regression: `--suite browser_named_saas` (see
-  `docs/evals/BROWSER_NAMED_SAAS_2026-07-26.md`).
+  `docs/archive/evals/BROWSER_NAMED_SAAS_2026-07-26.md`).
 
 ## Ports
 
@@ -178,7 +178,7 @@ Append one JSON line to `evals/datasets/*.jsonl`. Only `id`/`prompt` required. U
 - Live keys: `min_steps`/`max_steps`, `response_includes`, `tool_args`, `requires_approval`, …
 - Workflow keys: `must_complete`, `min_rounds`/`max_rounds`, …
 
-HITL design: [`docs/evals/QUALITY_HITL.md`](../docs/evals/QUALITY_HITL.md).
+HITL design: [`docs/archive/evals/QUALITY_HITL.md`](../docs/archive/evals/QUALITY_HITL.md).
 
 ## Ad hoc probes
 

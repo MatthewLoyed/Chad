@@ -3,7 +3,7 @@
 Thin, in-process HTTP client against the Serper.dev Google-SERP API
 (https://serper.dev). Serper is **not** required — Chad's default search stack
 (self-hosted SearXNG with a Brave fallback) works with zero API keys, matching
-the local-first/open-source thesis (see docs/strategy/OPEN_SOURCE_STRATEGY.md).
+the local-first/open-source thesis (see docs/archive/strategy/OPEN_SOURCE_STRATEGY.md).
 This tool only activates when the user opts in by setting ``SERPER_API_KEY``;
 without it, ``web_search``'s backend chain never includes ``serper_search`` and
 nothing changes for users who don't configure it.

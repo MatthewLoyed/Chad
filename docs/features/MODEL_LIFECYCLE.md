@@ -430,7 +430,7 @@ selection code.
 
 - [`LLM_TOOL_SELECTOR.md`](LLM_TOOL_SELECTOR.md) — the tool selector's selection logic (which
   model to target); load/unload mechanics now live here instead.
-- [`SUBAGENT_MODEL_SWAP.md`](SUBAGENT_MODEL_SWAP.md) — the subagent handoff swap this module
+- [`SUBAGENT_MODEL_SWAP.md`](../archive/features/SUBAGENT_MODEL_SWAP.md) — archived proposal for the subagent handoff swap this module
   now backs.
 - [`local-model-rules.md`](../local-model-rules.md) — LM Studio Infrastructure Gotchas section,
   for the short version of the Auto-Evict/Engine-Protocol findings above.

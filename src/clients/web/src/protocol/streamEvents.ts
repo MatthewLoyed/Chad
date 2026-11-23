@@ -8,7 +8,7 @@
  * via a single reducer — no manual DOM, no stringly-typed `state` ladder.
  *
  * This file is the SPEC-IN-CODE. It is intentionally not yet wired into the live
- * app (see docs/features/STREAMING_REFACTOR.md, Phase 1 step 1). The Python
+ * app (see docs/archive/features/STREAMING_REFACTOR.md, Phase 1 step 1). The Python
  * emitter (step 2), the reducer `applyStreamEvent` (step 3), and the legacy-frame
  * bridge (step 4) build against these types so equivalence can be proven against
  * the Phase 0 wall before any production swap.

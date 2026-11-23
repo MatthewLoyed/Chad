@@ -4,8 +4,8 @@
 
 All Chad's tools are organized by **category/scope** at the top level. Each directory = one tool scope.
 
-> [!WARNING]
-> **MCP Infrastructure**: Any references to MCP (Model Context Protocol) in the registry or discovery logic are currently **DEAD CODE**. Chad does not use MCP in the current implementation.
+> [!NOTE]
+> **MCP**: Chad can also expose tools from configured MCP servers (`src/core/tools/mcp_registry.py`, read index in `src/infrastructure/tools/mcp_read_index.py`, Settings → MCP servers). The directory tree below covers native tools only and may lag `src/tools/`; the directory listing is authoritative.
 
 ---
 

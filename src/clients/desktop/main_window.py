@@ -839,7 +839,7 @@ class MainWindow(ctk.CTk):
     # shipping the ones nobody on this window reads. Does NOT affect the HUD
     # overlay: it's a separate Electron process (chad-hud/) on its own websocket
     # transport (brainSocket.ts), not this pywebview bridge. Full writeup:
-    # docs/features/STREAMING_REFACTOR.md ("push_thinking_event is NOT dead").
+    # docs/archive/features/STREAMING_REFACTOR.md ("push_thinking_event is NOT dead").
     # See issue #636.
     _BRIDGE_THINKING_EVENT_TYPES = frozenset({'autonomous_notification', 'model_loading'})
 
@@ -889,7 +889,7 @@ class MainWindow(ctk.CTk):
         ChatStream renders from it). Runs PARALLEL to the legacy window.handle* path.
         The typeof guard keeps it safe if an older client bundle lacks the handler.
         Emitted when the Limb has CHAD_STREAM_EVENTS enabled (default on).
-        See docs/features/STREAMING_REFACTOR.md.
+        See docs/archive/features/STREAMING_REFACTOR.md.
         """
         if self._shutdown or not self.webview_window or not self._webview_ready:
             return

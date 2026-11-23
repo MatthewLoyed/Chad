@@ -15,7 +15,9 @@ Before this feature, every turn fed Chad's main model a bloated tool set regardl
 
 ## The Solution
 
-A small local model (e.g. Qwen 3.5 9B) sees the **entire tool catalog** and returns only the names of the tools actually needed. The main model (35B) only ever sees those tools.
+A small local model sees the **entire tool catalog** and returns only the names of the tools actually needed. The main model (35B) only ever sees those tools.
+
+> **Current default:** `tools.llm_selector_model` is `qwen2.5-3b-instruct` in [`config/config.yaml`](../../config/config.yaml) (`DEFAULT_LLM_SELECTOR_MODEL` in `src/shared/config_manager.py`). The "9B"/"35B" figures below come from the original Qwen 3.5 9B selector benchmark and are historical.
 
 The selector is **backend-agnostic**: it talks OpenAI-compatible `/chat/completions` and routes
 every model-residency decision (which model is loaded, load/unload, resident-model listing)
@@ -91,7 +93,7 @@ visible even when its provider is offline. Saving the choice does not load the m
 ```yaml
 # config/config.yaml
 tools:
-  llm_selector_model: "qwen/qwen3.5-9b"  # Model ID as shown in LM Studio
+  llm_selector_model: "qwen2.5-3b-instruct"  # Model ID as shown in LM Studio
 ```
 
 The base URL is read from the configured provider under `local_models.providers.*.base_url`
@@ -130,8 +132,6 @@ Latency for the 9B selection call: ~4–7s. This runs before the main model turn
 | `src/infrastructure/tools/registry.py` | Integration point — `get_schemas_for_turn()` tries LLM selector, falls back to RAG |
 | `config/config.yaml` | `tools.llm_selector_model` config key |
 | `tests/manual/test_9b_tool_selector.py` | Initial v1 proof-of-concept (30 tools, 10 queries) |
-| `tests/manual/test_9b_tool_selector_v2.py` | v2 comparison: full registry vs RAG candidates vs strict prompt |
-| `tests/manual/test_9b_full_replace.py` | Before/after tool count benchmark (the definitive test) |
 
 ## Scout read bindings
 

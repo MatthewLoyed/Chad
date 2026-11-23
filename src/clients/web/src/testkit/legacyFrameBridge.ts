@@ -7,7 +7,7 @@
  * This lets every existing golden fixture drive the new `applyStreamEvent`
  * reducer, so we can prove the reducer reproduces the legacy seam's output
  * (thinking text, answer text, tool cards, plan) BEFORE wiring the typed protocol
- * into production — see docs/features/STREAMING_REFACTOR.md, Phase 1.
+ * into production — see docs/archive/features/STREAMING_REFACTOR.md, Phase 1.
  *
  * The mapping mirrors the reference table at the bottom of protocol/streamEvents.ts.
  * Once the Python emitter (step 2) emits StreamEvents natively this bridge is only

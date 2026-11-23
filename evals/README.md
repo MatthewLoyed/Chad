@@ -11,9 +11,9 @@ budget) — not just whether a model gave a good answer. Complements live probes
 | [`AGENTS.md`](./AGENTS.md) | **Agent runbook** (Matt defaults, worktree Brain bootstrap, lanes, ports) |
 | [`REFERENCE.md`](./REFERENCE.md) | Schema, rubrics, probes, CI, mining, outputs |
 | [`HARNESS_LESSONS.md`](./HARNESS_LESSONS.md) | Append-only: harness failure classes + wins (don't re-learn) |
-| [`docs/evals/FOUND_AND_FIXED.md`](../docs/evals/FOUND_AND_FIXED.md) | Known live/workflow bugs already fixed |
-| [`docs/evals/BROWSER_NAMED_SAAS_2026-07-26.md`](../docs/evals/BROWSER_NAMED_SAAS_2026-07-26.md) | Named-SaaS browser cluster + OPEN re-test suite |
-| [`docs/evals/QUALITY_HITL.md`](../docs/evals/QUALITY_HITL.md) | Behavioral quality / Gemma HITL lane design |
+| [`docs/archive/evals/FOUND_AND_FIXED.md`](../docs/archive/evals/FOUND_AND_FIXED.md) | Known live/workflow bugs already fixed |
+| [`docs/archive/evals/BROWSER_NAMED_SAAS_2026-07-26.md`](../docs/archive/evals/BROWSER_NAMED_SAAS_2026-07-26.md) | Named-SaaS browser cluster + OPEN re-test suite |
+| [`docs/archive/evals/QUALITY_HITL.md`](../docs/archive/evals/QUALITY_HITL.md) | Behavioral quality / Gemma HITL lane design |
 | [`docs/architecture/CHAD_SELF_EVAL_LOOP.md`](../docs/architecture/CHAD_SELF_EVAL_LOOP.md) | Chad-on-Chad observe→fix→retest (#358) |
 | [`SELF_EVAL_DO_NOT_SHIP.md`](./SELF_EVAL_DO_NOT_SHIP.md) | Packaging exclude list for self-eval-only files |
 | [`docs/runbooks/`](./docs/runbooks/) | One-off sweep/overnight runbooks |

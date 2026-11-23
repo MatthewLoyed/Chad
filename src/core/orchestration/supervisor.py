@@ -43,7 +43,7 @@ logger = setup_logger("ChadSupervisor")
 # not Supabase is configured. An optional Supabase override (persona_config, scope=
 # deep_research_agent) can layer on top for a given install, but this is not a "cold-start
 # fallback" waiting to be replaced; it must stay complete and correct on its own (local-first
-# open-source default, see docs/strategy/OPEN_SOURCE_STRATEGY.md).
+# open-source default, see docs/archive/strategy/OPEN_SOURCE_STRATEGY.md).
 _DEEP_RESEARCH_AGENT_FALLBACK_PROMPT = (
     "ROLE: You are the deep research specialist. You OWN the whole research workflow for "
     "whatever task the supervisor delegates to you — you NEVER call web_search yourself.\n\n"

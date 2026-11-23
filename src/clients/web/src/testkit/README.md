@@ -78,4 +78,4 @@ Live turn content is one immutable `streamTurn` (`protocol/streamReducer.ts`):
 (reasoning / text / tool / plan) that can only grow. `partsToThinkingEvents` adapts
 that into the flat list `AIResponseRenderer` renders. There is no imperative DOM
 append path anymore, so flicker/cutoff are structurally prevented rather than
-patched. See `docs/features/STREAMING_REFACTOR.md`.
+patched. See `docs/archive/features/STREAMING_REFACTOR.md`.

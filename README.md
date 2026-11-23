@@ -176,6 +176,8 @@ All agent turns, tool calls, and reasoning are traced via
 
 ## Roadmap / experimental
 
+Current priorities and project state: [`docs/STATUS.md`](docs/STATUS.md).
+
 These exist in the codebase and work, but aren't part of the default
 experience yet — either disabled pending more vetting, or genuinely
 unfinished:

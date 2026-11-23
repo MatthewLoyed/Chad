@@ -7,7 +7,7 @@
 2. The always-on core profile being written but never read on the wake path.
 
 Both run offline — this is pure ranking and prompt assembly, no model calls.
-See docs/architecture/MEMORY_AUDIT_2026-07.md.
+See docs/archive/architecture/MEMORY_AUDIT_2026-07.md.
 """
 
 from __future__ import annotations

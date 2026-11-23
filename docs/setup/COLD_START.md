@@ -173,7 +173,7 @@ predates this and still hand-rolls its own local branch; new local-first slices
 Telegram, kanban, workflows, capability self-improvement, and OATS are
 optional/advanced features; several now have local sqlite fallbacks via
 `LocalPostgrestShim` but are not part of the cold-start path. See
-[OSS_SETUP_GAPS.md](OSS_SETUP_GAPS.md) for the full audit.
+[OSS_SETUP_GAPS.md](../archive/setup/OSS_SETUP_GAPS.md) for the full audit.
 
 ---
 
